@@ -21,6 +21,11 @@ def test_seo_and_softwareapplication_json_ld() -> None:
     assert "Aziel Eliab" in HOME
     assert "cite.json" in HOME
     assert "sitemap.xml" in HOME
+    assert "AI_CRAWLER_AGENTS" in HOME
+    assert "User-agent: *" in HOME
+    assert "GPTBot" in HOME
+    assert ".pytest_cache" not in HOME
+    assert ".wrangler" not in HOME
     assert "Everblooming sigil" in HOME
     assert "/sigil.png" in HOME
 

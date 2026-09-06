@@ -12,7 +12,7 @@ id = "00000000000000000000000000000001"
 [assets]
 directory = "./public"
 binding = "ASSETS"
-run_worker_first = ["/", "/download", "/download/*", "/stats", "/event", "/go", "/count", "/install.sh", "/v1", "/v1/*", "/openapi.json", "/ai", "/ai/*", "/mcp", "/mcp/", "/cite.json", "/sitemap.xml", "/robots.txt", "/llms.txt", "/ai.txt"]
+run_worker_first = ["/", "/download", "/download/*", "/stats", "/event", "/go", "/count", "/install.sh", "/v1", "/v1/*", "/openapi.json", "/ai", "/ai/*", "/mcp", "/mcp/", "/cite", "/cite/", "/cite.json", "/sitemap.xml", "/robots.txt", "/llms.txt", "/ai.txt"]
 
 [observability]
 enabled = true
