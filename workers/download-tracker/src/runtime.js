@@ -2,8 +2,12 @@
  * AZNet hosted runtime (port of canon/receipt/chain).
  * Stateless: client sends the ledger JSON in the body. Hashes only.
  * /v1 never touches DOWNLOADS KV.
+ * Dual surface: GET/POST /mcp is a FragGate pointer (never 404).
+ * Door paths (`/v1/fraggate/*`, `/v1/runtime/*`) PROXY to aziel-runtime.
+ * Local ops are single-segment `/v1/{op}` only.
  * Author: Aziel Eliab only.
  */
+import { classifyV1Path, doorTargetUrl } from "./door.js";
 const PRODUCT = "aznet";
 const VERSION = "0.1.0";
 const MOTTO = "Verification without hosting. Presence without authority.";
@@ -14,6 +18,29 @@ const ABSENT = "ABSENT";
 const ACTOR = "operator";
 const MARKER = "Truth Is No Defense — .AZNet — AZ.";
 const HOST = "https://aznet-download-tracker.vibelock.workers.dev";
+const RUNTIME = "https://aziel-runtime.vibelock.workers.dev";
+const FRAGGATE_KERNEL = "https://github.com/AzielEliab/fraggate";
+const FRAGGATE_MCP = "https://aziel-runtime.vibelock.workers.dev/mcp";
+const FRAGGATE_CALL = "https://aziel-runtime.vibelock.workers.dev/v1/fraggate/call";
+const AZBROWSER = "https://github.com/AzielEliab/azbrowser";
+const FRAGGATE_LIVE_OPS = Object.freeze([
+  "health",
+  "pair_status",
+  "garden_list",
+  "stamp",
+  "verify_hash",
+  "memorial_list",
+  "memorial_append",
+  "receipt_verify",
+  "skill",
+]);
+const LEFTOVER_ALIASES = Object.freeze({
+  pair: "pair_status",
+  garden: "garden_list",
+  verify: "verify_hash",
+  memorial: "memorial_append",
+  receipts: "receipt_verify",
+});
 const GENESIS_PREV_HASH = "0".repeat(64);
 const WITNESS_SECTIONS = ["garden", "memorial", "stamps", "receipts", "pair", "unlock", "staticclock"];
 const EVENT_KINDS = ["GARDEN", "STAMP", "MEMORIAL", "PAIR", "UNLOCK", "WITNESS", "WITHDRAW"];
@@ -55,6 +82,23 @@ AZNet, AZBrowser, and FragGate are **separate apps**. Do not embed AZNet chrome 
 
 Always send \`User-Agent: Mozilla/5.0\`. Cloudflare Workers may 403 an empty agent.
 
+## Agent path is FragGate only
+
+ONE FragGate door. Agents must not treat this Worker as a second MCP brand.
+
+- Discover: \`fraggate_list\` / \`GET ${RUNTIME}/v1/fraggate/list\`
+- Describe: \`fraggate_describe\` slug=\`aznet\`
+- Call: \`fraggate_call\` / \`POST ${FRAGGATE_CALL}\` with \`{ slug: "aznet", op, payload }\`
+- This Worker \`GET|POST /mcp\` is a **pointer** (never 404) to that door
+- This Worker \`/v1/fraggate/*\` (list / describe / call / verify) **PROXY** to aziel-runtime via the \`AZIEL_RUNTIME\` service binding
+- Leftover flat names such as \`aznet_stamp\` still go through FragGate — they are not a side door
+
+Catalog LIVE_OPS (same names the Worker UI buttons call): \`health\`, \`pair_status\`, \`garden_list\`, \`stamp\`, \`verify_hash\`, \`memorial_list\`, \`memorial_append\`, \`receipt_verify\`, \`skill\`.
+
+\`doctor\` is **not** a FragGate live op. Local CLI \`aznet doctor\` stays a device-local self-check. Worker UI does not expose a Doctor button.
+
+AZNet is **separate software** from AZBrowser. Pairing is functional order only (\`pair_token\` + \`pair_flag\`). Do not merge UIs.
+
 ## Endpoints (this Worker)
 
 Host: \`https://aznet-download-tracker.vibelock.workers.dev\`
@@ -65,28 +109,35 @@ Host: \`https://aznet-download-tracker.vibelock.workers.dev\`
 | GET | \`/download\` | Counted tarball (HTTP 200, live counter, no 302). Increments **downloads**. |
 | GET | \`/count\` | \`{views, downloads, total}\`. Does not increment. |
 | GET | \`/stats\` | views, downloads, \`by_repo\` / \`by_branch\` / \`by_fork\`. Does not increment. |
+| GET/POST | \`/mcp\` | FragGate pointer (never 404). Not a second MCP. |
+| GET | \`/v1/fraggate/list\` | PROXY to aziel-runtime FragGate list. |
+| GET | \`/v1/fraggate/describe\` | PROXY to aziel-runtime FragGate describe. |
+| POST | \`/v1/fraggate/call\` | PROXY to aziel-runtime FragGate call. |
+| POST | \`/v1/fraggate/verify\` | PROXY to aziel-runtime FragGate verify. |
 | GET | \`/v1/health\` | Liveness. Does not increment downloads. |
 | GET | \`/v1/skill\` | This markdown. Does not increment downloads. |
 | GET | \`/v1/example\` | Sample pair + stamp payload. Does not increment downloads. |
-| GET | \`/v1/doctor\` | Hosted self-check (no writes). Does not increment downloads. |
-| GET | \`/v1/garden\` | Demo Gold Pages (shifting, non-ranked hashes). |
-| GET | \`/v1/time\` | StaticClock advisory display. Not a scheduler. |
-| GET | \`/v1/witness\` | Mandatory UI witness hash. |
-| POST | \`/v1/pair\` | Pair AZNet + AZBrowser. Client may send ledger. |
-| POST | \`/v1/unlock\` | FragGate unlock after pair. |
+| GET/POST | \`/v1/pair_status\` | Catalog name: pair + report AZBrowser token/flag. Leftover alias: \`/v1/pair\`. |
+| GET | \`/v1/garden_list\` | Catalog name: demo Gold Pages. Leftover alias: \`/v1/garden\`. |
+| GET | \`/v1/time\` | StaticClock advisory display. Not a scheduler. Human chrome. |
+| GET | \`/v1/witness\` | Mandatory UI witness hash. Human chrome. |
+| POST | \`/v1/unlock\` | Human chrome: FragGate unlock after pair. Not a catalog live op. |
 | POST | \`/v1/stamp\` | TemporalLock-style stamp of a hash. Pair + unlock required. |
-| POST | \`/v1/memorial\` | Terminal compromise memorial. No exploit details. |
-| POST | \`/v1/withdraw\` | Withdrawal over coercion. |
-| POST | \`/v1/verify\` | Walk hashes and prev links. Not stored. |
-| POST | \`/v1/lattice\` | Verify receipt links + counts. |
-| POST | \`/v1/receipts\` | Return the client-held ledger. |
-| POST | \`/v1/witness\` | Check UI witness. Mismatch terminates + memorial. |
+| POST | \`/v1/memorial_append\` | Catalog name: terminal memorial. Leftover alias: \`/v1/memorial\`. |
+| POST | \`/v1/memorial_list\` | Catalog name: list memorial receipts from the client ledger. |
+| POST | \`/v1/withdraw\` | Human chrome: withdrawal over coercion. |
+| POST | \`/v1/verify_hash\` | Catalog name: walk hashes and prev links. Leftover alias: \`/v1/verify\`. |
+| POST | \`/v1/receipt_verify\` | Catalog name: verify receipt links. Leftover alias: \`/v1/receipts\`. |
+| POST | \`/v1/lattice\` | Human chrome: verify receipt links + counts. |
+| POST | \`/v1/witness\` | Human chrome: check UI witness. Mismatch terminates + memorial. |
 
 OpenAPI: \`https://aznet-download-tracker.vibelock.workers.dev/openapi.json\`
 
 Catalog OpenAPI: \`https://aziel-runtime.vibelock.workers.dev/openapi.json\`
 
-MCP: \`POST https://aziel-runtime.vibelock.workers.dev/mcp\`
+Catalog MCP: \`POST ${FRAGGATE_MCP}\`
+
+This Worker MCP pointer: \`GET|POST https://aznet-download-tracker.vibelock.workers.dev/mcp\`
 
 Catalog aliases under \`/p/aznet/…\` when listed. FragGate slug: \`aznet\`.
 
@@ -104,12 +155,16 @@ Do **not** wire Lumen, AZInterface, AZ-OS Hub, or Interface products.
 
 \`\`\`bash
 curl -s -A 'Mozilla/5.0' https://aznet-download-tracker.vibelock.workers.dev/v1/health
-curl -s -A 'Mozilla/5.0' -X POST https://aznet-download-tracker.vibelock.workers.dev/v1/pair \\
+curl -s -A 'Mozilla/5.0' https://aznet-download-tracker.vibelock.workers.dev/mcp
+curl -s -A 'Mozilla/5.0' -X POST ${FRAGGATE_CALL} \\
+  -H 'content-type: application/json' \\
+  -d '{"slug":"aznet","op":"pair_status","payload":{"azbrowser":"https://github.com/AzielEliab/azbrowser"}}'
+curl -s -A 'Mozilla/5.0' -X POST https://aznet-download-tracker.vibelock.workers.dev/v1/pair_status \\
   -H 'content-type: application/json' \\
   -d '{"azbrowser":"https://github.com/AzielEliab/azbrowser"}'
 curl -s -A 'Mozilla/5.0' https://aznet-download-tracker.vibelock.workers.dev/count
 curl -s -A 'Mozilla/5.0' https://aznet-download-tracker.vibelock.workers.dev/stats
-curl -s -A 'Mozilla/5.0' https://aznet-download-tracker.vibelock.workers.dev/v1/garden
+curl -s -A 'Mozilla/5.0' https://aznet-download-tracker.vibelock.workers.dev/v1/garden_list
 curl -s -A 'Mozilla/5.0' https://aznet-download-tracker.vibelock.workers.dev/v1/skill
 \`\`\`
 
@@ -140,12 +195,13 @@ Author: **Aziel Eliab**. Honest scope: hashes only. Not an alt internet.
 - Product homepage (workspace + counted download): https://aznet-download-tracker.vibelock.workers.dev/
 - Catalog product (when listed): https://aziel-runtime.vibelock.workers.dev/p/aznet/
 - Catalog OpenAPI: https://aziel-runtime.vibelock.workers.dev/openapi.json
-- Catalog MCP: \`POST https://aziel-runtime.vibelock.workers.dev/mcp\`
+- Catalog MCP: \`POST ${FRAGGATE_MCP}\`
+- This Worker MCP pointer: \`GET|POST https://aznet-download-tracker.vibelock.workers.dev/mcp\`
 - This Worker skill: \`GET https://aznet-download-tracker.vibelock.workers.dev/v1/skill\`
 - This Worker OpenAPI: https://aznet-download-tracker.vibelock.workers.dev/openapi.json
 - Sample payload: \`GET https://aznet-download-tracker.vibelock.workers.dev/v1/example\`
 
-Local UI: Garden Rolodex, Memorial, stamps, receipts, pair-status, FragGate unlock, StaticClock. Then \`aznet doctor\`.
+Local UI: Garden Rolodex, Memorial, stamps, receipts, pair-status, FragGate unlock, StaticClock. Device-local \`aznet doctor\` is not a FragGate live op.
 
 ${AI_CLIENTS} MCP clients: \`POST https://aziel-runtime.vibelock.workers.dev/mcp\`.
 
@@ -161,8 +217,16 @@ function corsHeaders() {
   return {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, Accept, MCP-Protocol-Version, mcp-session-id, User-Agent, Authorization",
   };
+}
+
+function originOf(request) {
+  try {
+    return new URL(request.url).origin;
+  } catch {
+    return HOST;
+  }
 }
 
 function json(body, status = 200) {
@@ -574,40 +638,175 @@ async function doWitness(body) {
   return wrap("witness", rec, [...ledger, rec], { witness_hash: expected });
 }
 
-function openapiSpec() {
+function mcpDocs(origin) {
+  return {
+    ok: false,
+    error: "not a product MCP",
+    product: PRODUCT,
+    door: "fraggate",
+    slug: "aznet",
+    identity: AUTHOR,
+    agent_path: FRAGGATE_CALL,
+    catalog_mcp: FRAGGATE_MCP,
+    body: { slug: "aznet", op: "pair_status", payload: { azbrowser: AZBROWSER } },
+    openapi: origin + "/openapi.json",
+    note: "AI / MCP path is FragGate only. This host GET|POST /mcp is a pointer (never 404), not a second agent brand. /v1/fraggate/* and /v1/runtime/* PROXY to aziel-runtime via AZIEL_RUNTIME. Local ops are /v1/{op} only. Catalog LIVE_OPS: " + FRAGGATE_LIVE_OPS.join(", ") + ". AZBrowser is sibling software (functional-order pair), not this product. doctor is not a FragGate live op.",
+    ops: [...FRAGGATE_LIVE_OPS],
+    live_ops: [...FRAGGATE_LIVE_OPS],
+    fraggate_live_ops: [...FRAGGATE_LIVE_OPS],
+    leftover_aliases: { ...LEFTOVER_ALIASES },
+    limitation: HONEST,
+    kernel: FRAGGATE_KERNEL,
+    separate_from: "azbrowser",
+  };
+}
+
+function runtimeFetcher(env) {
+  if (env && env.AZIEL_RUNTIME && typeof env.AZIEL_RUNTIME.fetch === "function") return env.AZIEL_RUNTIME;
+  return null;
+}
+
+async function proxyDoor(request, url, env) {
+  const dest = doorTargetUrl(url.pathname, request.url, env);
+  if (!dest) {
+    return json({ ok: false, error: "not a door path", path: url.pathname, limitation: HONEST }, 404);
+  }
+  const headers = new Headers();
+  const pass = ["content-type", "accept", "authorization", "user-agent", "mcp-protocol-version", "mcp-session-id", "x-aziel-runtime-token"];
+  for (const name of pass) {
+    const v = request.headers.get(name);
+    if (v) headers.set(name, v);
+  }
+  if (!headers.has("User-Agent")) headers.set("User-Agent", "Mozilla/5.0 AZNet/0.1.0");
+  const init = { method: request.method, headers, redirect: "follow" };
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    init.body = request.body;
+    init.duplex = "half";
+  }
+  try {
+    const fetcher = runtimeFetcher(env);
+    const res = fetcher ? await fetcher.fetch(dest, init) : await fetch(dest, init);
+    const outHeaders = new Headers(res.headers);
+    for (const [k, v] of Object.entries(corsHeaders())) outHeaders.set(k, v);
+    outHeaders.set("X-Aziel-Door", "proxy");
+    outHeaders.set("X-Aziel-Door-Origin", dest);
+    return new Response(res.body, { status: res.status, statusText: res.statusText, headers: outHeaders });
+  } catch (exc) {
+    return json({
+      ok: false,
+      error: "fraggate_proxy_failed",
+      detail: String(exc).slice(0, 240),
+      origin: dest,
+      agent_path: FRAGGATE_CALL,
+      limitation: HONEST,
+    }, 502);
+  }
+}
+
+async function doPairStatus(body, method) {
+  if (method === "GET") {
+    const ledger = parseLedger(body || {});
+    return {
+      ok: true,
+      product: PRODUCT,
+      version: VERSION,
+      author: AUTHOR,
+      action: "pair_status",
+      pair_status: pairStatus(ledger),
+      unlock_status: unlockStatus(ledger),
+      pair_token: pairToken(ledger) ? "present" : "absent",
+      pair_flag: pairFlag(ledger),
+      peer: "azbrowser",
+      separate_software: true,
+      fraggate_live_ops: [...FRAGGATE_LIVE_OPS],
+    };
+  }
+  return doPair(body || {});
+}
+
+async function doMemorialList(body) {
+  const ledger = parseLedger(body || {});
+  const memorials = ledger.filter((row) => row && row.event_kind === "MEMORIAL");
+  return {
+    ok: true,
+    product: PRODUCT,
+    version: VERSION,
+    author: AUTHOR,
+    action: "memorial_list",
+    memorials,
+    length: memorials.length,
+    pair_status: pairStatus(ledger),
+    unlock_status: unlockStatus(ledger),
+    note: "Append-only memorial list from the client-held ledger. No rewrite.",
+  };
+}
+
+async function doReceiptVerify(body) {
+  const ledger = parseLedger(body || {});
+  const rec = await verify(ledger);
+  return {
+    product: PRODUCT,
+    version: VERSION,
+    author: AUTHOR,
+    action: "receipt_verify",
+    pair_status: pairStatus(ledger),
+    unlock_status: unlockStatus(ledger),
+    length: ledger.length,
+    ...rec,
+  };
+}
+
+function openapiSpec(origin) {
   const ledgerSchema = { oneOf: [{ type: "array", items: { type: "object" } }, { type: "string" }] };
   return {
     openapi: "3.1.0",
     info: {
       title: "AZNet runtime",
       version: VERSION,
-      description: "Silent verification side-net (AZN-WP-0.1). Hashes only. AZNet + AZBrowser required. FragGate slug aznet. Author " + AUTHOR + ".",
+      summary: "Dual surface. Human UI is this Worker /v1. AI / MCP path is FragGate only (slug=aznet).",
+      description: HONEST + " Agent door is FragGate only: POST " + FRAGGATE_CALL + " {slug:aznet,op,payload}. Catalog MCP: POST " + FRAGGATE_MCP + ". This host /mcp is a pointer, not a second agent brand. Catalog LIVE_OPS: " + FRAGGATE_LIVE_OPS.join(", ") + ". AZBrowser is sibling software.",
+      license: { name: "Apache-2.0", identifier: "Apache-2.0" },
+      contact: { name: AUTHOR, url: "https://github.com/AzielEliab/aznet" },
     },
-    servers: [{ url: HOST }],
+    servers: [{ url: origin || HOST }, { url: RUNTIME, description: "aziel-runtime FragGate catalog" }],
     paths: {
       "/count": { get: { operationId: "count", summary: "Live {views, downloads, total}. Does not increment.", responses: { "200": { description: "count" } } } },
       "/stats": { get: { operationId: "stats", summary: "views, downloads, by_repo / by_branch / by_fork. Does not increment.", responses: { "200": { description: "stats" } } } },
       "/download": { get: { operationId: "download", summary: "Counted tarball. HTTP 200, live counter, no 302.", responses: { "200": { description: "gzip" } } } },
+      "/mcp": {
+        get: { operationId: "aznet_mcp_docs", summary: "MCP docs + FragGate pointer. Never 404.", responses: { "200": { description: "docs" } } },
+        post: { operationId: "aznet_mcp", summary: "JSON-RPC MCP-over-HTTP pointer. Same catalog ops as UI.", responses: { "200": { description: "rpc" } } },
+      },
       "/v1/skill": { get: { operationId: "aznet_skill", summary: "Return skill markdown. Does not increment download KV.", responses: { "200": { description: "markdown" } } } },
       "/v1/health": { get: { operationId: "health", summary: "Liveness", responses: { "200": { description: "ok" } } } },
-      "/v1/doctor": { get: { operationId: "doctor", summary: "Hosted self-check. No writes.", responses: { "200": { description: "ok" } } } },
-      "/v1/garden": { get: { operationId: "garden", summary: "Demo Gold Pages. Hashes only.", responses: { "200": { description: "garden" } } } },
-      "/v1/time": { get: { operationId: "time", summary: "StaticClock advisory display.", responses: { "200": { description: "time" } } } },
+      "/v1/pair_status": { get: { operationId: "pair_status_get", summary: "Report AZBrowser pair token + flag.", responses: { "200": { description: "status" } } }, post: { operationId: "pair_status", summary: "FragGate catalog name. Pair AZNet + AZBrowser, then report status. Leftover alias: /v1/pair.", requestBody: { content: { "application/json": { schema: { type: "object", properties: { azbrowser: { type: "string" }, ledger: ledgerSchema } } } } }, responses: { "200": { description: "paired" } } } },
+      "/v1/garden_list": { get: { operationId: "garden_list", summary: "FragGate catalog name. Demo Gold Pages. Leftover alias: /v1/garden.", responses: { "200": { description: "garden" } } } },
+      "/v1/time": { get: { operationId: "time", summary: "StaticClock advisory display. Human chrome.", responses: { "200": { description: "time" } } } },
       "/v1/witness": { get: { operationId: "witness_get", summary: "Mandatory UI witness hash.", responses: { "200": { description: "witness" } } } },
-      "/v1/pair": { post: { operationId: "pair", summary: "Pair AZNet + AZBrowser.", requestBody: { content: { "application/json": { schema: { type: "object", properties: { azbrowser: { type: "string" }, ledger: ledgerSchema } } } } }, responses: { "200": { description: "paired" } } } },
-      "/v1/unlock": { post: { operationId: "unlock", summary: "FragGate unlock after pair.", requestBody: { content: { "application/json": { schema: { type: "object" } } } }, responses: { "200": { description: "unlocked" } } } },
+      "/v1/pair": { post: { operationId: "pair", summary: "Leftover alias of pair_status.", requestBody: { content: { "application/json": { schema: { type: "object", properties: { azbrowser: { type: "string" }, ledger: ledgerSchema } } } } }, responses: { "200": { description: "paired" } } } },
+      "/v1/unlock": { post: { operationId: "unlock", summary: "Human chrome: FragGate unlock after pair. Not a catalog live op.", requestBody: { content: { "application/json": { schema: { type: "object" } } } }, responses: { "200": { description: "unlocked" } } } },
       "/v1/stamp": { post: { operationId: "stamp", summary: "Stamp a hash. Pair + unlock required.", requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["hash_hex"], properties: { hash_hex: { type: "string" }, ledger: ledgerSchema } } } } }, responses: { "200": { description: "stamped" } } } },
-      "/v1/memorial": { post: { operationId: "memorial", summary: "Terminal compromise memorial. No exploit details.", requestBody: { content: { "application/json": { schema: { type: "object", properties: { reason: { type: "string" }, ledger: ledgerSchema } } } } }, responses: { "200": { description: "memorial" } } } },
-      "/v1/withdraw": { post: { operationId: "withdraw", summary: "Withdrawal over coercion.", requestBody: { content: { "application/json": { schema: { type: "object" } } } }, responses: { "200": { description: "withdrawn" } } } },
-      "/v1/verify": { post: { operationId: "verify", summary: "Walk hashes and links.", requestBody: { content: { "application/json": { schema: { type: "object", properties: { ledger: ledgerSchema } } } } }, responses: { "200": { description: "verify" } } } },
-      "/v1/lattice": { post: { operationId: "lattice", summary: "Verify receipt links + counts.", requestBody: { content: { "application/json": { schema: { type: "object" } } } }, responses: { "200": { description: "lattice" } } } },
-      "/v1/receipts": { post: { operationId: "receipts", summary: "Return the client-held ledger.", requestBody: { content: { "application/json": { schema: { type: "object" } } } }, responses: { "200": { description: "receipts" } } } },
+      "/v1/memorial_append": { post: { operationId: "memorial_append", summary: "FragGate catalog name. Terminal memorial. Leftover alias: /v1/memorial.", requestBody: { content: { "application/json": { schema: { type: "object", properties: { reason: { type: "string" }, ledger: ledgerSchema } } } } }, responses: { "200": { description: "memorial" } } } },
+      "/v1/memorial_list": { post: { operationId: "memorial_list", summary: "List memorial receipts from the client-held ledger.", requestBody: { content: { "application/json": { schema: { type: "object" } } } }, responses: { "200": { description: "memorials" } } } },
+      "/v1/memorial": { post: { operationId: "memorial", summary: "Leftover alias of memorial_append.", requestBody: { content: { "application/json": { schema: { type: "object", properties: { reason: { type: "string" }, ledger: ledgerSchema } } } } }, responses: { "200": { description: "memorial" } } } },
+      "/v1/withdraw": { post: { operationId: "withdraw", summary: "Human chrome: withdrawal over coercion.", requestBody: { content: { "application/json": { schema: { type: "object" } } } }, responses: { "200": { description: "withdrawn" } } } },
+      "/v1/verify_hash": { post: { operationId: "verify_hash", summary: "FragGate catalog name. Walk hashes and links. Leftover alias: /v1/verify.", requestBody: { content: { "application/json": { schema: { type: "object", properties: { ledger: ledgerSchema } } } } }, responses: { "200": { description: "verify" } } } },
+      "/v1/verify": { post: { operationId: "verify", summary: "Leftover alias of verify_hash.", requestBody: { content: { "application/json": { schema: { type: "object", properties: { ledger: ledgerSchema } } } } }, responses: { "200": { description: "verify" } } } },
+      "/v1/receipt_verify": { post: { operationId: "receipt_verify", summary: "FragGate catalog name. Verify receipt links. Leftover alias: /v1/receipts.", requestBody: { content: { "application/json": { schema: { type: "object" } } } }, responses: { "200": { description: "verify" } } } },
+      "/v1/lattice": { post: { operationId: "lattice", summary: "Human chrome: verify receipt links + counts.", requestBody: { content: { "application/json": { schema: { type: "object" } } } }, responses: { "200": { description: "lattice" } } } },
+      "/v1/receipts": { post: { operationId: "receipts", summary: "Leftover alias of receipt_verify / return the client-held ledger.", requestBody: { content: { "application/json": { schema: { type: "object" } } } }, responses: { "200": { description: "receipts" } } } },
       "/v1/example": { get: { operationId: "example", summary: "Sample pair payload.", responses: { "200": { description: "example" } } } },
+      "/v1/fraggate/call": { post: { operationId: "aznet_fraggate_call_proxy", summary: "PROXY to aziel-runtime POST /v1/fraggate/call. Not a local op.", requestBody: { content: { "application/json": { schema: { type: "object" } } } }, responses: { "200": { description: "FragGate ResultEnvelope" } } } },
+      "/v1/fraggate/list": { get: { operationId: "aznet_fraggate_list_proxy", summary: "PROXY to aziel-runtime GET /v1/fraggate/list. Not a local op.", responses: { "200": { description: "hashed registry" } } } },
+      "/v1/fraggate/describe": { get: { operationId: "aznet_fraggate_describe_proxy", summary: "PROXY to aziel-runtime GET /v1/fraggate/describe. Not a local op.", responses: { "200": { description: "catalog entry" } } } },
+      "/v1/fraggate/verify": { post: { operationId: "aznet_fraggate_verify_proxy", summary: "PROXY to aziel-runtime POST /v1/fraggate/verify. Not a local op.", requestBody: { content: { "application/json": { schema: { type: "object" } } } }, responses: { "200": { description: "verify" } } } },
+      "/v1/runtime/call": { post: { operationId: "aznet_runtime_call_proxy", summary: "Alias PROXY → origin /v1/fraggate/call. Not a local op.", requestBody: { content: { "application/json": { schema: { type: "object" } } } }, responses: { "200": { description: "FragGate ResultEnvelope" } } } },
+      "/v1/runtime/list": { get: { operationId: "aznet_runtime_list_proxy", summary: "Alias PROXY → origin /v1/fraggate/list. Not a local op.", responses: { "200": { description: "hashed registry" } } } },
     },
   };
 }
 
-function aiHtml() {
+function aiHtml(origin) {
   return `<!doctype html>
 <html lang="en">
 <meta charset="utf-8">
@@ -619,6 +818,8 @@ function aiHtml() {
   code { background: #151922; padding: .15rem .4rem; border-radius: 4px; }
   a { color: #c9a227; }
   .motto { color: #c9a227; font-style: italic; }
+  .banner { border: 1px solid #5c4a1a; background: #241c0d; color: #f0d78c; padding: .85rem 1rem; border-radius: 8px; }
+  pre { background: #141414; padding: .85rem 1rem; overflow: auto; border-radius: 8px; }
   .brandrow{display:flex;align-items:center;gap:12px;margin:0 0 10px}
   .brandmark{width:40px;height:40px;border-radius:10px;object-fit:cover;flex:0 0 auto;box-shadow:0 0 0 1px #d4af3733}
   .stamp{margin:0;color:#c9a227;font-size:.88rem}
@@ -628,27 +829,33 @@ function aiHtml() {
     <img class="brandmark" src="/sigil.png" width="40" height="40" alt="Everblooming sigil — Aziel Eliab" decoding="async">
     <p class="stamp">Everblooming sigil · Aziel Eliab</p>
   </div>
-  <h1>AZNet live API</h1>
+  <h1>AZNet dual surface</h1>
   <p class="motto">${MOTTO}</p>
-  <p>Silent verification side-net. Stateless: send the ledger JSON in the body. Hashes only. AZNet + AZBrowser required. FragGate slug aznet. Author ${AUTHOR}.</p>
+  <p class="banner">${HONEST}</p>
   <h2>Use with AI assistants</h2>
   <p>${AI_CLIENTS} Author ${AUTHOR} only.</p>
+  <p>Agent path is FragGate only (one door). This Worker <code>/mcp</code> is a pointer, not a second MCP. AZBrowser is sibling software — functional-order pair only.</p>
+  <pre>POST ${FRAGGATE_CALL}
+{"slug":"aznet","op":"pair_status","payload":{"azbrowser":"${AZBROWSER}"}}</pre>
   <h2>OpenAPI import</h2>
   <p>Paste this OpenAPI URL into GPT Actions, custom HTTP tools, Grok custom tools, or any other OpenAPI-capable assistant:</p>
-  <p><code>${HOST}/openapi.json</code></p>
-  <p>Custom tools can also point at <code>POST ${HOST}/v1/pair</code>, <code>/v1/unlock</code>, <code>/v1/stamp</code>, <code>/v1/verify</code>, <code>/v1/memorial</code>.</p>
+  <p><code>${origin}/openapi.json</code></p>
+  <p>Human chrome catalog names: <code>POST ${origin}/v1/pair_status</code>, <code>/v1/garden_list</code>, <code>/v1/stamp</code>, <code>/v1/verify_hash</code>, <code>/v1/memorial_append</code>, <code>/v1/receipt_verify</code>.</p>
   <h2>MCP catalog</h2>
-  <p>MCP clients (Cursor, Glama, Claude, and others) use the shared catalog (ships separately): <code>https://aziel-runtime.vibelock.workers.dev/mcp</code>. FragGate slug: <code>aznet</code>.</p>
-  <p><a href="/openapi.json">openapi.json</a> · <a href="/v1/health">health</a> · <a href="/">AZNet software</a> · <a href="/cite.json">cite.json</a></p>
+  <p>Catalog MCP: <code>POST ${FRAGGATE_MCP}</code>. This Worker <code>/mcp</code> is a pointer. FragGate slug: <code>aznet</code>.</p>
+  <p><a href="/openapi.json">openapi.json</a> · <a href="/mcp">/mcp pointer</a> · <a href="/v1/health">health</a> · <a href="/v1/fraggate/list">FragGate list</a> · <a href="/">AZNet software</a> · <a href="/cite.json">cite.json</a></p>
 </body>
 </html>`;
 }
 
-export async function handleRuntimeApi(request, url) {
-  const path = url.pathname;
-  const isApi = path === "/v1" || path.startsWith("/v1/") || path === "/openapi.json" || path === "/ai";
+export async function handleRuntimeApi(request, url, env) {
+  const path = url.pathname.replace(/\/+$/, "") || "/";
+  const isApi = path === "/v1" || path.startsWith("/v1/") || path === "/openapi.json" || path === "/ai" || path === "/mcp";
   if (!isApi) return null;
   try {
+    if (path === "/mcp" && (request.method === "GET" || request.method === "POST")) {
+      return json(mcpDocs(originOf(request)));
+    }
     if (path === "/v1/health" && request.method === "GET") {
       return json({
         ok: true,
@@ -659,46 +866,71 @@ export async function handleRuntimeApi(request, url) {
         motto: MOTTO,
         spec: SPEC,
         marker: MARKER,
+        door: "fraggate",
+        slug: "aznet",
+        agent_path: FRAGGATE_CALL,
+        fraggate_live_ops: [...FRAGGATE_LIVE_OPS],
         pair: "AZNet + AZBrowser both required",
+        separate_software: true,
         worker_posture: "control-plane / demo garden",
-        note: "Hosted /v1 does not store ledgers. Hashes only. Device-local silent node is the real posture.",
+        note: "Hosted /v1 does not store ledgers. Hashes only. Device-local silent node is the real posture. Agent path is FragGate only.",
       });
     }
     if (path === "/v1/skill" && request.method === "GET") {
       return new Response(SKILL, { status: 200, headers: { "Content-Type": "text/markdown; charset=utf-8", "Cache-Control": "private, no-store", ...corsHeaders() } });
     }
-    if (path === "/openapi.json" && request.method === "GET") return json(openapiSpec());
-    if (path === "/ai" && request.method === "GET") {
-      return new Response(aiHtml(), { headers: { "Content-Type": "text/html; charset=utf-8", ...corsHeaders() } });
+    if (path === "/openapi.json" && request.method === "GET") return json(openapiSpec(originOf(request)));
+    if ((path === "/ai" || url.pathname === "/ai/") && request.method === "GET") {
+      return new Response(aiHtml(originOf(request)), { headers: { "Content-Type": "text/html; charset=utf-8", ...corsHeaders() } });
     }
-    if (path === "/v1/doctor" && request.method === "GET") {
-      return json({ ok: true, product: PRODUCT, version: VERSION, author: AUTHOR, identity: "Aziel Eliab only", hashes_only: true, pair: "AZNet + AZBrowser", network: false });
+
+    const classified = classifyV1Path(url.pathname);
+    if (classified.kind === "door") {
+      return proxyDoor(request, url, env);
     }
+    if (classified.kind === "multi") {
+      return json({
+        ok: false,
+        error: "not a local op",
+        code: "NOT_LOCAL_OP",
+        path: classified.path,
+        hint: "Local ops are POST|GET /v1/{op} only (single segment). FragGate door is /v1/fraggate/* (proxied to aziel-runtime). /v1/runtime/list and /v1/runtime/call alias that door.",
+        agent_path: FRAGGATE_CALL,
+        ops: [...FRAGGATE_LIVE_OPS],
+        limitation: HONEST,
+      }, 404);
+    }
+
     if (path === "/v1/example" && request.method === "GET") {
-      return json({ azbrowser: "https://github.com/AzielEliab/azbrowser", hash_hex: "a".repeat(64), author: AUTHOR, spec: SPEC, marker: MARKER });
+      return json({ azbrowser: AZBROWSER, hash_hex: "a".repeat(64), author: AUTHOR, spec: SPEC, marker: MARKER, op: "pair_status" });
     }
-    if (path === "/v1/garden" && request.method === "GET") return json(await gardenView());
+    if ((path === "/v1/garden" || path === "/v1/garden_list") && request.method === "GET") return json(await gardenView());
     if (path === "/v1/time" && request.method === "GET") return json(await advise());
     if (path === "/v1/witness" && request.method === "GET") {
       return json({ marker: MARKER, spec: SPEC, sections: WITNESS_SECTIONS, witness_hash: await witnessDigest() });
     }
+    if (path === "/v1/pair_status" && request.method === "GET") return json(await doPairStatus({}, "GET"));
     async function readBody() {
       try { return await request.json(); } catch { return {}; }
     }
-    if (path === "/v1/pair" && request.method === "POST") return json(await doPair(await readBody()));
+    if ((path === "/v1/pair_status" || path === "/v1/pair") && request.method === "POST") {
+      return json(await doPairStatus(await readBody(), "POST"));
+    }
     if (path === "/v1/unlock" && request.method === "POST") return json(await doUnlock(await readBody()));
     if (path === "/v1/stamp" && request.method === "POST") return json(await doStamp(await readBody()));
-    if (path === "/v1/memorial" && request.method === "POST") return json(await doMemorial(await readBody()));
+    if ((path === "/v1/memorial_append" || path === "/v1/memorial") && request.method === "POST") return json(await doMemorial(await readBody()));
+    if (path === "/v1/memorial_list" && (request.method === "POST" || request.method === "GET")) return json(await doMemorialList(request.method === "GET" ? {} : await readBody()));
     if (path === "/v1/withdraw" && request.method === "POST") return json(await doWithdraw(await readBody()));
     if (path === "/v1/witness" && request.method === "POST") return json(await doWitness(await readBody()));
+    if (path === "/v1/receipt_verify" && request.method === "POST") return json(await doReceiptVerify(await readBody()));
     if (path === "/v1/receipts" && request.method === "POST") {
       const body = await readBody();
       const ledger = parseLedger(body);
       return json({ product: PRODUCT, version: VERSION, author: AUTHOR, action: "receipts", ledger, length: ledger.length, pair_status: pairStatus(ledger), unlock_status: unlockStatus(ledger) });
     }
-    if (path === "/v1/verify" && request.method === "POST") {
+    if ((path === "/v1/verify_hash" || path === "/v1/verify") && request.method === "POST") {
       const ledger = parseLedger(await readBody());
-      return json({ product: PRODUCT, version: VERSION, motto: MOTTO, role: ROLE, author: AUTHOR, ...(await verify(ledger)) });
+      return json({ product: PRODUCT, version: VERSION, motto: MOTTO, role: ROLE, author: AUTHOR, action: "verify_hash", ...(await verify(ledger)) });
     }
     if (path === "/v1/lattice" && request.method === "POST") {
       const ledger = parseLedger(await readBody());
@@ -709,7 +941,14 @@ export async function handleRuntimeApi(request, url) {
       }
       return json({ product: PRODUCT, version: VERSION, author: AUTHOR, ...rec, garden: counts.GARDEN, stamps: counts.STAMP, memorials: counts.MEMORIAL, pairs: counts.PAIR, unlocks: counts.UNLOCK, note: HONEST });
     }
-    return json({ error: "not found" }, 404);
+    if (path === "/v1/garden_list" && request.method === "POST") return json(await gardenView());
+    return json({
+      error: "not found",
+      hint: "GET /v1/health GET /v1/skill POST /v1/{catalog_op} GET /v1/fraggate/list POST /v1/fraggate/call GET /openapi.json GET|POST /mcp",
+      ops: [...FRAGGATE_LIVE_OPS],
+      leftover_aliases: { ...LEFTOVER_ALIASES },
+      limitation: HONEST,
+    }, 404);
   } catch (err) {
     const status = err instanceof PairError || err instanceof WitnessError ? 409 : 400;
     const extra = err.memorial ? { memorial: err.memorial, ledger: err.ledger } : {};
@@ -717,4 +956,4 @@ export async function handleRuntimeApi(request, url) {
   }
 }
 
-export { SKILL, MARKER, WITNESS_SECTIONS, HONEST, MOTTO };
+export { SKILL, MARKER, WITNESS_SECTIONS, HONEST, MOTTO, FRAGGATE_LIVE_OPS, FRAGGATE_CALL, FRAGGATE_MCP };

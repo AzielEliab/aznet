@@ -11,9 +11,22 @@ Author: **Aziel Eliab**.
 
 Use when mirroring a cryptographic hash, shifting the Custodian Garden / Gold Pages, stamping a hash, or writing a Memorial. Never host payloads. Never store keys or user content. UI is a mandatory witness — if altered, terminate and memorial.
 
-AZNet, AZBrowser, and FragGate are **separate apps**. Do not embed AZNet chrome in AZBrowser or FragGate. Functional order only: `pair_token` then FragGate `pair_flag` before garden / stamp / memorial writes. StaticClock stamps time.
+AZNet, AZBrowser, and FragGate are **separate software**. Do not embed AZNet chrome in AZBrowser or FragGate. Functional order only: `pair_token` then FragGate `pair_flag` before garden / stamp / memorial writes. StaticClock stamps time.
 
 Always send `User-Agent: Mozilla/5.0`. Cloudflare Workers may 403 an empty agent.
+
+## Agent path is FragGate only
+
+ONE FragGate door. Agents must not treat this Worker as a second MCP brand.
+
+- Discover: `fraggate_list` / `GET https://aziel-runtime.vibelock.workers.dev/v1/fraggate/list`
+- Call: `fraggate_call` / `POST https://aziel-runtime.vibelock.workers.dev/v1/fraggate/call` with `{ slug: "aznet", op, payload }`
+- This Worker `GET|POST /mcp` is a **pointer** (never 404) to that door
+- This Worker `/v1/fraggate/*` (list / describe / call / verify) **PROXY** to aziel-runtime via the `AZIEL_RUNTIME` service binding
+
+Catalog LIVE_OPS (same names the Worker UI buttons call): `health`, `pair_status`, `garden_list`, `stamp`, `verify_hash`, `memorial_list`, `memorial_append`, `receipt_verify`, `skill`.
+
+`doctor` is **not** a FragGate live op. Local CLI `aznet doctor` stays a device-local self-check.
 
 ## Endpoints (this Worker)
 
@@ -25,28 +38,35 @@ Host: `https://aznet-download-tracker.vibelock.workers.dev`
 | GET | `/download` | Counted tarball (HTTP 200, live counter, no 302). Increments **downloads**. |
 | GET | `/count` | `{views, downloads, total}`. Does not increment. |
 | GET | `/stats` | views, downloads, `by_repo` / `by_branch` / `by_fork`. Does not increment. |
+| GET/POST | `/mcp` | FragGate pointer (never 404). Not a second MCP. |
+| GET | `/v1/fraggate/list` | PROXY to aziel-runtime FragGate list. |
+| GET | `/v1/fraggate/describe` | PROXY to aziel-runtime FragGate describe. |
+| POST | `/v1/fraggate/call` | PROXY to aziel-runtime FragGate call. |
+| POST | `/v1/fraggate/verify` | PROXY to aziel-runtime FragGate verify. |
 | GET | `/v1/health` | Liveness. Does not increment downloads. |
 | GET | `/v1/skill` | This markdown. Does not increment downloads. |
 | GET | `/v1/example` | Sample pair + stamp payload. Does not increment downloads. |
-| GET | `/v1/doctor` | Hosted self-check (no writes). Does not increment downloads. |
-| GET | `/v1/garden` | Demo Gold Pages (shifting, non-ranked hashes). |
-| GET | `/v1/time` | StaticClock advisory display. Not a scheduler. |
-| GET | `/v1/witness` | Mandatory UI witness hash. |
-| POST | `/v1/pair` | Pair AZNet + AZBrowser. Client may send ledger. |
-| POST | `/v1/unlock` | FragGate unlock after pair. |
+| GET/POST | `/v1/pair_status` | Catalog name: pair + report AZBrowser token/flag. Leftover alias: `/v1/pair`. |
+| GET | `/v1/garden_list` | Catalog name: demo Gold Pages. Leftover alias: `/v1/garden`. |
+| GET | `/v1/time` | StaticClock advisory display. Not a scheduler. Human chrome. |
+| GET | `/v1/witness` | Mandatory UI witness hash. Human chrome. |
+| POST | `/v1/unlock` | Human chrome: FragGate unlock after pair. Not a catalog live op. |
 | POST | `/v1/stamp` | TemporalLock-style stamp of a hash. Pair + unlock required. |
-| POST | `/v1/memorial` | Terminal compromise memorial. No exploit details. |
-| POST | `/v1/withdraw` | Withdrawal over coercion. |
-| POST | `/v1/verify` | Walk hashes and prev links. Not stored. |
-| POST | `/v1/lattice` | Verify receipt links + counts. |
-| POST | `/v1/receipts` | Return the client-held ledger. |
-| POST | `/v1/witness` | Check UI witness. Mismatch terminates + memorial. |
+| POST | `/v1/memorial_append` | Catalog name: terminal memorial. Leftover alias: `/v1/memorial`. |
+| POST | `/v1/memorial_list` | Catalog name: list memorial receipts from the client ledger. |
+| POST | `/v1/withdraw` | Human chrome: withdrawal over coercion. |
+| POST | `/v1/verify_hash` | Catalog name: walk hashes and prev links. Leftover alias: `/v1/verify`. |
+| POST | `/v1/receipt_verify` | Catalog name: verify receipt links. Leftover alias: `/v1/receipts`. |
+| POST | `/v1/lattice` | Human chrome: verify receipt links + counts. |
+| POST | `/v1/witness` | Human chrome: check UI witness. Mismatch terminates + memorial. |
 
 OpenAPI: `https://aznet-download-tracker.vibelock.workers.dev/openapi.json`
 
 Catalog OpenAPI: `https://aziel-runtime.vibelock.workers.dev/openapi.json`
 
-MCP: `POST https://aziel-runtime.vibelock.workers.dev/mcp`
+Catalog MCP: `POST https://aziel-runtime.vibelock.workers.dev/mcp`
+
+This Worker MCP pointer: `GET|POST https://aznet-download-tracker.vibelock.workers.dev/mcp`
 
 Catalog aliases under `/p/aznet/…` when listed. FragGate slug: `aznet`.
 
@@ -64,12 +84,16 @@ Do **not** wire Lumen, AZInterface, AZ-OS Hub, or Interface products.
 
 ```bash
 curl -s -A 'Mozilla/5.0' https://aznet-download-tracker.vibelock.workers.dev/v1/health
-curl -s -A 'Mozilla/5.0' -X POST https://aznet-download-tracker.vibelock.workers.dev/v1/pair \
+curl -s -A 'Mozilla/5.0' https://aznet-download-tracker.vibelock.workers.dev/mcp
+curl -s -A 'Mozilla/5.0' -X POST https://aziel-runtime.vibelock.workers.dev/v1/fraggate/call \
+  -H 'content-type: application/json' \
+  -d '{"slug":"aznet","op":"pair_status","payload":{"azbrowser":"https://github.com/AzielEliab/azbrowser"}}'
+curl -s -A 'Mozilla/5.0' -X POST https://aznet-download-tracker.vibelock.workers.dev/v1/pair_status \
   -H 'content-type: application/json' \
   -d '{"azbrowser":"https://github.com/AzielEliab/azbrowser"}'
 curl -s -A 'Mozilla/5.0' https://aznet-download-tracker.vibelock.workers.dev/count
 curl -s -A 'Mozilla/5.0' https://aznet-download-tracker.vibelock.workers.dev/stats
-curl -s -A 'Mozilla/5.0' https://aznet-download-tracker.vibelock.workers.dev/v1/garden
+curl -s -A 'Mozilla/5.0' https://aznet-download-tracker.vibelock.workers.dev/v1/garden_list
 curl -s -A 'Mozilla/5.0' https://aznet-download-tracker.vibelock.workers.dev/v1/skill
 ```
 
@@ -101,11 +125,12 @@ Author: **Aziel Eliab**. Honest scope: hashes only. Not an alt internet.
 - Catalog product (when listed): https://aziel-runtime.vibelock.workers.dev/p/aznet/
 - Catalog OpenAPI: https://aziel-runtime.vibelock.workers.dev/openapi.json
 - Catalog MCP: `POST https://aziel-runtime.vibelock.workers.dev/mcp`
+- This Worker MCP pointer: `GET|POST https://aznet-download-tracker.vibelock.workers.dev/mcp`
 - This Worker skill: `GET https://aznet-download-tracker.vibelock.workers.dev/v1/skill`
 - This Worker OpenAPI: https://aznet-download-tracker.vibelock.workers.dev/openapi.json
 - Sample payload: `GET https://aznet-download-tracker.vibelock.workers.dev/v1/example`
 
-Local UI: Garden Rolodex, Memorial, stamps, receipts, pair-status, FragGate unlock, StaticClock. Then `aznet doctor`.
+Local UI: Garden Rolodex, Memorial, stamps, receipts, pair-status, FragGate unlock, StaticClock. Device-local `aznet doctor` is not a FragGate live op.
 
 Works with ChatGPT (GPT Actions / OpenAI), Grok (xAI), Venice, Claude (Anthropic), Cursor (MCP), Glama (MCP), Perplexity, Microsoft Copilot / Bing, Google Gemini / Vertex, Mistral, Meta AI, Apple Intelligence surfaces, Amazon Q tooling, DuckAssist, You.com, Cohere, and other MCP/OpenAPI-capable assistants. Import catalog or Worker OpenAPI as a GPT Action, custom HTTP tool, or custom OpenAPI tool. MCP clients: `POST https://aziel-runtime.vibelock.workers.dev/mcp`.
 

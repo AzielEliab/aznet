@@ -63,7 +63,9 @@ URL pattern (same as sibling Aziel Eliab products):
 | `/count` | `{views, downloads, total}` |
 | `/stats` | views, downloads, `by_repo` / `by_branch` / `by_fork` |
 | `/openapi.json` | OpenAPI 3.1 |
-| `/v1/{op}` | Human UI backend / FragGate ops |
+| `/mcp` | FragGate pointer (never 404). Not a second MCP. |
+| `/v1/fraggate/*` | PROXY list/describe/call/verify to aziel-runtime |
+| `/v1/{op}` | Human UI backend. Catalog names: `pair_status`, `garden_list`, `stamp`, `verify_hash`, `memorial_list`, `memorial_append`, `receipt_verify`, `health`, `skill` |
 
 Isolated counter: Worker `aznet-download-tracker`, KV `AZNET_DOWNLOADS`. `/v1` does not increment downloads.
 
@@ -183,9 +185,9 @@ Runtime is stdlib only (`hashlib`, `json`). No extra crypto packages.
 ## Pairing (mandatory)
 
 AZNet, [AZBrowser](https://github.com/AzielEliab/azbrowser), and
-[FragGate](https://github.com/AzielEliab/fraggate) are **separate apps**
+[FragGate](https://github.com/AzielEliab/fraggate) are **separate software**
 with separate Worker UIs. Do not embed AZNet chrome inside AZBrowser or
-FragGate.
+FragGate. ONE FragGate door. Agents use FragGate only (`slug=aznet`).
 
 The required relationship is **functional order / pairing only**:
 `pair_token` then FragGate `pair_flag` before garden / stamp / memorial
@@ -213,8 +215,10 @@ Works with ChatGPT (GPT Actions / OpenAI), Grok (xAI), Venice, Claude (Anthropic
 - Catalog OpenAPI: https://aziel-runtime.vibelock.workers.dev/openapi.json
 - Catalog MCP: `POST https://aziel-runtime.vibelock.workers.dev/mcp`
 - FragGate slug: `aznet`
+- This Worker MCP pointer: `GET|POST https://aznet-download-tracker.vibelock.workers.dev/mcp`
+- FragGate proxy: `GET|POST https://aznet-download-tracker.vibelock.workers.dev/v1/fraggate/{list,describe,call,verify}`
 
-Agents use OpenAPI/MCP via aziel-runtime. Humans use the complete Worker UI (Garden Rolodex, Memorial, stamps, receipts, pair-status, FragGate unlock, StaticClock). Dual surface: do not gut the human UI.
+Agents use FragGate only via aziel-runtime (`fraggate_call` / `POST /v1/fraggate/call` with `{slug:"aznet",op,payload}`). This Worker `/mcp` is a pointer, not a second MCP brand. Humans use the complete Worker UI (Garden Rolodex, Memorial, stamps, receipts, pair-status, FragGate unlock, StaticClock). Dual surface: do not gut the human UI. Catalog UI ops: `pair_status`, `garden_list`, `stamp`, `verify_hash`, `memorial_list`, `memorial_append`, `receipt_verify`. `doctor` is local CLI only — not a FragGate live op.
 
 Always send `User-Agent: Mozilla/5.0`.
 
