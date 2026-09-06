@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aznet"
+version = "0.1.0"
+description = "Silent verification side-net (AZNet AZN-WP-0.1, Aziel Eliab). Hashes only. Not an alt internet. AZNet + AZBrowser required."
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [{name = "Aziel Eliab"}]
+requires-python = ">=3.10"
+keywords = [
+    "aznet",
+    "side-net",
+    "verification",
+    "hash-chain",
+    "garden",
+    "memorial",
+    "azbrowser",
+    "staticclock",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security :: Cryptography",
+    "Intended Audience :: Developers",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4"]
+
+[project.scripts]
+aznet = "aznet.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/AzielEliab/aznet"
+Download = "https://aznet-download-tracker.vibelock.workers.dev/"
+Issues = "https://github.com/AzielEliab/aznet/issues"
+AZBrowser = "https://github.com/AzielEliab/azbrowser"
+
+[tool.setuptools.packages.find]
+include = ["aznet*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
