@@ -31,12 +31,13 @@ def test_seo_and_softwareapplication_json_ld() -> None:
 
 
 def test_workspace_calls_real_ops() -> None:
-    for path in ("/v1/pair", "/v1/unlock", "/v1/stamp", "/v1/verify", "/v1/memorial", "/v1/garden"):
+    for path in ("/v1/pair_status", "/v1/unlock", "/v1/stamp", "/v1/verify_hash", "/v1/memorial_append", "/v1/garden_list"):
         assert path in HOME or path in RUNTIME
     assert "btn-pair" in HOME
     assert "btn-unlock" in HOME
     assert "btn-stamp" in HOME
     assert "btn-memorial" in HOME
+    assert "btn-doctor" not in HOME
     assert "Garden Rolodex" in HOME or "Gold Pages" in HOME
 
 
@@ -111,10 +112,40 @@ def test_readme_lists_count_stats_and_hubs() -> None:
 def test_apps_stay_separate() -> None:
     assert "pair_token" in HOME or "pair_token" in RUNTIME
     assert "pair_flag" in HOME or "pair_flag" in RUNTIME
-    assert "separate apps" in HOME.lower() or "Separate apps" in HOME
+    assert "separate software" in HOME.lower() or "separate apps" in HOME.lower()
     assert "iframe" not in HOME.lower()
     assert "azbrowser-download-tracker" not in HOME
     assert "fraggate-download-tracker" not in HOME
+    assert "/mcp" in HOME
+    assert "FragGate only" in HOME or "FragGate only" in RUNTIME
+
+
+def test_worker_mcp_and_fraggate_door() -> None:
+    assert "AZIEL_RUNTIME" in TOML
+    assert "aziel-runtime" in TOML
+    assert 'binding = "AZIEL_RUNTIME"' in TOML
+    door = Path("workers/download-tracker/src/door.js").read_text(encoding="utf-8")
+    assert "classifyV1Path" in door
+    assert "/v1/fraggate" in door
+    assert "X-Aziel-Door" in RUNTIME
+    assert "not a product MCP" in RUNTIME
+    assert 'slug: "aznet"' in RUNTIME
+    assert "pair_status" in RUNTIME
+    assert "garden_list" in RUNTIME
+    assert "verify_hash" in RUNTIME
+    assert "memorial_append" in RUNTIME
+    assert "receipt_verify" in RUNTIME
+
+
+def test_ui_uses_catalog_names_not_leftovers() -> None:
+    assert 'api("/v1/pair_status"' in HOME
+    assert 'api("/v1/verify_hash"' in HOME
+    assert 'api("/v1/memorial_append"' in HOME
+    assert 'api("/v1/receipt_verify"' in HOME
+    assert 'fetch("/v1/garden_list")' in HOME
+    assert 'api("/v1/pair"' not in HOME
+    assert 'api("/v1/doctor"' not in HOME
+    assert "btn-doctor" not in HOME
 
 
 def test_pairing_and_forbidden_products() -> None:

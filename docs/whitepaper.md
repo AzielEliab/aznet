@@ -99,12 +99,13 @@ No exploit details. No payloads. No keys.
 
 ## 6. Pairing
 
-AZNet, AZBrowser, and FragGate are separate apps with separate Worker
-UIs. Do not embed AZNet chrome inside AZBrowser or FragGate.
+AZNet, AZBrowser, and FragGate are separate software with separate Worker
+UIs. Do not embed AZNet chrome inside AZBrowser or FragGate. ONE FragGate
+door. Agents call `slug=aznet` only through FragGate.
 
 Functional order only: issue a `pair_token`, then set FragGate
 `pair_flag`, then garden / stamp / memorial writes. Health, skill,
-pair, and time remain available so an operator can complete the pair.
+pair_status, and time remain available so an operator can complete the pair.
 AZBrowser may view side-net status from its own UI by calling this
 runtime.
 

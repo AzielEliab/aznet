@@ -1,6 +1,6 @@
 name = "aznet-download-tracker"
 main = "src/index.js"
-compatibility_date = "2026-09-01"
+compatibility_date = "2026-09-06"
 workers_dev = true
 account_id = "ac575a9b822bea2bed97d0ab73aed238"
 
@@ -13,6 +13,13 @@ id = "00000000000000000000000000000001"
 directory = "./public"
 binding = "ASSETS"
 run_worker_first = ["/", "/download", "/download/*", "/stats", "/event", "/go", "/count", "/install.sh", "/v1", "/v1/*", "/openapi.json", "/ai", "/ai/*", "/mcp", "/mcp/", "/cite", "/cite/", "/cite.json", "/sitemap.xml", "/robots.txt", "/llms.txt", "/ai.txt"]
+
+[vars]
+AZIEL_RUNTIME_ORIGIN = "https://aziel-runtime.vibelock.workers.dev"
+
+[[services]]
+binding = "AZIEL_RUNTIME"
+service = "aziel-runtime"
 
 [observability]
 enabled = true

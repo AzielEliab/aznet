@@ -189,7 +189,7 @@ export function jsonLd() {
 }
 
 export function sitemapXml() {
-  const paths = ["/", "/download", "/count", "/stats", "/install.sh", "/v1/skill", "/v1/example", "/v1/health", "/v1/garden", "/openapi.json", "/cite.json", "/llms.txt", "/ai.txt", "/ai"];
+  const paths = ["/", "/download", "/count", "/stats", "/install.sh", "/mcp", "/v1/skill", "/v1/example", "/v1/health", "/v1/garden_list", "/v1/fraggate/list", "/openapi.json", "/cite.json", "/llms.txt", "/ai.txt", "/ai"];
   const urls = paths.map((p) => `  <url><loc>${HOST}${p === "/" ? "/" : p}</loc></url>`).join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -228,7 +228,12 @@ Skill: ${HOST}/v1/skill
 Cite: ${HOST}/cite.json
 Library: ${LIBRARY}
 Catalog: ${CATALOG}
-Ops: POST /v1/pair, POST /v1/unlock, POST /v1/stamp, POST /v1/verify, POST /v1/memorial
+Agent path: FragGate only — POST ${CATALOG}v1/fraggate/call {slug:aznet,op,payload}
+This Worker /mcp is a pointer, not a second MCP.
+Catalog LIVE_OPS: health, pair_status, garden_list, stamp, verify_hash, memorial_list, memorial_append, receipt_verify, skill
+Human chrome leftovers: unlock, time, witness, lattice, withdraw
+doctor is not a FragGate live op (local CLI only).
+AZNet is separate software from AZBrowser.
 Pair: AZNet + AZBrowser both required
 Marker: ${MARKER}
 Identity: Aziel Eliab only
@@ -392,6 +397,7 @@ export function renderHome(stats) {
         <a href="#install">Download / install</a>
         <a href="/v1/skill">Skill</a>
         <a href="/openapi.json">OpenAPI</a>
+        <a href="/mcp">/mcp pointer</a>
         <a href="${GITHUB_REPO}">GitHub</a>
       </nav>
       <p class="banner">${escapeHtml(HONEST)}</p>
@@ -399,7 +405,7 @@ export function renderHome(stats) {
 
     <section class="card" id="pair">
       <h2><span class="kicker">pair</span>Pair status</h2>
-      <p>Separate apps. Functional pair only: <code>pair_token</code>, then FragGate <code>pair_flag</code>. No AZBrowser chrome is embedded here.</p>
+      <p>Separate software. Functional pair only: <code>pair_token</code>, then FragGate <code>pair_flag</code>. No AZBrowser chrome is embedded here. Catalog op: <code>pair_status</code>.</p>
       <p id="pair-status">UNPAIRED · LOCKED</p>
       <div class="actions">
         <button type="button" class="gold" id="btn-pair">Pair AZBrowser</button>
@@ -409,7 +415,7 @@ export function renderHome(stats) {
 
     <section class="card" id="unlock">
       <h2><span class="kicker">unlock</span>FragGate</h2>
-      <p>Kernel: <a href="${FRAGGATE}">fraggate</a>. Catalog MCP: <code>POST https://aziel-runtime.vibelock.workers.dev/mcp</code>. Slug <code>aznet</code>.</p>
+      <p>ONE FragGate door. Agent path is FragGate only: <code>POST /v1/fraggate/call</code> slug=<b>aznet</b>. This Worker <code>/v1/fraggate/*</code> proxies to aziel-runtime. Catalog MCP: <code>POST https://aziel-runtime.vibelock.workers.dev/mcp</code>. This host <a href="/mcp">/mcp</a> is a pointer, not a second MCP. AZBrowser is sibling software.</p>
     </section>
 
     <section class="card" id="staticclock">
@@ -431,9 +437,9 @@ export function renderHome(stats) {
       <input id="hash-hex" maxlength="64" placeholder="64-char sha256 hex">
       <div class="actions">
         <button type="button" class="gold" id="btn-stamp">Stamp</button>
-        <button type="button" class="ghost" id="btn-verify">Verify</button>
+        <button type="button" class="ghost" id="btn-verify">Verify hash</button>
         <button type="button" class="ghost" id="btn-lattice">Lattice</button>
-        <button type="button" class="ghost" id="btn-doctor">Doctor</button>
+        <button type="button" class="ghost" id="btn-receipt">Receipt verify</button>
       </div>
     </section>
 
@@ -449,7 +455,8 @@ export function renderHome(stats) {
         <option>witness_fail</option>
       </select>
       <div class="actions">
-        <button type="button" class="ghost" id="btn-memorial">Memorial</button>
+        <button type="button" class="ghost" id="btn-memorial">Memorial append</button>
+        <button type="button" class="ghost" id="btn-memorial-list">Memorial list</button>
         <button type="button" class="ghost" id="btn-withdraw">Withdraw</button>
         <button type="button" class="ghost" id="btn-witness">Witness</button>
       </div>
@@ -480,10 +487,10 @@ export function renderHome(stats) {
       </div>
       <pre id="install-cmd">${INSTALL_LINE}</pre>
       <p class="meta">The download count ticks on the Download click. No 302 to GitHub. ${DEFAULT_ASSET} — ${n} counted.</p>
-      <p class="iso">Isolated counter: Worker <code>aznet-download-tracker</code>, project <code>aznet</code>, KV <code>AZNET_DOWNLOADS</code>. /v1 does not increment downloads.</p>
+      <p class="iso">Isolated counter: Worker <code>aznet-download-tracker</code>, project <code>aznet</code>, KV <code>AZNET_DOWNLOADS</code>. /v1 and /mcp do not increment downloads.</p>
       <p class="meta">GitHub: stars ${gh.stars || 0} · forks ${gh.forks || 0} · watchers ${gh.watchers || 0} · release assets ${gh.release_download_count || 0}</p>
       <p class="meta">Pair / time: <a href="${AZBROWSER}">AZBrowser</a> · <a href="${STATICCLOCK_HOST}/">StaticClock</a> · <a href="${TEMPORALLOCK_HOST}/">TemporalLock</a> · <a href="${FRAGGATE}">FragGate</a> · <a href="${CATALOG}">aziel-runtime</a> · <a href="https://www.azielcorpuslibrary.net/">library</a> · <a href="https://godlock.uk/">godlock.uk</a> · <a href="https://www.azieleliab.com/">www.azieleliab.com</a></p>
-      <p class="meta"><a href="/stats">JSON stats</a> · <a href="/count">/count</a> · <a href="/openapi.json">OpenAPI</a> · <a href="/v1/skill">Skill</a> · <a href="/v1/example">Example</a> · <a href="/ai">AI runtime</a> · <a href="${GITHUB_REPO}">GitHub</a> · <a href="${GITHUB_LATEST}">releases</a></p>
+      <p class="meta"><a href="/stats">JSON stats</a> · <a href="/count">/count</a> · <a href="/openapi.json">OpenAPI</a> · <a href="/mcp">/mcp pointer</a> · <a href="/v1/fraggate/list">FragGate list</a> · <a href="/v1/skill">Skill</a> · <a href="/v1/example">Example</a> · <a href="/ai">AI runtime</a> · <a href="${GITHUB_REPO}">GitHub</a> · <a href="${GITHUB_LATEST}">releases</a></p>
       <h3>Per repo / branch / fork</h3>
       <ul>${breakdownList(stats)}</ul>
     </section>
@@ -568,16 +575,17 @@ export function renderHome(stats) {
         try { applyResult(await fn(), label); }
         catch (err) { setStatus("bad", String(err.message || err)); }
       }
-      $("btn-pair").onclick = function () { run(function () { return api("/v1/pair", { azbrowser: "${AZBROWSER}" }); }, "Paired. FragGate still required."); };
+      $("btn-pair").onclick = function () { run(function () { return api("/v1/pair_status", { azbrowser: "${AZBROWSER}" }); }, "Paired. FragGate still required."); };
       $("btn-unlock").onclick = function () { run(function () { return api("/v1/unlock", {}); }, "FragGate unlocked."); };
       $("btn-stamp").onclick = function () { run(function () { return api("/v1/stamp", { hash_hex: $("hash-hex").value }); }, "Stamped. Hash only."); };
-      $("btn-verify").onclick = function () { run(function () { return api("/v1/verify", {}); }, "Verify walked hashes and prev links."); };
+      $("btn-verify").onclick = function () { run(function () { return api("/v1/verify_hash", {}); }, "Verify walked hashes and prev links."); };
       $("btn-lattice").onclick = function () { run(function () { return api("/v1/lattice", {}); }, "Lattice walk."); };
-      $("btn-doctor").onclick = function () { run(function () { return api("/v1/doctor", {}, "GET"); }, "Doctor. No writes."); };
-      $("btn-memorial").onclick = function () { run(function () { return api("/v1/memorial", { reason: $("reason").value }); }, "Memorial written. Non-actionable."); };
+      $("btn-receipt").onclick = function () { run(function () { return api("/v1/receipt_verify", {}); }, "Receipt verify."); };
+      $("btn-memorial").onclick = function () { run(function () { return api("/v1/memorial_append", { reason: $("reason").value }); }, "Memorial written. Non-actionable."); };
+      $("btn-memorial-list").onclick = function () { run(function () { return api("/v1/memorial_list", {}); }, "Memorial list."); };
       $("btn-withdraw").onclick = function () { run(function () { return api("/v1/withdraw", {}); }, "Withdrawn. Silence as security."); };
       $("btn-witness").onclick = function () { run(function () { return api("/v1/witness", { witness_hash: witnessHash }); }, "UI witness intact."); };
-      fetch("/v1/garden").then(function (r) { return r.json(); }).then(function (g) {
+      fetch("/v1/garden_list").then(function (r) { return r.json(); }).then(function (g) {
         var box = $("rolodex");
         box.textContent = "";
         (g.cards || []).forEach(function (c) {
