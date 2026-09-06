@@ -110,10 +110,13 @@ function githubAssetUrl(owner, repo, tag, asset) {
 }
 
 async function increment(env, dims) {
+  if (!env.DOWNLOADS) return 0;
   const key = kvKey(dims);
   const n = parseInt((await env.DOWNLOADS.get(key)) || "0", 10) + 1;
   await env.DOWNLOADS.put(key, String(n));
-  return n;
+  const tot = parseInt((await env.DOWNLOADS.get(totalKey())) || "0", 10) + 1;
+  await env.DOWNLOADS.put(totalKey(), String(tot));
+  return tot;
 }
 
 async function listAllKeys(env) {
@@ -190,6 +193,7 @@ function githubCacheKey() {
 }
 
 async function incrementViews(env) {
+  if (!env.DOWNLOADS) return 0;
   const n = parseInt((await env.DOWNLOADS.get(viewsKey())) || "0", 10) + 1;
   await env.DOWNLOADS.put(viewsKey(), String(n));
   return n;
@@ -329,7 +333,12 @@ export default {
 
     if (url.pathname === "/count" && request.method === "GET") {
       const stats = await collectStats(env);
-      return json({ project: PROJECT, total: stats.total || 0 });
+      return json({
+        project: PROJECT,
+        views: stats.views || 0,
+        downloads: stats.downloads || 0,
+        total: stats.total || 0,
+      });
     }
 
     if (url.pathname === "/stats" && request.method === "GET") {

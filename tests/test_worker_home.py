@@ -71,6 +71,22 @@ def test_worker_serves_home_and_seo() -> None:
     assert "function totalKey()" in INDEX
     assert "ASSETS.fetch" in INDEX or "env.ASSETS" in INDEX
     assert "/count" in INDEX
+    assert "views: stats.views" in INDEX
+    assert "downloads: stats.downloads" in INDEX
+    assert "by_repo" in INDEX
+    assert "by_branch" in INDEX
+    assert "by_fork" in INDEX
+    assert "totalKey()" in INDEX
+    assert 'await increment(env, dims)' in INDEX
+
+
+def test_apps_stay_separate() -> None:
+    assert "pair_token" in HOME or "pair_token" in RUNTIME
+    assert "pair_flag" in HOME or "pair_flag" in RUNTIME
+    assert "separate apps" in HOME.lower() or "Separate apps" in HOME
+    assert "iframe" not in HOME.lower()
+    assert "azbrowser-download-tracker" not in HOME
+    assert "fraggate-download-tracker" not in HOME
 
 
 def test_pairing_and_forbidden_products() -> None:

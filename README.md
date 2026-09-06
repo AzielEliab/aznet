@@ -64,9 +64,11 @@ Open http://127.0.0.1:8771 (loopback only). No CDN, no telemetry.
 
 Direct tarball (also counted): [aznet-0.1.0.tar.gz](https://aznet-download-tracker.vibelock.workers.dev/download?asset=aznet-0.1.0.tar.gz)
 
-- Live count JSON: [https://aznet-download-tracker.vibelock.workers.dev/count](https://aznet-download-tracker.vibelock.workers.dev/count)
-- Stats: [https://aznet-download-tracker.vibelock.workers.dev/stats](https://aznet-download-tracker.vibelock.workers.dev/stats)
+- Live count JSON (`views`, `downloads`, `total`): [https://aznet-download-tracker.vibelock.workers.dev/count](https://aznet-download-tracker.vibelock.workers.dev/count)
+- Stats (`by_repo` / `by_branch` / `by_fork`): [https://aznet-download-tracker.vibelock.workers.dev/stats](https://aznet-download-tracker.vibelock.workers.dev/stats)
 - GitHub releases: [https://github.com/AzielEliab/aznet/releases](https://github.com/AzielEliab/aznet/releases)
+
+Hubs ([Aziel Digital Library](https://www.azielcorpuslibrary.net/), [godlock.uk](https://godlock.uk/), [www.azieleliab.com](https://www.azieleliab.com/)) list this Worker once it is live.
 
 ---
 

@@ -7,7 +7,9 @@ Does **not** 302 to GitHub on `/download`. Serves gzip via `ASSETS.fetch`,
 `Cache-Control: private, no-store`.
 
 GET `/` is the product homepage (Garden Rolodex + counted download). Increments a **page-view** counter (separate from downloads).
-GET `/download` increments **downloads**.
+GET `/download` increments **downloads** and serves the tarball (HTTP 200, live counter, no 302).
+GET `/count` returns `{views, downloads, total}`.
+GET `/stats` returns views, downloads, `by_repo` / `by_branch` / `by_fork`.
 `/v1` never increments DOWNLOADS KV.
 GET `/install.sh` one-click install (does not increment; script curls `/download`).
 GET `/v1/skill` returns skill markdown (`text/markdown`). Does not increment views or downloads.
