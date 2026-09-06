@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Sequence
 
-from aznet.canon import ABSENT, GENESIS_PREV_HASH, digest
+from aznet.canon import ABSENT, GENESIS_PREV_HASH, MARKER, digest, sha256_text
 from aznet.clock import advise, utc_now
 from aznet.errors import AppendOnlyError, IntegrityRefuse, LedgerError, PairError, WitnessError
 from aznet.receipt import Receipt
@@ -91,13 +91,20 @@ class Ledger:
             return "LOCKED"
         return rec.unlock_status if rec and rec.unlock_status else "LOCKED"
 
+    def pair_token(self) -> str | None:
+        rec = self.latest("PAIR")
+        return rec.pair_token if rec else None
+
+    def pair_flag(self) -> bool:
+        return self.unlock_status() == "UNLOCKED" and bool(self.pair_token())
+
     def require_ready(self, *, for_memorial: bool = False) -> None:
         if for_memorial:
             return
-        if self.pair_status() != "PAIRED":
-            raise PairError("AZNet + AZBrowser are both required to run. Pair first. FragGate unlocks access.")
-        if self.unlock_status() != "UNLOCKED":
-            raise PairError("FragGate unlock required. Pairing alone does not open the garden.")
+        if not self.pair_token() or self.pair_status() != "PAIRED":
+            raise PairError("AZNet + AZBrowser pairing is functional only (pair_token). Products stay separate apps.")
+        if not self.pair_flag():
+            raise PairError("FragGate pair_flag required. Pairing alone does not open garden/stamp/memorial writes.")
 
     def _append(self, rec: Receipt) -> Receipt:
         if self._path is not None:
@@ -117,18 +124,21 @@ class Ledger:
         note: str = "",
     ) -> Receipt:
         clock = advise(timestamp)
+        token = sha256_text(f"{aznet_node}|{azbrowser}|{MARKER}|{clock['local']}")
         rec = Receipt.create(
             event_kind="PAIR",
             prev_hash=self.tip(),
             timestamp=clock["local"],
             pair_status="PAIRED",
+            pair_token=token,
+            pair_flag=False,
             unlock_status="LOCKED",
             azbrowser=azbrowser,
             aznet_node=aznet_node,
             fraggate="required",
             staticclock=clock["stamp"],
             zone=clock["zone"],
-            note=note or "AZNet + AZBrowser paired. FragGate still required.",
+            note=note or "pair_token issued. Separate apps. FragGate pair_flag still required.",
         )
         return self._append(rec)
 
@@ -138,20 +148,23 @@ class Ledger:
         timestamp: str | None = None,
         note: str = "",
     ) -> Receipt:
-        if self.pair_status() != "PAIRED":
-            raise PairError("FragGate unlock requires AZNet + AZBrowser pair first.")
+        token = self.pair_token()
+        if self.pair_status() != "PAIRED" or not token:
+            raise PairError("FragGate pair_flag requires an AZNet pair_token first. Apps stay separate.")
         clock = advise(timestamp)
         rec = Receipt.create(
             event_kind="UNLOCK",
             prev_hash=self.tip(),
             timestamp=clock["local"],
             pair_status="PAIRED",
+            pair_token=token,
+            pair_flag=True,
             unlock_status="UNLOCKED",
             azbrowser="https://github.com/AzielEliab/azbrowser",
             fraggate="unlocked",
             staticclock=clock["stamp"],
             zone=clock["zone"],
-            note=note or "FragGate unlocked access. Side-net remains hash-only.",
+            note=note or "pair_flag set. FragGate order only. Side-net remains hash-only.",
         )
         return self._append(rec)
 
@@ -170,6 +183,8 @@ class Ledger:
             timestamp=clock["local"],
             hash_hex=hash_hex.lower(),
             pair_status="PAIRED",
+            pair_token=self.pair_token(),
+            pair_flag=True,
             unlock_status="UNLOCKED",
             staticclock=clock["stamp"],
             zone=clock["zone"],
@@ -196,6 +211,8 @@ class Ledger:
             hash_hex=hash_hex.lower(),
             label=label[:48],
             pair_status="PAIRED",
+            pair_token=self.pair_token(),
+            pair_flag=True,
             unlock_status="UNLOCKED",
             staticclock=clock["stamp"],
             zone=clock["zone"],
@@ -222,6 +239,8 @@ class Ledger:
             reason=reason,
             summary=reason,
             pair_status=self.pair_status(),
+            pair_token=self.pair_token(),
+            pair_flag=self.pair_flag(),
             unlock_status=self.unlock_status(),
             staticclock=clock["stamp"],
             zone=clock["zone"],

@@ -338,7 +338,7 @@ export function renderHome(stats) {
 
     <section class="card" id="pair">
       <h2><span class="kicker">pair</span>Pair status</h2>
-      <p>AZNet + AZBrowser are both required to run. AZBrowser views the side-net. Manual intent only.</p>
+      <p>Separate apps. Functional pair only: <code>pair_token</code>, then FragGate <code>pair_flag</code>. No AZBrowser chrome is embedded here.</p>
       <p id="pair-status">UNPAIRED · LOCKED</p>
       <div class="actions">
         <button type="button" class="gold" id="btn-pair">Pair AZBrowser</button>

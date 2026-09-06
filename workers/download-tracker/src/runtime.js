@@ -20,7 +20,7 @@ const EVENT_KINDS = ["GARDEN", "STAMP", "MEMORIAL", "PAIR", "UNLOCK", "WITNESS",
 const MEMORIAL_REASONS = ["ui_altered", "integrity_refuse", "node_withdraw", "pair_broken", "witness_fail", "isolation"];
 const HASH_FIELDS = [
   "actor", "azbrowser", "aznet_node", "date_stamp", "event_kind", "final_hash", "fraggate",
-  "genesis_hash", "hash_hex", "keys", "label", "marker", "note", "pair_status", "payload",
+  "genesis_hash", "hash_hex", "keys", "label", "marker", "note", "pair_flag", "pair_status", "pair_token", "payload",
   "prev_hash", "reason", "spec", "staticclock", "summary", "timestamp", "unlock_status",
   "user_content", "witness_hash", "zone",
 ];
@@ -51,7 +51,7 @@ Author: **Aziel Eliab**.
 
 Use when mirroring a cryptographic hash, shifting the Custodian Garden / Gold Pages, stamping a hash, or writing a Memorial. Never host payloads. Never store keys or user content. UI is a mandatory witness — if altered, terminate and memorial.
 
-AZNet + AZBrowser are **both required** to run. AZBrowser views the side-net. FragGate unlocks access. StaticClock stamps time.
+AZNet, AZBrowser, and FragGate are **separate apps**. Do not embed AZNet chrome in AZBrowser or FragGate. Functional order only: \`pair_token\` then FragGate \`pair_flag\` before garden / stamp / memorial writes. StaticClock stamps time.
 
 Always send \`User-Agent: Mozilla/5.0\`. Cloudflare Workers may 403 an empty agent.
 
@@ -264,7 +264,9 @@ async function createReceipt(fields) {
     label: fields.label || null,
     marker: MARKER,
     note: validateNote(fields.note),
+    pair_flag: fields.pair_flag == null ? null : fields.pair_flag,
     pair_status: fields.pair_status || null,
+    pair_token: fields.pair_token || null,
     payload: ABSENT,
     prev_hash: fields.prev_hash || GENESIS_PREV_HASH,
     reason: fields.reason || null,
@@ -331,12 +333,23 @@ function unlockStatus(ledger) {
   return "LOCKED";
 }
 
-function requireReady(ledger) {
-  if (pairStatus(ledger) !== "PAIRED") {
-    throw new PairError("AZNet + AZBrowser are both required to run. Pair first. FragGate unlocks access.");
+function pairToken(ledger) {
+  for (let i = ledger.length - 1; i >= 0; i--) {
+    if (ledger[i].event_kind === "PAIR") return ledger[i].pair_token || null;
   }
-  if (unlockStatus(ledger) !== "UNLOCKED") {
-    throw new PairError("FragGate unlock required. Pairing alone does not open the garden.");
+  return null;
+}
+
+function pairFlag(ledger) {
+  return unlockStatus(ledger) === "UNLOCKED" && Boolean(pairToken(ledger));
+}
+
+function requireReady(ledger) {
+  if (!pairToken(ledger) || pairStatus(ledger) !== "PAIRED") {
+    throw new PairError("AZNet + AZBrowser pairing is functional only (pair_token). Products stay separate apps.");
+  }
+  if (!pairFlag(ledger)) {
+    throw new PairError("FragGate pair_flag required. Pairing alone does not open garden/stamp/memorial writes.");
   }
 }
 
@@ -414,37 +427,45 @@ async function doPair(body) {
   assertNoLeakage(body);
   const ledger = parseLedger(body);
   const clock = await advise(body.timestamp);
+  const azbrowser = body.azbrowser || "https://github.com/AzielEliab/azbrowser";
+  const aznetNode = body.aznet_node || "demo-garden";
+  const token = await sha256Hex(`${aznetNode}|${azbrowser}|${MARKER}|${clock.local}`);
   const rec = await createReceipt({
     event_kind: "PAIR",
     prev_hash: tipHash(ledger),
     timestamp: clock.local,
     pair_status: "PAIRED",
+    pair_token: token,
+    pair_flag: false,
     unlock_status: "LOCKED",
-    azbrowser: body.azbrowser || "https://github.com/AzielEliab/azbrowser",
-    aznet_node: body.aznet_node || "demo-garden",
+    azbrowser,
+    aznet_node: aznetNode,
     fraggate: "required",
     staticclock: clock.stamp,
     zone: clock.zone,
-    note: body.note || "AZNet + AZBrowser paired. FragGate still required.",
+    note: body.note || "pair_token issued. Separate apps. FragGate pair_flag still required.",
   });
   return wrap("paired", rec, [...ledger, rec]);
 }
 
 async function doUnlock(body) {
   const ledger = parseLedger(body);
-  if (pairStatus(ledger) !== "PAIRED") throw new PairError("FragGate unlock requires AZNet + AZBrowser pair first.");
+  const token = pairToken(ledger);
+  if (pairStatus(ledger) !== "PAIRED" || !token) throw new PairError("FragGate pair_flag requires an AZNet pair_token first. Apps stay separate.");
   const clock = await advise(body.timestamp);
   const rec = await createReceipt({
     event_kind: "UNLOCK",
     prev_hash: tipHash(ledger),
     timestamp: clock.local,
     pair_status: "PAIRED",
+    pair_token: token,
+    pair_flag: true,
     unlock_status: "UNLOCKED",
     azbrowser: "https://github.com/AzielEliab/azbrowser",
     fraggate: "unlocked",
     staticclock: clock.stamp,
     zone: clock.zone,
-    note: body.note || "FragGate unlocked access. Side-net remains hash-only.",
+    note: body.note || "pair_flag set. FragGate order only. Side-net remains hash-only.",
   });
   return wrap("unlocked", rec, [...ledger, rec]);
 }
@@ -459,6 +480,8 @@ async function doStamp(body) {
     timestamp: clock.local,
     hash_hex: body.hash_hex || body.hash,
     pair_status: "PAIRED",
+    pair_token: pairToken(ledger),
+    pair_flag: true,
     unlock_status: "UNLOCKED",
     staticclock: clock.stamp,
     zone: clock.zone,
@@ -478,6 +501,8 @@ async function doMemorial(body) {
     final_hash: body.final_hash || tipHash(ledger),
     reason: body.reason || "isolation",
     pair_status: pairStatus(ledger),
+    pair_token: pairToken(ledger),
+    pair_flag: pairFlag(ledger),
     unlock_status: unlockStatus(ledger),
     staticclock: clock.stamp,
     zone: clock.zone,

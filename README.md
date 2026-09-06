@@ -156,9 +156,15 @@ Runtime is stdlib only (`hashlib`, `json`). No extra crypto packages.
 
 ## Pairing (mandatory)
 
-AZNet + [AZBrowser](https://github.com/AzielEliab/azbrowser) are **both
-required** to run. AZBrowser views the side-net. FragGate unlocks
-access. StaticClock stamps time.
+AZNet, [AZBrowser](https://github.com/AzielEliab/azbrowser), and
+[FragGate](https://github.com/AzielEliab/fraggate) are **separate apps**
+with separate Worker UIs. Do not embed AZNet chrome inside AZBrowser or
+FragGate.
+
+The required relationship is **functional order / pairing only**:
+`pair_token` then FragGate `pair_flag` before garden / stamp / memorial
+writes. AZBrowser may view side-net status from its own UI by calling
+this runtime. Products stay separate.
 
 Do **not** wire Lumen, AZInterface, AZ-OS Hub, or Interface products.
 

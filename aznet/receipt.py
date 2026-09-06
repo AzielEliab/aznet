@@ -98,6 +98,8 @@ class Receipt:
     reason: str | None = None
     summary: str | None = None
     pair_status: str | None = None
+    pair_token: str | None = None
+    pair_flag: bool | None = None
     unlock_status: str | None = None
     azbrowser: str | None = None
     aznet_node: str | None = None
@@ -125,7 +127,9 @@ class Receipt:
                 "label": self.label,
                 "marker": MARKER,
                 "note": self.note,
+                "pair_flag": self.pair_flag,
                 "pair_status": self.pair_status,
+                "pair_token": self.pair_token,
                 "payload": ABSENT,
                 "prev_hash": self.prev_hash,
                 "reason": self.reason,
@@ -162,6 +166,8 @@ class Receipt:
             reason=data.get("reason"),
             summary=data.get("summary"),
             pair_status=data.get("pair_status"),
+            pair_token=data.get("pair_token"),
+            pair_flag=data.get("pair_flag"),
             unlock_status=data.get("unlock_status"),
             azbrowser=data.get("azbrowser"),
             aznet_node=data.get("aznet_node"),
@@ -218,6 +224,8 @@ class Receipt:
             "reason": reason,
             "summary": fields.get("summary"),
             "pair_status": pair_status,
+            "pair_token": fields.get("pair_token"),
+            "pair_flag": fields.get("pair_flag"),
             "unlock_status": unlock_status,
             "azbrowser": fields.get("azbrowser"),
             "aznet_node": fields.get("aznet_node"),
@@ -240,6 +248,8 @@ class Receipt:
             reason=payload["reason"],
             summary=payload["summary"],
             pair_status=payload["pair_status"],
+            pair_token=payload["pair_token"],
+            pair_flag=payload["pair_flag"],
             unlock_status=payload["unlock_status"],
             azbrowser=payload["azbrowser"],
             aznet_node=payload["aznet_node"],

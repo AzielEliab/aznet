@@ -23,6 +23,8 @@
     "reason": { "type": ["string", "null"] },
     "summary": { "type": ["string", "null"] },
     "pair_status": { "type": ["string", "null"] },
+    "pair_token": { "type": ["string", "null"] },
+    "pair_flag": { "type": ["boolean", "null"] },
     "unlock_status": { "type": ["string", "null"] },
     "azbrowser": { "type": ["string", "null"] },
     "aznet_node": { "type": ["string", "null"] },

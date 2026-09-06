@@ -17,8 +17,12 @@ def test_pair_unlock_stamp_verify(tmp_path: Path) -> None:
     ledger = Ledger((), path=path)
     a = ledger.pair(timestamp="2026-09-06T12:00:00Z")
     assert a.prev_hash == GENESIS_PREV_HASH
+    assert a.pair_token and len(a.pair_token) == 64
+    assert a.pair_flag is False
     b = ledger.unlock(timestamp="2026-09-06T12:01:00Z")
     assert b.prev_hash == a.receipt_hash
+    assert b.pair_token == a.pair_token
+    assert b.pair_flag is True
     c = ledger.stamp("a" * 64, timestamp="2026-09-06T12:02:00Z")
     assert c.hash_hex == "a" * 64
     assert c.payload == "ABSENT"

@@ -99,9 +99,14 @@ No exploit details. No payloads. No keys.
 
 ## 6. Pairing
 
-AZNet does not run the garden or stamps until AZBrowser is paired and
-FragGate has unlocked access. Health, skill, pair, and time remain
-available so an operator can complete the pair.
+AZNet, AZBrowser, and FragGate are separate apps with separate Worker
+UIs. Do not embed AZNet chrome inside AZBrowser or FragGate.
+
+Functional order only: issue a `pair_token`, then set FragGate
+`pair_flag`, then garden / stamp / memorial writes. Health, skill,
+pair, and time remain available so an operator can complete the pair.
+AZBrowser may view side-net status from its own UI by calling this
+runtime.
 
 AZBrowser: https://github.com/AzielEliab/azbrowser
 
