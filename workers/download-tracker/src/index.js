@@ -4,11 +4,13 @@ import { handleRuntimeApi } from "./runtime.js";
 /**
  * AZNet download tracker (Cloudflare Worker).
  *
+ * GET  /        increments views, Garden Rolodex + counted download
  * GET  /download?repo=AzielEliab/aznet&tag=latest&asset=...
- *      increments KV, serves gzip via ASSETS.fetch (no 302)
- *      (default https://github.com/AzielEliab/aznet/releases)
- * GET  /stats   JSON totals + per-repo + per-branch breakdown
+ *      increments downloads + __total__, serves gzip via ASSETS.fetch (no 302)
+ * GET  /count   {views, downloads, total}
+ * GET  /stats   views, downloads, by_repo / by_branch / by_fork
  * POST /event   forks report a download {owner,repo,branch,fork,asset}
+ * /v1 does not increment.
  *
  * KV binding DOWNLOADS. Keys: project|owner|repo|branch|fork
  * CORS *. No secrets in this tree.
@@ -120,6 +122,7 @@ async function increment(env, dims) {
 }
 
 async function listAllKeys(env) {
+  if (!env.DOWNLOADS) return [];
   const keys = [];
   let cursor;
   do {
@@ -132,7 +135,7 @@ async function listAllKeys(env) {
 
 async function collectStats(env) {
   const keys = await listAllKeys(env);
-  let total = 0;
+  let summed = 0;
   const by_repo = {};
   const by_branch = {};
   const by_fork = { "0": 0, "1": 0 };
@@ -146,7 +149,7 @@ async function collectStats(env) {
     const parts = name.split("|");
     if (parts.length < 5) continue;
     const [project, owner, repo, branch, fork] = parts;
-    total += n;
+    summed += n;
     const repoId = `${owner}/${repo}`;
     by_repo[repoId] = (by_repo[repoId] || 0) + n;
     by_branch[branch] = (by_branch[branch] || 0) + n;
@@ -155,15 +158,15 @@ async function collectStats(env) {
     breakdown.push({ project, owner, repo, branch, fork: forkFlag, count: n });
   }
 
-  const totalDirect = parseInt((await env.DOWNLOADS.get(totalKey())) || "0", 10);
-  const views = parseInt((await env.DOWNLOADS.get(viewsKey())) || "0", 10) || 0;
+  const downloadsDirect = env.DOWNLOADS ? parseInt((await env.DOWNLOADS.get(totalKey())) || "0", 10) : 0;
+  const downloads = Number.isFinite(downloadsDirect) && downloadsDirect > 0 ? downloadsDirect : summed;
+  const views = env.DOWNLOADS ? parseInt((await env.DOWNLOADS.get(viewsKey())) || "0", 10) || 0 : 0;
   const github = await githubStats(env);
-  const shown = Number.isFinite(totalDirect) && totalDirect > 0 ? totalDirect : total;
   return {
     project: PROJECT,
-    total: shown,
     views,
-    downloads: shown,
+    downloads,
+    total: downloads,
     by_repo,
     by_branch,
     by_fork,
@@ -174,7 +177,7 @@ async function collectStats(env) {
       watchers: github.watchers || 0,
       release_download_count: github.release_download_count || 0,
     },
-    note: "Forks identified by GitHub owner/repo. Key layout: project|owner|repo|branch|fork. Views are separate from downloads. /v1 does not increment.",
+    note: "Isolated AZNet counter. Key layout: project|owner|repo|branch|fork. Views are separate from downloads. /v1 does not increment.",
   };
 }
 
@@ -200,15 +203,17 @@ async function incrementViews(env) {
 }
 
 async function githubStats(env) {
-  const cached = await env.DOWNLOADS.get(githubCacheKey());
-  if (cached) {
-    try {
-      const obj = JSON.parse(cached);
-      if (obj && obj.fetched_at && Date.now() - obj.fetched_at < 5 * 60 * 1000) {
-        return obj;
+  if (env.DOWNLOADS) {
+    const cached = await env.DOWNLOADS.get(githubCacheKey());
+    if (cached) {
+      try {
+        const obj = JSON.parse(cached);
+        if (obj && obj.fetched_at && Date.now() - obj.fetched_at < 5 * 60 * 1000) {
+          return obj;
+        }
+      } catch {
+        /* ignore */
       }
-    } catch {
-      /* ignore */
     }
   }
   const headers = { "User-Agent": "Mozilla/5.0 AZNet-download-tracker", Accept: "application/vnd.github+json" };
@@ -235,7 +240,7 @@ async function githubStats(env) {
   }
   const out = { stars, forks, watchers, release_download_count, fetched_at: Date.now() };
   try {
-    await env.DOWNLOADS.put(githubCacheKey(), JSON.stringify(out));
+    if (env.DOWNLOADS) await env.DOWNLOADS.put(githubCacheKey(), JSON.stringify(out));
   } catch {
     /* ignore */
   }

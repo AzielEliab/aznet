@@ -21,6 +21,10 @@ Host: `https://aznet-download-tracker.vibelock.workers.dev`
 
 | Method | Path | What |
 |--------|------|------|
+| GET | `/` | Product homepage. Increments **views**. |
+| GET | `/download` | Counted tarball (HTTP 200, live counter, no 302). Increments **downloads**. |
+| GET | `/count` | `{views, downloads, total}`. Does not increment. |
+| GET | `/stats` | views, downloads, `by_repo` / `by_branch` / `by_fork`. Does not increment. |
 | GET | `/v1/health` | Liveness. Does not increment downloads. |
 | GET | `/v1/skill` | This markdown. Does not increment downloads. |
 | GET | `/v1/example` | Sample pair + stamp payload. Does not increment downloads. |
@@ -63,6 +67,8 @@ curl -s -A 'Mozilla/5.0' https://aznet-download-tracker.vibelock.workers.dev/v1/
 curl -s -A 'Mozilla/5.0' -X POST https://aznet-download-tracker.vibelock.workers.dev/v1/pair \
   -H 'content-type: application/json' \
   -d '{"azbrowser":"https://github.com/AzielEliab/azbrowser"}'
+curl -s -A 'Mozilla/5.0' https://aznet-download-tracker.vibelock.workers.dev/count
+curl -s -A 'Mozilla/5.0' https://aznet-download-tracker.vibelock.workers.dev/stats
 curl -s -A 'Mozilla/5.0' https://aznet-download-tracker.vibelock.workers.dev/v1/garden
 curl -s -A 'Mozilla/5.0' https://aznet-download-tracker.vibelock.workers.dev/v1/skill
 ```
@@ -104,4 +110,8 @@ Local UI: Garden Rolodex, Memorial, stamps, receipts, pair-status, FragGate unlo
 Works with ChatGPT (GPT Actions / OpenAI), Grok (xAI), Venice, Claude (Anthropic), Cursor (MCP), Glama (MCP), Perplexity, Microsoft Copilot / Bing, Google Gemini / Vertex, Mistral, Meta AI, Apple Intelligence surfaces, Amazon Q tooling, DuckAssist, You.com, Cohere, and other MCP/OpenAPI-capable assistants. Import catalog or Worker OpenAPI as a GPT Action, custom HTTP tool, or custom OpenAPI tool. MCP clients: `POST https://aziel-runtime.vibelock.workers.dev/mcp`.
 
 Counted download (gzip HTTP 200, no 302): https://aznet-download-tracker.vibelock.workers.dev/download?asset=aznet-0.1.0.tar.gz
+Count JSON: https://aznet-download-tracker.vibelock.workers.dev/count
+Stats (`by_repo` / `by_branch` / `by_fork`): https://aznet-download-tracker.vibelock.workers.dev/stats
+Isolated counter: Worker `aznet-download-tracker`, KV `AZNET_DOWNLOADS`. `/v1` does not increment.
+Hubs list this Worker once live: https://www.azielcorpuslibrary.net/software · https://godlock.uk/software · https://www.azieleliab.com (Software section)
 GitHub: https://github.com/AzielEliab/aznet

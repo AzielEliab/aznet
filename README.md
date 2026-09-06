@@ -50,6 +50,21 @@ The Worker serves the gzip itself (HTTP 200, no 302 to GitHub).
 - GitHub: [https://github.com/AzielEliab/aznet](https://github.com/AzielEliab/aznet)
 - Cite: [cite.json](https://aznet-download-tracker.vibelock.workers.dev/cite.json) — Eliab, Aziel. (2026). AZNet 0.1.0 [Software]. Apache-2.0. No Zenodo DOI is invented here; a software deposit is still needed.
 
+Worker name: `aznet-download-tracker`
+
+URL pattern (same as sibling Aziel Eliab products):
+
+`https://aznet-download-tracker.vibelock.workers.dev`
+
+| Path | What |
+|------|------|
+| `/` | Garden Rolodex + views |
+| `/download` | Counted tarball (HTTP 200, live counter, no 302) |
+| `/count` | `{views, downloads, total}` |
+| `/stats` | views, downloads, `by_repo` / `by_branch` / `by_fork` |
+| `/openapi.json` | OpenAPI 3.1 |
+| `/v1/{op}` | Human UI backend / FragGate ops |
+
 Isolated counter: Worker `aznet-download-tracker`, KV `AZNET_DOWNLOADS`. `/v1` does not increment downloads.
 
 Open http://127.0.0.1:8771 (loopback only). No CDN, no telemetry.
@@ -68,7 +83,16 @@ Direct tarball (also counted): [aznet-0.1.0.tar.gz](https://aznet-download-track
 - Stats (`by_repo` / `by_branch` / `by_fork`): [https://aznet-download-tracker.vibelock.workers.dev/stats](https://aznet-download-tracker.vibelock.workers.dev/stats)
 - GitHub releases: [https://github.com/AzielEliab/aznet/releases](https://github.com/AzielEliab/aznet/releases)
 
-Hubs ([Aziel Digital Library](https://www.azielcorpuslibrary.net/), [godlock.uk](https://godlock.uk/), [www.azieleliab.com](https://www.azieleliab.com/)) list this Worker once it is live.
+## Software tabs (parent listing)
+
+Once this Worker is live, AZNet is listed on:
+
+- https://www.azielcorpuslibrary.net/software
+- https://godlock.uk/software
+- https://www.azieleliab.com (Software section)
+
+Parent lists after deploy. Expected URL:
+`https://aznet-download-tracker.vibelock.workers.dev/`
 
 ---
 
@@ -219,4 +243,8 @@ Author: **Aziel Eliab**. Honest scope: hashes only. Not an alt internet.
 Local UI: Garden Rolodex (hover reveal), Memorial, stamps, receipts, pair-status, FragGate unlock, StaticClock. Then `aznet doctor`.
 
 Counted download (gzip HTTP 200, no 302): https://aznet-download-tracker.vibelock.workers.dev/download?asset=aznet-0.1.0.tar.gz
+Count JSON: https://aznet-download-tracker.vibelock.workers.dev/count
+Stats (`by_repo` / `by_branch` / `by_fork`): https://aznet-download-tracker.vibelock.workers.dev/stats
+Isolated counter: Worker `aznet-download-tracker`, KV `AZNET_DOWNLOADS`. `/v1` does not increment.
+Hubs list this Worker once live: https://www.azielcorpuslibrary.net/software · https://godlock.uk/software · https://www.azieleliab.com (Software section)
 GitHub: https://github.com/AzielEliab/aznet

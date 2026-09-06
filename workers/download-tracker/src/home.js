@@ -100,7 +100,7 @@ export function jsonLd() {
 }
 
 function sitemapXml() {
-  const paths = ["/", "/download", "/install.sh", "/v1/skill", "/v1/example", "/v1/health", "/v1/garden", "/openapi.json", "/cite.json", "/llms.txt", "/ai"];
+  const paths = ["/", "/download", "/count", "/stats", "/install.sh", "/v1/skill", "/v1/example", "/v1/health", "/v1/garden", "/openapi.json", "/cite.json", "/llms.txt", "/ai"];
   const urls = paths.map((p) => `  <url><loc>${HOST}${p === "/" ? "/" : p}</loc></url>`).join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -171,6 +171,8 @@ One-line: ${DESCRIPTION}
 GitHub: ${GITHUB_REPO}
 Homepage: ${HOST}/
 Download: ${HOST}/download
+Count: ${HOST}/count
+Stats: ${HOST}/stats
 Install: ${HOST}/install.sh
 OpenAPI: ${HOST}/openapi.json
 Skill: ${HOST}/v1/skill

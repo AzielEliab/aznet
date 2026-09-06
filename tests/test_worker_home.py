@@ -80,6 +80,29 @@ def test_worker_serves_home_and_seo() -> None:
     assert 'await increment(env, dims)' in INDEX
 
 
+def test_readme_lists_count_stats_and_hubs() -> None:
+    readme = Path("README.md").read_text(encoding="utf-8")
+    skill = Path("SKILL.md").read_text(encoding="utf-8")
+    assert "`{views, downloads, total}`" in readme or "{views, downloads, total}" in readme
+    assert "by_repo" in readme
+    assert "www.azielcorpuslibrary.net/software" in readme
+    assert "godlock.uk/software" in readme
+    assert "www.azieleliab.com" in readme
+    for text in (readme, skill, RUNTIME):
+        assert "/count" in text
+        assert "/stats" in text
+        assert "by_repo" in text
+        assert "by_branch" in text
+        assert "by_fork" in text
+        assert "azielcorpuslibrary.net/software" in text
+        assert "godlock.uk/software" in text
+    assert '"/count"' in RUNTIME
+    assert '"/stats"' in RUNTIME
+    assert '"/download"' in RUNTIME
+    assert "/count" in HOME
+    assert "/stats" in HOME
+
+
 def test_apps_stay_separate() -> None:
     assert "pair_token" in HOME or "pair_token" in RUNTIME
     assert "pair_flag" in HOME or "pair_flag" in RUNTIME
