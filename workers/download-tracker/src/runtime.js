@@ -3,11 +3,12 @@
  * Stateless: client sends the ledger JSON in the body. Hashes only.
  * /v1 never touches DOWNLOADS KV.
  * Dual surface: GET/POST /mcp is a FragGate pointer (never 404).
- * Door paths (`/v1/fraggate/*`, `/v1/runtime/*`) PROXY to aziel-runtime.
+ * Door paths (`/v1/fraggate/*`, `/v1/runtime/*`, `/v1/mesh/*`) PROXY to aziel-runtime.
  * Local ops are single-segment `/v1/{op}` only.
  * Author: Aziel Eliab only.
  */
 import { classifyV1Path, doorTargetUrl } from "./door.js";
+import { meshOpenApiPaths, meshPointer } from "./mesh.js";
 const PRODUCT = "aznet";
 const VERSION = "0.1.0";
 const MOTTO = "Verification without hosting. Presence without authority.";
@@ -91,13 +92,14 @@ ONE FragGate door. Agents must not treat this Worker as a second MCP brand.
 - Call: \`fraggate_call\` / \`POST ${FRAGGATE_CALL}\` with \`{ slug: "aznet", op, payload }\`
 - This Worker \`GET|POST /mcp\` is a **pointer** (never 404) to that door
 - This Worker \`/v1/fraggate/*\` (list / describe / call / verify) **PROXY** to aziel-runtime via the \`AZIEL_RUNTIME\` service binding
+- This Worker \`/v1/mesh/*\` **PROXY** to aziel-runtime suite mesh (default OFF). QNM-BUILD-1.0 live|locked|isolated. No Node Gate. No auto-heal. Not anonymity. Catalog MCP \`mesh_*\` + FragGate \`slug=mesh\`
 - Leftover flat names such as \`aznet_stamp\` still go through FragGate — they are not a side door
 
 Catalog LIVE_OPS (same names the Worker UI buttons call): \`health\`, \`pair_status\`, \`garden_list\`, \`stamp\`, \`verify_hash\`, \`memorial_list\`, \`memorial_append\`, \`receipt_verify\`, \`skill\`.
 
 \`doctor\` is **not** a FragGate live op. Local CLI \`aznet doctor\` stays a device-local self-check. Worker UI does not expose a Doctor button.
 
-AZNet is **separate software** from AZBrowser. Pairing is functional order only (\`pair_token\` + \`pair_flag\`). Do not merge UIs.
+AZNet is **separate software** from AZBrowser. Pairing is functional order only (\`pair_token\` + \`pair_flag\`). Do not merge UIs. Suite mesh is presence + QNM live|locked|isolated (default OFF) — not an anonymity network and not AZMail's product-local ring. Suite mesh is presence + QNM live|locked|isolated (default OFF) — not an anonymity network and not AZMail's product-local ring.
 
 ## Endpoints (this Worker)
 
@@ -114,6 +116,9 @@ Host: \`https://aznet-download-tracker.vibelock.workers.dev\`
 | GET | \`/v1/fraggate/describe\` | PROXY to aziel-runtime FragGate describe. |
 | POST | \`/v1/fraggate/call\` | PROXY to aziel-runtime FragGate call. |
 | POST | \`/v1/fraggate/verify\` | PROXY to aziel-runtime FragGate verify. |
+| GET | \`/v1/mesh\` | PROXY suite mesh status. Default OFF. QNM live\\|locked\\|isolated. Never enables. |
+| GET | \`/v1/mesh/nodes\` | PROXY Live Nodes roster (5-minute presence). |
+| POST | \`/v1/mesh/{enable,disable,join,heartbeat,leave,broadcast}\` | PROXY. Bearer required to enable. No auto-heal. Anon-broadcast is not a publish path. |
 | GET | \`/v1/health\` | Liveness. Does not increment downloads. |
 | GET | \`/v1/skill\` | This markdown. Does not increment downloads. |
 | GET | \`/v1/example\` | Sample pair + stamp payload. Does not increment downloads. |
@@ -166,6 +171,7 @@ curl -s -A 'Mozilla/5.0' https://aznet-download-tracker.vibelock.workers.dev/cou
 curl -s -A 'Mozilla/5.0' https://aznet-download-tracker.vibelock.workers.dev/stats
 curl -s -A 'Mozilla/5.0' https://aznet-download-tracker.vibelock.workers.dev/v1/garden_list
 curl -s -A 'Mozilla/5.0' https://aznet-download-tracker.vibelock.workers.dev/v1/skill
+curl -s -A 'Mozilla/5.0' https://aznet-download-tracker.vibelock.workers.dev/v1/mesh
 \`\`\`
 
 ${AI_CLIENTS}
@@ -650,7 +656,9 @@ function mcpDocs(origin) {
     catalog_mcp: FRAGGATE_MCP,
     body: { slug: "aznet", op: "pair_status", payload: { azbrowser: AZBROWSER } },
     openapi: origin + "/openapi.json",
-    note: "AI / MCP path is FragGate only. This host GET|POST /mcp is a pointer (never 404), not a second agent brand. /v1/fraggate/* and /v1/runtime/* PROXY to aziel-runtime via AZIEL_RUNTIME. Local ops are /v1/{op} only. Catalog LIVE_OPS: " + FRAGGATE_LIVE_OPS.join(", ") + ". AZBrowser is sibling software (functional-order pair), not this product. doctor is not a FragGate live op.",
+    mesh: meshPointer(),
+    mesh_body: { slug: "mesh", op: "status", payload: {} },
+    note: "AI / MCP path is FragGate only. This host GET|POST /mcp is a pointer (never 404), not a second agent brand. /v1/fraggate/*, /v1/runtime/*, and /v1/mesh/* PROXY to aziel-runtime via AZIEL_RUNTIME. Local ops are /v1/{op} only. Catalog LIVE_OPS: " + FRAGGATE_LIVE_OPS.join(", ") + ". Catalog MCP mesh_* + FragGate slug=mesh. Suite mesh default OFF. QNM rollup live|locked|isolated. No Node Gate. No auto-heal. Not anonymity. AZBrowser is sibling software (functional-order pair), not this product. doctor is not a FragGate live op.",
     ops: [...FRAGGATE_LIVE_OPS],
     live_ops: [...FRAGGATE_LIVE_OPS],
     fraggate_live_ops: [...FRAGGATE_LIVE_OPS],
@@ -764,7 +772,7 @@ function openapiSpec(origin) {
       title: "AZNet runtime",
       version: VERSION,
       summary: "Dual surface. Human UI is this Worker /v1. AI / MCP path is FragGate only (slug=aznet).",
-      description: HONEST + " Agent door is FragGate only: POST " + FRAGGATE_CALL + " {slug:aznet,op,payload}. Catalog MCP: POST " + FRAGGATE_MCP + ". This host /mcp is a pointer, not a second agent brand. Catalog LIVE_OPS: " + FRAGGATE_LIVE_OPS.join(", ") + ". AZBrowser is sibling software.",
+      description: HONEST + " Agent door is FragGate only: POST " + FRAGGATE_CALL + " {slug:aznet,op,payload}. Catalog MCP: POST " + FRAGGATE_MCP + ". This host /mcp is a pointer, not a second agent brand. Catalog LIVE_OPS: " + FRAGGATE_LIVE_OPS.join(", ") + ". AZBrowser is sibling software. Suite mesh /v1/mesh/* PROXY to aziel-runtime (AZIEL_RUNTIME). Default OFF. QNM-BUILD-1.0 live|locked|isolated. No Node Gate. No auto-heal. Not anonymity. Aziel Eliab only.",
       license: { name: "Apache-2.0", identifier: "Apache-2.0" },
       contact: { name: AUTHOR, url: "https://github.com/AzielEliab/aznet" },
     },
@@ -802,6 +810,7 @@ function openapiSpec(origin) {
       "/v1/fraggate/verify": { post: { operationId: "aznet_fraggate_verify_proxy", summary: "PROXY to aziel-runtime POST /v1/fraggate/verify. Not a local op.", requestBody: { content: { "application/json": { schema: { type: "object" } } } }, responses: { "200": { description: "verify" } } } },
       "/v1/runtime/call": { post: { operationId: "aznet_runtime_call_proxy", summary: "Alias PROXY → origin /v1/fraggate/call. Not a local op.", requestBody: { content: { "application/json": { schema: { type: "object" } } } }, responses: { "200": { description: "FragGate ResultEnvelope" } } } },
       "/v1/runtime/list": { get: { operationId: "aznet_runtime_list_proxy", summary: "Alias PROXY → origin /v1/fraggate/list. Not a local op.", responses: { "200": { description: "hashed registry" } } } },
+      ...meshOpenApiPaths(),
     },
   };
 }
@@ -842,8 +851,9 @@ function aiHtml(origin) {
   <p><code>${origin}/openapi.json</code></p>
   <p>Human chrome catalog names: <code>POST ${origin}/v1/pair_status</code>, <code>/v1/garden_list</code>, <code>/v1/stamp</code>, <code>/v1/verify_hash</code>, <code>/v1/memorial_append</code>, <code>/v1/receipt_verify</code>.</p>
   <h2>MCP catalog</h2>
-  <p>Catalog MCP: <code>POST ${FRAGGATE_MCP}</code>. This Worker <code>/mcp</code> is a pointer. FragGate slug: <code>aznet</code>.</p>
-  <p><a href="/openapi.json">openapi.json</a> · <a href="/mcp">/mcp pointer</a> · <a href="/v1/health">health</a> · <a href="/v1/fraggate/list">FragGate list</a> · <a href="/">AZNet software</a> · <a href="/cite.json">cite.json</a></p>
+  <p>Catalog MCP: <code>POST ${FRAGGATE_MCP}</code> (includes <code>mesh_*</code> + FragGate <code>slug=mesh</code>). This Worker <code>/mcp</code> is a pointer. FragGate slug: <code>aznet</code>.</p>
+  <p>Suite mesh: <code>GET ${origin}/v1/mesh</code> PROXY to aziel-runtime. Default OFF. QNM-BUILD-1.0 live|locked|isolated. No Node Gate. No auto-heal. Not anonymity. Author: ${AUTHOR} only.</p>
+  <p><a href="/openapi.json">openapi.json</a> · <a href="/mcp">/mcp pointer</a> · <a href="/v1/health">health</a> · <a href="/v1/fraggate/list">FragGate list</a> · <a href="/v1/mesh">/v1/mesh</a> · <a href="/">AZNet software</a> · <a href="/cite.json">cite.json</a></p>
 </body>
 </html>`;
 }
@@ -873,7 +883,8 @@ export async function handleRuntimeApi(request, url, env) {
         pair: "AZNet + AZBrowser both required",
         separate_software: true,
         worker_posture: "control-plane / demo garden",
-        note: "Hosted /v1 does not store ledgers. Hashes only. Device-local silent node is the real posture. Agent path is FragGate only.",
+        mesh: meshPointer(),
+        note: "Hosted /v1 does not store ledgers. Hashes only. Device-local silent node is the real posture. Agent path is FragGate only. Suite mesh /v1/mesh/* PROXY to aziel-runtime. Default OFF.",
       });
     }
     if (path === "/v1/skill" && request.method === "GET") {
@@ -894,7 +905,7 @@ export async function handleRuntimeApi(request, url, env) {
         error: "not a local op",
         code: "NOT_LOCAL_OP",
         path: classified.path,
-        hint: "Local ops are POST|GET /v1/{op} only (single segment). FragGate door is /v1/fraggate/* (proxied to aziel-runtime). /v1/runtime/list and /v1/runtime/call alias that door.",
+        hint: "Local ops are POST|GET /v1/{op} only (single segment). FragGate door is /v1/fraggate/* (proxied to aziel-runtime). /v1/runtime/list and /v1/runtime/call alias that door. Suite mesh is /v1/mesh/* (proxied to aziel-runtime; default OFF).",
         agent_path: FRAGGATE_CALL,
         ops: [...FRAGGATE_LIVE_OPS],
         limitation: HONEST,
@@ -944,7 +955,7 @@ export async function handleRuntimeApi(request, url, env) {
     if (path === "/v1/garden_list" && request.method === "POST") return json(await gardenView());
     return json({
       error: "not found",
-      hint: "GET /v1/health GET /v1/skill POST /v1/{catalog_op} GET /v1/fraggate/list POST /v1/fraggate/call GET /openapi.json GET|POST /mcp",
+      hint: "GET /v1/health GET /v1/skill POST /v1/{catalog_op} GET /v1/fraggate/list POST /v1/fraggate/call GET /v1/mesh GET /openapi.json GET|POST /mcp",
       ops: [...FRAGGATE_LIVE_OPS],
       leftover_aliases: { ...LEFTOVER_ALIASES },
       limitation: HONEST,

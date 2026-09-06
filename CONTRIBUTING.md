@@ -43,6 +43,7 @@ pytest is the dev extra. No network.
 - Pairing / witness: `aznet/chain.py`, `aznet/witness.py`
 - CLI: `aznet/cli.py`
 - Errors: `aznet/errors.py`
+- Suite mesh / QNM Live Nodes: `workers/download-tracker/src/mesh.js` (`/v1/mesh/*` PROXY to aziel-runtime). Local ops are `/v1/{op}` only. Never treat `fraggate/call` or `mesh/status` as a local op name. Suite mesh default OFF; QNM rollup live|locked|isolated; no Node Gate; no auto-heal; not anonymity.
 
 ## License of contributions
 
