@@ -44,6 +44,13 @@ def test_workspace_calls_real_ops() -> None:
 def test_ui_witness_sections() -> None:
     for section in ("garden", "memorial", "stamps", "receipts", "pair", "unlock", "staticclock"):
         assert f'id="{section}"' in HOME
+    assert 'id="meshStrip"' in HOME
+    assert "Live Nodes" in HOME
+    assert "QNM-BUILD-1.0" in HOME
+    assert "No Node Gate" in HOME
+    assert "No auto-heal" in HOME
+    assert "/v1/mesh" in HOME
+    assert 'id="node-gate"' not in HOME
 
 
 def test_black_white_gold() -> None:

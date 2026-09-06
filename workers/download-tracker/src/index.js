@@ -10,7 +10,7 @@ import { handleRuntimeApi } from "./runtime.js";
  * GET  /count   {views, downloads, total}
  * GET  /stats   views, downloads, by_repo / by_branch / by_fork
  * POST /event   forks report a download {owner,repo,branch,fork,asset}
- * /v1 and /mcp do not increment.
+ * /v1, /mcp, and /v1/mesh/* do not increment.
  *
  * KV binding DOWNLOADS. Keys: project|owner|repo|branch|fork
  * CORS *. No secrets in this tree.

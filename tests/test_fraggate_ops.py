@@ -55,3 +55,20 @@ def test_mcp_pointer_never_404() -> None:
     assert "/v1/fraggate/call" in RUNTIME
     assert "/v1/fraggate/describe" in RUNTIME
     assert "/v1/fraggate/verify" in RUNTIME
+
+
+def test_suite_mesh_proxy_and_pointer() -> None:
+    door = (ROOT / "workers/download-tracker/src/door.js").read_text(encoding="utf-8")
+    mesh = (ROOT / "workers/download-tracker/src/mesh.js").read_text(encoding="utf-8")
+    assert '"mesh"' in door
+    assert "/v1/mesh" in door
+    assert "QNM-BUILD-1.0" in mesh
+    assert "enabled_default: false" in mesh
+    assert "live|locked|isolated" in mesh
+    assert "anon_broadcast_publish_path: false" in mesh
+    assert "meshPointer" in RUNTIME
+    assert "meshOpenApiPaths" in RUNTIME
+    assert "/v1/mesh" in README
+    assert "/v1/mesh" in SKILL
+    assert "QNM-BUILD-1.0" in HOME
+    assert "Aziel Eliab" in mesh

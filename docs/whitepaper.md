@@ -113,6 +113,13 @@ AZBrowser: https://github.com/AzielEliab/azbrowser
 
 Do not wire Lumen, AZInterface, AZ-OS Hub, or Interface products.
 
+The Worker homepage shows a suite Live Nodes strip. `/v1/fraggate/*`,
+`/v1/runtime/*`, and `/v1/mesh/*` PROXY to aziel-runtime. Suite mesh
+default OFF. QNM rollup is live|locked|isolated counts only. No Node
+Gate. No auto-heal. Not an anonymity network. Anon-broadcast is not a
+publish path. AZNet remains a silent verification side-net; the Worker
+is still a control-plane / demo garden.
+
 ---
 
 ## 7. UI witness

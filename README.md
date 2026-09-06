@@ -65,6 +65,7 @@ URL pattern (same as sibling Aziel Eliab products):
 | `/openapi.json` | OpenAPI 3.1 |
 | `/mcp` | FragGate pointer (never 404). Not a second MCP. |
 | `/v1/fraggate/*` | PROXY list/describe/call/verify to aziel-runtime |
+| `/v1/mesh/*` | PROXY to aziel-runtime suite mesh (default OFF; QNM live / locked / isolated) |
 | `/v1/{op}` | Human UI backend. Catalog names: `pair_status`, `garden_list`, `stamp`, `verify_hash`, `memorial_list`, `memorial_append`, `receipt_verify`, `health`, `skill` |
 
 Isolated counter: Worker `aznet-download-tracker`, KV `AZNET_DOWNLOADS`. `/v1` does not increment downloads.
@@ -217,8 +218,9 @@ Works with ChatGPT (GPT Actions / OpenAI), Grok (xAI), Venice, Claude (Anthropic
 - FragGate slug: `aznet`
 - This Worker MCP pointer: `GET|POST https://aznet-download-tracker.vibelock.workers.dev/mcp`
 - FragGate proxy: `GET|POST https://aznet-download-tracker.vibelock.workers.dev/v1/fraggate/{list,describe,call,verify}`
+- Suite mesh proxy: `GET|POST https://aznet-download-tracker.vibelock.workers.dev/v1/mesh` (and `/status`, `/nodes`, `/enable`, `/disable`, `/join`, `/heartbeat`, `/leave`, `/broadcast`)
 
-Agents use FragGate only via aziel-runtime (`fraggate_call` / `POST /v1/fraggate/call` with `{slug:"aznet",op,payload}`). This Worker `/mcp` is a pointer, not a second MCP brand. Humans use the complete Worker UI (Garden Rolodex, Memorial, stamps, receipts, pair-status, FragGate unlock, StaticClock). Dual surface: do not gut the human UI. Catalog UI ops: `pair_status`, `garden_list`, `stamp`, `verify_hash`, `memorial_list`, `memorial_append`, `receipt_verify`. `doctor` is local CLI only — not a FragGate live op.
+Agents use FragGate only via aziel-runtime (`fraggate_call` / `POST /v1/fraggate/call` with `{slug:"aznet",op,payload}`). This Worker `/mcp` is a pointer, not a second MCP brand. Humans use the complete Worker UI (Garden Rolodex, Memorial, stamps, receipts, pair-status, FragGate unlock, StaticClock, Live Nodes strip). Dual surface: do not gut the human UI. Catalog UI ops: `pair_status`, `garden_list`, `stamp`, `verify_hash`, `memorial_list`, `memorial_append`, `receipt_verify`. `doctor` is local CLI only — not a FragGate live op. Suite mesh `/v1/mesh/*` PROXY to aziel-runtime (AZIEL_RUNTIME). Default OFF. QNM-BUILD-1.0 live|locked|isolated. No Node Gate. No auto-heal. Not anonymity. Catalog MCP `mesh_*` + FragGate `slug=mesh`. Anon-broadcast is not a publish path.
 
 Always send `User-Agent: Mozilla/5.0`.
 
@@ -244,7 +246,7 @@ Author: **Aziel Eliab**. Honest scope: hashes only. Not an alt internet.
 - This Worker skill: `GET https://aznet-download-tracker.vibelock.workers.dev/v1/skill`
 - This Worker OpenAPI: https://aznet-download-tracker.vibelock.workers.dev/openapi.json
 
-Local UI: Garden Rolodex (hover reveal), Memorial, stamps, receipts, pair-status, FragGate unlock, StaticClock. Then `aznet doctor`.
+Local UI: Garden Rolodex (hover reveal), Memorial, stamps, receipts, pair-status, FragGate unlock, StaticClock. Worker homepage adds the suite Live Nodes strip (`GET /v1/mesh`). Then `aznet doctor`.
 
 Counted download (gzip HTTP 200, no 302): https://aznet-download-tracker.vibelock.workers.dev/download?asset=aznet-0.1.0.tar.gz
 Count JSON: https://aznet-download-tracker.vibelock.workers.dev/count
