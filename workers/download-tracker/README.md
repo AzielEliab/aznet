@@ -13,7 +13,7 @@ GET `/stats` returns views, downloads, `by_repo` / `by_branch` / `by_fork`.
 `/v1` never increments DOWNLOADS KV.
 GET `/install.sh` one-click install (does not increment; script curls `/download`).
 GET `/v1/skill` returns skill markdown (`text/markdown`). Does not increment views or downloads.
-GET `/cite.json`, `/sitemap.xml`, `/robots.txt`, `/llms.txt` are SEO / cite surfaces. Do not increment downloads.
+GET `/cite.json` (and `/cite`), `/sitemap.xml`, `/robots.txt`, `/llms.txt` (and `/ai.txt`) are SEO / cite surfaces. `robots.txt` is a hardcoded Aziel Eliab AI Allow list (`User-agent: *` + GPTBot / ChatGPT-User / Google-Extended / Claude / Perplexity / …). It must never interpolate workspace directory names. Do not increment downloads.
 
 The Worker is a control-plane / demo garden. Device-local silent node is the real posture.
 

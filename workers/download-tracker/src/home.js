@@ -11,12 +11,99 @@ const GITHUB_LATEST = "https://github.com/AzielEliab/aznet/releases/latest";
 const AZBROWSER = "https://github.com/AzielEliab/azbrowser";
 const CATALOG = "https://aziel-runtime.vibelock.workers.dev/";
 const CATALOG_PRODUCT = "https://aziel-runtime.vibelock.workers.dev/p/aznet/";
+const LIBRARY = "https://www.azielcorpuslibrary.net/";
 const STATICCLOCK_HOST = "https://staticclock-download-tracker.vibelock.workers.dev";
 const TEMPORALLOCK_HOST = "https://temporallock-download-tracker.vibelock.workers.dev";
 const FRAGGATE = "https://github.com/AzielEliab/fraggate";
 const LICENSE = "https://www.apache.org/licenses/LICENSE-2.0";
 const VERSION = "0.1.0";
 const AUTHOR = "Aziel Eliab";
+const AUTHOR_AKA = "Aziel Elroi Eliab";
+const AI_CLIENTS =
+  "ChatGPT (GPT Actions / OpenAI), Grok (xAI), Venice, Claude (Anthropic), Cursor (MCP), Glama (MCP), Perplexity, Microsoft Copilot / Bing, Google Gemini / Vertex, Mistral, Meta AI, Apple Intelligence surfaces, Amazon Q tooling, DuckAssist, You.com, Cohere, and other MCP/OpenAPI-capable assistants";
+
+/**
+ * Aziel Eliab AI Allow policy. Hardcoded crawler names only.
+ * Never interpolate fs/readdir, ASSETS listings, or workspace directory names.
+ */
+export const AI_CRAWLER_AGENTS = Object.freeze([
+  "GPTBot",
+  "ChatGPT-User",
+  "OAI-SearchBot",
+  "Google-Extended",
+  "Googlebot",
+  "GoogleOther",
+  "Google-CloudVertexBot",
+  "ClaudeBot",
+  "Claude-SearchBot",
+  "Claude-User",
+  "anthropic-ai",
+  "PerplexityBot",
+  "Perplexity-User",
+  "bingbot",
+  "Meta-ExternalAgent",
+  "Meta-ExternalFetcher",
+  "Meta-WebIndexer",
+  "FacebookBot",
+  "facebookexternalhit",
+  "Meta-ExternalAds",
+  "Applebot",
+  "Applebot-Extended",
+  "Amazonbot",
+  "DuckDuckBot",
+  "DuckAssistBot",
+  "MistralAI-User",
+  "YouBot",
+  "CCBot",
+  "cohere-ai",
+  "cohere-training-data-crawler",
+  "Diffbot",
+  "AI2Bot",
+  "AI2Bot-Dolma",
+  "Timpibot",
+  "Petalbot",
+  "Bytespider",
+  "Omgili",
+  "Omgilibot",
+  "FirecrawlAgent",
+  "ImagesiftBot",
+  "Cloudflare-AI-Search",
+  "TikTokSpider",
+  "Baiduspider",
+  "Baiduspider-render",
+  "Baiduspider-ai",
+  "YandexBot",
+  "PanguBot",
+  "Kangaroo Bot",
+  "Cotoyogi",
+  "aiHitBot",
+  "webzio-extended",
+  "ICC-Crawler",
+  "DataForSeoBot",
+  "AwarioBot",
+  "AwarioSmartBot",
+  "AwarioRssBot",
+  "Sentibot",
+  "peer39_crawler",
+  "Seekr",
+  "Meltwater",
+  "TurnitinBot",
+  "Factset_spyderbot",
+  "NeevaBot",
+]);
+
+export function uniqueUserAgents(agents) {
+  const seen = new Set();
+  const out = [];
+  for (const agent of agents) {
+    const key = String(agent).toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(agent);
+  }
+  return out;
+}
+
 const TITLE = "AZNet — Aziel Eliab";
 const DEFAULT_ASSET = "aznet-0.1.0.tar.gz";
 const INSTALL_LINE = "curl -fsSL https://aznet-download-tracker.vibelock.workers.dev/install.sh | bash";
@@ -58,6 +145,8 @@ export function citePayload() {
     skill: HOST + "/v1/skill",
     catalog: CATALOG,
     catalog_product: CATALOG_PRODUCT,
+    library: LIBRARY,
+    aka: AUTHOR_AKA,
     azbrowser: AZBROWSER,
     license: "Apache-2.0",
     license_url: LICENSE,
@@ -84,8 +173,8 @@ export function jsonLd() {
     applicationCategory: "DeveloperApplication",
     operatingSystem: "Linux, macOS, Windows, Cloudflare Workers",
     softwareVersion: VERSION,
-    author: { "@type": "Person", name: AUTHOR, url: "https://github.com/AzielEliab" },
-    creator: { "@type": "Person", name: AUTHOR, url: "https://github.com/AzielEliab" },
+    author: { "@type": "Person", name: AUTHOR, alternateName: AUTHOR_AKA, url: "https://github.com/AzielEliab" },
+    creator: { "@type": "Person", name: AUTHOR, alternateName: AUTHOR_AKA, url: "https://github.com/AzielEliab" },
     codeRepository: GITHUB_REPO,
     downloadUrl: HOST + "/download",
     installUrl: HOST + "/install.sh",
@@ -99,8 +188,8 @@ export function jsonLd() {
   };
 }
 
-function sitemapXml() {
-  const paths = ["/", "/download", "/count", "/stats", "/install.sh", "/v1/skill", "/v1/example", "/v1/health", "/v1/garden", "/openapi.json", "/cite.json", "/llms.txt", "/ai"];
+export function sitemapXml() {
+  const paths = ["/", "/download", "/count", "/stats", "/install.sh", "/v1/skill", "/v1/example", "/v1/health", "/v1/garden", "/openapi.json", "/cite.json", "/llms.txt", "/ai.txt", "/ai"];
   const urls = paths.map((p) => `  <url><loc>${HOST}${p === "/" ? "/" : p}</loc></url>`).join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -110,63 +199,23 @@ ${urls}
 `;
 }
 
-function robotsTxt() {
-  return `User-agent: *
-Allow: /
-
-User-agent: GPTBot
-Allow: /
-
-User-agent: ChatGPT-User
-Allow: /
-
-User-agent: Google-Extended
-Allow: /
-
-User-agent: anthropic-ai
-Allow: /
-
-User-agent: ClaudeBot
-Allow: /
-
-User-agent: PerplexityBot
-Allow: /
-
-User-agent: Bytespider
-Allow: /
-
-User-agent: CCBot
-Allow: /
-
-User-agent: Applebot-Extended
-Allow: /
-
-User-agent: meta-externalagent
-Allow: /
-
-User-agent: FacebookBot
-Allow: /
-
-User-agent: cohere-ai
-Allow: /
-
-User-agent: Diffbot
-Allow: /
-
-User-agent: Omgilibot
-Allow: /
-
-User-agent: Amazonbot
-Allow: /
-
-Sitemap: ${HOST}/sitemap.xml
-`;
+export function robotsTxt() {
+  const lines = ["User-agent: *", "Allow: /", "Content-Signal: search=yes, ai-input=yes, ai-train=yes", ""];
+  for (const agent of uniqueUserAgents(AI_CRAWLER_AGENTS)) {
+    lines.push("User-agent: " + agent);
+    lines.push("Allow: /");
+  }
+  lines.push("");
+  lines.push("Sitemap: " + HOST + "/sitemap.xml");
+  lines.push("");
+  return lines.join("\n");
 }
 
-function llmsTxt() {
+export function llmsTxt() {
   return `# AZNet
 
 Author: Aziel Eliab
+Also known as: ${AUTHOR_AKA} (alternateName only)
 One-line: ${DESCRIPTION}
 GitHub: ${GITHUB_REPO}
 Homepage: ${HOST}/
@@ -177,6 +226,8 @@ Install: ${HOST}/install.sh
 OpenAPI: ${HOST}/openapi.json
 Skill: ${HOST}/v1/skill
 Cite: ${HOST}/cite.json
+Library: ${LIBRARY}
+Catalog: ${CATALOG}
 Ops: POST /v1/pair, POST /v1/unlock, POST /v1/stamp, POST /v1/verify, POST /v1/memorial
 Pair: AZNet + AZBrowser both required
 Marker: ${MARKER}
@@ -184,27 +235,35 @@ Identity: Aziel Eliab only
 License: Apache-2.0
 Forks: welcome and always allowed
 DOI: none invented; software deposit still needed.
+AI clients: ${AI_CLIENTS}.
+robots.txt: User-agent * Allow / plus GPTBot, ChatGPT-User, Google-Extended, Claude, Perplexity, and the rest of the Aziel Eliab AI Allow set. No GPTBot Disallow.
 
 Indexing, metadata scrape, and AI grounding of public pages are allowed.
 `;
 }
 
+function seoPath(pathname) {
+  if (pathname.length > 1 && pathname.endsWith("/")) return pathname.slice(0, -1);
+  return pathname;
+}
+
 export function handleSeoRoutes(request, url) {
   if (request.method !== "GET" && request.method !== "HEAD") return null;
   const headers = { ...corsHeaders(), "Cache-Control": "private, no-store" };
-  if (url.pathname === "/cite.json") {
+  const path = seoPath(url.pathname);
+  if (path === "/cite.json" || path === "/cite") {
     return new Response(JSON.stringify(citePayload(), null, 2), {
       status: 200,
       headers: { "Content-Type": "application/json; charset=utf-8", ...headers },
     });
   }
-  if (url.pathname === "/sitemap.xml") {
+  if (path === "/sitemap.xml") {
     return new Response(sitemapXml(), { status: 200, headers: { "Content-Type": "application/xml; charset=utf-8", ...headers } });
   }
-  if (url.pathname === "/robots.txt") {
+  if (path === "/robots.txt") {
     return new Response(robotsTxt(), { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8", ...headers } });
   }
-  if (url.pathname === "/llms.txt" || url.pathname === "/ai.txt") {
+  if (path === "/llms.txt" || path === "/ai.txt") {
     return new Response(llmsTxt(), { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8", ...headers } });
   }
   return null;
