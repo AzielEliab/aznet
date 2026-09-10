@@ -5,16 +5,21 @@
 import assert from "node:assert/strict";
 import {
   QNM_SPEC,
+  QNS_CD_SPEC,
+  QNS_CD,
   MESH_DEFAULT_OFF,
   MESH_ANONYMITY_NETWORK,
   MESH_NODE_GATE,
   MESH_AUTO_HEAL,
+  MESH_NOTE,
   MESH_OPS,
   MESH_PATH,
   MESH_IDENTITY,
   MESH_PRODUCT,
   alignLiveNodes,
+  attachQnsCdCrossMap,
   emptyMesh,
+  isMeshLiveNodesPath,
   meshOpenApiPaths,
   meshPointer,
   meshStatusLine,
@@ -26,6 +31,21 @@ import { handleRuntimeApi } from "../workers/download-tracker/src/runtime.js";
 import { renderHome } from "../workers/download-tracker/src/home.js";
 
 assert.equal(QNM_SPEC, "QNM-BUILD-1.0");
+assert.equal(QNS_CD_SPEC, "QNS-CD-1.0");
+assert.equal(QNS_CD.spec, "QNS-CD-1.0");
+assert.equal(QNS_CD.kind, "photon QNS1 packet transfer");
+assert.equal(QNS_CD.local, "qnsd");
+assert.equal(QNS_CD.local_coded, "https://github.com/AzielEliab/qnm-node");
+assert.equal(QNS_CD.runtime_cites, "https://github.com/AzielEliab/aziel-runtime");
+assert.equal(QNS_CD.pair_custody, "https://github.com/AzielEliab/azinterface");
+assert.equal(QNS_CD.softwares_tab, false);
+assert.equal(QNS_CD.public_proxy, false);
+assert.equal(QNS_CD.qnsd_proxy, false);
+assert.equal(QNS_CD.node_gate, false);
+assert.equal(QNS_CD.default_off, true);
+assert.equal(QNS_CD.identity, "Aziel Eliab");
+assert.match(MESH_NOTE, /QNS-CD-1\.0/);
+assert.match(MESH_NOTE, /No public qnsd proxy/);
 assert.equal(MESH_DEFAULT_OFF, true);
 assert.equal(MESH_ANONYMITY_NETWORK, false);
 assert.equal(MESH_NODE_GATE, false);
@@ -34,6 +54,9 @@ assert.equal(MESH_IDENTITY, "Aziel Eliab");
 assert.equal(MESH_PRODUCT, "aznet");
 assert.ok(MESH_OPS.includes("status") && MESH_OPS.includes("nodes"));
 assert.equal(MESH_PATH, "/v1/mesh");
+assert.equal(isMeshLiveNodesPath("/v1/mesh"), true);
+assert.equal(isMeshLiveNodesPath("/v1/mesh/nodes"), true);
+assert.equal(isMeshLiveNodesPath("/v1/mesh/enable"), false);
 
 const empty = emptyMesh();
 assert.equal(empty.enabled, false);
@@ -42,6 +65,9 @@ assert.equal(empty.node_gate, false);
 assert.equal(empty.auto_heal, false);
 assert.equal(empty.anonymity_network, false);
 assert.equal(empty.identity, "Aziel Eliab");
+assert.equal(empty.qns_cd_spec, "QNS-CD-1.0");
+assert.equal(empty.qns_cd.spec, "QNS-CD-1.0");
+assert.equal(empty.qns_cd.public_proxy, false);
 
 const qnm = parseMeshDoc({
   spec: "QNM-BUILD-1.0",
@@ -63,6 +89,10 @@ const pub = publicMesh(qnm);
 assert.equal(pub.nodes, undefined);
 assert.equal(pub.slug, "mesh");
 assert.equal(pub.product, "aznet");
+assert.equal(pub.qns_cd_spec, "QNS-CD-1.0");
+assert.equal(pub.qns_cd.kind, "photon QNS1 packet transfer");
+assert.equal(pub.enabled, true);
+assert.equal(attachQnsCdCrossMap({ enabled: false }).qns_cd.spec, "QNS-CD-1.0");
 assert.match(meshStatusLine(pub), /Suite mesh: on · live 2 · locked 1 · isolated 3/);
 assert.match(meshStatusLine(emptyMesh()), /Suite mesh: off \(default\)\. QNM-BUILD-1\.0/);
 assert.equal(alignLiveNodes({ mesh: { enabled: true, rollup: { live: 4, locked: 1, isolated: 0 } } }), 4);
@@ -77,6 +107,10 @@ assert.equal(pointer.auto_heal, false);
 assert.equal(pointer.anonymity_network, false);
 assert.equal(pointer.anon_broadcast_publish_path, false);
 assert.match(pointer.note, /AZBrowser is sibling software/);
+assert.equal(pointer.qns_cd_spec, "QNS-CD-1.0");
+assert.equal(pointer.qnsd_proxy, false);
+assert.equal(pointer.softwares_tab, false);
+assert.match(pointer.note, /QNS-CD-1\.0/);
 
 assert.equal(classifyV1Path("/v1/mesh").kind, "door");
 assert.equal(classifyV1Path("/v1/mesh/nodes").originPath, "/v1/mesh/nodes");
@@ -92,6 +126,8 @@ assert.match(html, /id="meshStrip"/);
 assert.match(html, /id="meshLiveCount"/);
 assert.match(html, /id="meshLine"/);
 assert.match(html, /QNM-BUILD-1\.0/);
+assert.match(html, /QNS-CD-1\.0/);
+assert.match(html, /no public qnsd proxy/);
 assert.match(html, /Live Nodes/);
 assert.match(html, /No Node Gate/);
 assert.match(html, /No auto-heal/);
@@ -130,6 +166,11 @@ try {
   assert.notEqual(meshBody.code, "FG-HALLUC-TOOL");
   assert.notEqual(meshBody.op, "mesh");
   assert.equal(meshBody.ok, true);
+  assert.equal(meshBody.enabled, false);
+  assert.equal(meshBody.qns_cd_spec, "QNS-CD-1.0");
+  assert.equal(meshBody.qns_cd.spec, "QNS-CD-1.0");
+  assert.equal(meshBody.qns_cd.kind, "photon QNS1 packet transfer");
+  assert.equal(meshBody.qns_cd.public_proxy, false);
   assert.equal(meshRes.headers.get("X-Aziel-Door"), "proxy");
   assert.ok(fetches.some((f) => f.url === DEFAULT_RUNTIME_ORIGIN + "/v1/mesh" && f.method === "GET"));
 
@@ -163,6 +204,9 @@ try {
   const bindRes = await handleRuntimeApi(bindReq, new URL(bindReq.url), bindingEnv);
   const bindBody = await bindRes.json();
   assert.equal(bindBody.via, "binding");
+  assert.equal(bindBody.enabled, false);
+  assert.equal(bindBody.qns_cd_spec, "QNS-CD-1.0");
+  assert.equal(bindBody.qns_cd.qnsd_proxy, false);
   assert.ok(bindingFetches[0].endsWith("/v1/mesh/nodes"));
 
   const specReq = new Request("https://aznet-download-tracker.vibelock.workers.dev/openapi.json", { method: "GET" });
