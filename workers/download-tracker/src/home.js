@@ -231,7 +231,7 @@ Catalog: ${CATALOG}
 Agent path: FragGate only — POST ${CATALOG}v1/fraggate/call {slug:aznet,op,payload}
 This Worker /mcp is a pointer, not a second MCP.
 Catalog LIVE_OPS: health, pair_status, garden_list, stamp, verify_hash, memorial_list, memorial_append, receipt_verify, skill
-Suite mesh: GET ${HOST}/v1/mesh PROXY to aziel-runtime. Default OFF. QNM-BUILD-1.0 live|locked|isolated. No Node Gate. No auto-heal. Not anonymity. Catalog MCP mesh_* + FragGate slug=mesh.
+Suite mesh: GET ${HOST}/v1/mesh PROXY to aziel-runtime. Default OFF. QNM-BUILD-1.0 live|locked|isolated. QNS-CD-1.0 photon QNS1 cite only (qnm-node + aziel-runtime; pair custody cite). Not a Softwares-tab product. No Node Gate. No public qnsd proxy. No auto-heal. Not anonymity. Catalog MCP mesh_* + FragGate slug=mesh.
 Human chrome leftovers: unlock, time, witness, lattice, withdraw
 doctor is not a FragGate live op (local CLI only).
 AZNet is separate software from AZBrowser.
@@ -415,7 +415,7 @@ export function renderHome(stats) {
 
     <div id="meshStrip" aria-label="Suite Live Nodes">
       <div class="live"><b id="meshLiveCount">0</b> Live Nodes</div>
-      <div id="meshLine">Suite mesh: off (default). QNM-BUILD-1.0. Not an anonymity network.</div>
+      <div id="meshLine">Suite mesh: off (default). QNM-BUILD-1.0. QNS-CD-1.0. Not an anonymity network.</div>
       <div class="rollup">live <b id="qnmLive">0</b> · locked <b id="qnmLocked">0</b> · isolated <b id="qnmIsolated">0</b></div>
       <div>No Node Gate · No auto-heal · Aziel Eliab only</div>
       <div>
@@ -425,7 +425,7 @@ export function renderHome(stats) {
         <button id="meshJoin" type="button" title="Join as aznet. Refused while mesh is OFF. No auto-join. AZBrowser stays separate software.">Join</button>
         <button id="meshLeave" type="button" title="Leave this node. No auto-heal.">Leave</button>
       </div>
-      <div id="meshProducts">Catalog MCP mesh_* · FragGate slug=mesh · /v1/mesh/* PROXY · not AnonBroadcast · not AZMail ring · AZBrowser is sibling pair only</div>
+      <div id="meshProducts">Catalog MCP mesh_* · FragGate slug=mesh · /v1/mesh/* PROXY · QNS-CD-1.0 cite only · not AnonBroadcast · not AZMail ring · AZBrowser is sibling pair only · no public qnsd proxy</div>
     </div>
 
     <section class="card" id="pair">
@@ -440,7 +440,7 @@ export function renderHome(stats) {
 
     <section class="card" id="unlock">
       <h2><span class="kicker">unlock</span>FragGate</h2>
-      <p>ONE FragGate door. Agent path is FragGate only: <code>POST /v1/fraggate/call</code> slug=<b>aznet</b>. This Worker <code>/v1/fraggate/*</code> and <code>/v1/mesh/*</code> proxy to aziel-runtime. Catalog MCP: <code>POST https://aziel-runtime.vibelock.workers.dev/mcp</code> (<code>mesh_*</code> + slug=<b>mesh</b>). This host <a href="/mcp">/mcp</a> is a pointer, not a second MCP. AZBrowser is sibling software (functional pair only). Suite mesh default OFF. QNM-BUILD-1.0 live|locked|isolated. No Node Gate. No auto-heal. Not anonymity.</p>
+      <p>ONE FragGate door. Agent path is FragGate only: <code>POST /v1/fraggate/call</code> slug=<b>aznet</b>. This Worker <code>/v1/fraggate/*</code> and <code>/v1/mesh/*</code> proxy to aziel-runtime. Catalog MCP: <code>POST https://aziel-runtime.vibelock.workers.dev/mcp</code> (<code>mesh_*</code> + slug=<b>mesh</b>). This host <a href="/mcp">/mcp</a> is a pointer, not a second MCP. AZBrowser is sibling software (functional pair only). Suite mesh default OFF. QNM-BUILD-1.0 live|locked|isolated. QNS-CD-1.0 photon QNS1 cite only (not a Softwares-tab product; no public qnsd proxy). No Node Gate. No auto-heal. Not anonymity.</p>
     </section>
 
     <section class="card" id="staticclock">
@@ -691,14 +691,14 @@ export function renderHome(stats) {
         $("qnmLocked").textContent = String(locked);
         $("qnmIsolated").textContent = String(isolated);
         var line = $("meshLine");
-        if (on) line.textContent = "Suite mesh: on · live " + live + " · locked " + locked + " · isolated " + isolated + ". Not an anonymity network.";
-        else if (j.status === "unavailable" || (j.ok === false && j.error)) line.textContent = "Suite mesh: off (unavailable). QNM-BUILD-1.0. Not an anonymity network.";
-        else line.textContent = "Suite mesh: off (default). QNM-BUILD-1.0. Not an anonymity network.";
+        if (on) line.textContent = "Suite mesh: on · live " + live + " · locked " + locked + " · isolated " + isolated + ". QNS-CD-1.0 cite only. Not an anonymity network.";
+        else if (j.status === "unavailable" || (j.ok === false && j.error)) line.textContent = "Suite mesh: off (unavailable). QNM-BUILD-1.0. QNS-CD-1.0. Not an anonymity network.";
+        else line.textContent = "Suite mesh: off (default). QNM-BUILD-1.0. QNS-CD-1.0. Not an anonymity network.";
         var products = j.products_present || j.products || [];
         var names = Array.isArray(products) ? products.map(function (p) { return typeof p === "string" ? p : (p && (p.product || p.slug)) || ""; }).filter(Boolean) : [];
         var nodes = Array.isArray(j.nodes) ? j.nodes : [];
         var extra = names.length ? " · products " + names.join(", ") : (nodes.length ? " · " + nodes.length + " node labels" : "");
-        $("meshProducts").textContent = "Catalog MCP mesh_* · FragGate slug=mesh · /v1/mesh/* PROXY · not AnonBroadcast · not AZMail ring · AZBrowser is sibling pair only" + extra;
+        $("meshProducts").textContent = "Catalog MCP mesh_* · FragGate slug=mesh · /v1/mesh/* PROXY · QNS-CD-1.0 cite only · not AnonBroadcast · not AZMail ring · AZBrowser is sibling pair only · no public qnsd proxy" + extra;
       }
       async function meshGet(path) {
         var r = await fetch(path, { headers: { "user-agent": "Mozilla/5.0", accept: "application/json" } });

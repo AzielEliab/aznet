@@ -65,7 +65,7 @@ URL pattern (same as sibling Aziel Eliab products):
 | `/openapi.json` | OpenAPI 3.1 |
 | `/mcp` | FragGate pointer (never 404). Not a second MCP. |
 | `/v1/fraggate/*` | PROXY list/describe/call/verify to aziel-runtime |
-| `/v1/mesh/*` | PROXY to aziel-runtime suite mesh (default OFF; QNM live / locked / isolated) |
+| `/v1/mesh/*` | PROXY to aziel-runtime suite mesh (default OFF; QNM live / locked / isolated; QNS-CD-1.0 cite only) |
 | `/v1/{op}` | Human UI backend. Catalog names: `pair_status`, `garden_list`, `stamp`, `verify_hash`, `memorial_list`, `memorial_append`, `receipt_verify`, `health`, `skill` |
 
 Isolated counter: Worker `aznet-download-tracker`, KV `AZNET_DOWNLOADS`. `/v1` does not increment downloads.
@@ -203,7 +203,9 @@ Do **not** wire Lumen, AZInterface, AZ-OS Hub, or Interface products.
 - [StaticClock](https://github.com/AzielEliab/staticclock) — stamps time
 - [TemporalLock](https://github.com/AzielEliab/temporallock) — timeslate lattice
 - [FragGate](https://github.com/AzielEliab/fraggate) — one door: discover, route, refuse
-- [aziel-runtime](https://github.com/AzielEliab/aziel-runtime) — catalog + MCP + OpenAPI
+- [aziel-runtime](https://github.com/AzielEliab/aziel-runtime) — catalog + MCP + OpenAPI; QNS-CD-1.0 cites + catalog field
+- [qnm-node](https://github.com/AzielEliab/qnm-node) — local Quantum Node Mesh process; local `qnsd` (QNS-CD-1.0 / photon QNS1)
+- [AZInterface](https://github.com/AzielEliab/azinterface) — QNS-CD-1.0 pair-custody cite only (do not wire Interface ops into this Worker)
 - [Aziel Digital Library](https://www.azielcorpuslibrary.net/)
 - [godlock.uk](https://godlock.uk/)
 - [www.azieleliab.com](https://www.azieleliab.com/)
@@ -220,7 +222,7 @@ Works with ChatGPT (GPT Actions / OpenAI), Grok (xAI), Venice, Claude (Anthropic
 - FragGate proxy: `GET|POST https://aznet-download-tracker.vibelock.workers.dev/v1/fraggate/{list,describe,call,verify}`
 - Suite mesh proxy: `GET|POST https://aznet-download-tracker.vibelock.workers.dev/v1/mesh` (and `/status`, `/nodes`, `/enable`, `/disable`, `/join`, `/heartbeat`, `/leave`, `/broadcast`)
 
-Agents use FragGate only via aziel-runtime (`fraggate_call` / `POST /v1/fraggate/call` with `{slug:"aznet",op,payload}`). This Worker `/mcp` is a pointer, not a second MCP brand. Humans use the complete Worker UI (Garden Rolodex, Memorial, stamps, receipts, pair-status, FragGate unlock, StaticClock, Live Nodes strip). Dual surface: do not gut the human UI. Catalog UI ops: `pair_status`, `garden_list`, `stamp`, `verify_hash`, `memorial_list`, `memorial_append`, `receipt_verify`. `doctor` is local CLI only — not a FragGate live op. Suite mesh `/v1/mesh/*` PROXY to aziel-runtime (AZIEL_RUNTIME). Default OFF. QNM-BUILD-1.0 live|locked|isolated. No Node Gate. No auto-heal. Not anonymity. Catalog MCP `mesh_*` + FragGate `slug=mesh`. Anon-broadcast is not a publish path.
+Agents use FragGate only via aziel-runtime (`fraggate_call` / `POST /v1/fraggate/call` with `{slug:"aznet",op,payload}`). This Worker `/mcp` is a pointer, not a second MCP brand. Humans use the complete Worker UI (Garden Rolodex, Memorial, stamps, receipts, pair-status, FragGate unlock, StaticClock, Live Nodes strip). Dual surface: do not gut the human UI. Catalog UI ops: `pair_status`, `garden_list`, `stamp`, `verify_hash`, `memorial_list`, `memorial_append`, `receipt_verify`. `doctor` is local CLI only — not a FragGate live op. Suite mesh `/v1/mesh/*` PROXY to aziel-runtime (AZIEL_RUNTIME). Default OFF. QNM-BUILD-1.0 live|locked|isolated. **QNS-CD-1.0** (photon QNS1 packet transfer) is a hub cite / Worker mesh cross-map only — local `qnsd` is coded in [qnm-node](https://github.com/AzielEliab/qnm-node); runtime cites + catalog field live in [aziel-runtime](https://github.com/AzielEliab/aziel-runtime); pair custody is [AZInterface](https://github.com/AzielEliab/azinterface). Not a Softwares-tab product. No Node Gate. No public qnsd proxy. No auto-heal. Not anonymity. Catalog MCP `mesh_*` + FragGate `slug=mesh`. Anon-broadcast is not a publish path.
 
 Always send `User-Agent: Mozilla/5.0`.
 

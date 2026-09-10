@@ -63,12 +63,21 @@ def test_suite_mesh_proxy_and_pointer() -> None:
     assert '"mesh"' in door
     assert "/v1/mesh" in door
     assert "QNM-BUILD-1.0" in mesh
+    assert "QNS-CD-1.0" in mesh
+    assert "QNS_CD_SPEC" in mesh
+    assert "photon QNS1 packet transfer" in mesh
     assert "enabled_default: false" in mesh
     assert "live|locked|isolated" in mesh
     assert "anon_broadcast_publish_path: false" in mesh
+    assert "qnsd_proxy: false" in mesh
+    assert "softwares_tab: false" in mesh
     assert "meshPointer" in RUNTIME
     assert "meshOpenApiPaths" in RUNTIME
+    assert "attachQnsCdCrossMap" in RUNTIME
     assert "/v1/mesh" in README
     assert "/v1/mesh" in SKILL
+    assert "QNS-CD-1.0" in README
+    assert "QNS-CD-1.0" in SKILL
     assert "QNM-BUILD-1.0" in HOME
+    assert "QNS-CD-1.0" in HOME
     assert "Aziel Eliab" in mesh

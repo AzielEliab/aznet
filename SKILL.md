@@ -11,7 +11,7 @@ Author: **Aziel Eliab**.
 
 Use when mirroring a cryptographic hash, shifting the Custodian Garden / Gold Pages, stamping a hash, or writing a Memorial. Never host payloads. Never store keys or user content. UI is a mandatory witness — if altered, terminate and memorial.
 
-AZNet, AZBrowser, and FragGate are **separate software**. Do not embed AZNet chrome in AZBrowser or FragGate. Functional order only: `pair_token` then FragGate `pair_flag` before garden / stamp / memorial writes. StaticClock stamps time. Suite mesh is presence + QNM live|locked|isolated (default OFF) — not an anonymity network and not AZMail's product-local ring.
+AZNet, AZBrowser, and FragGate are **separate software**. Do not embed AZNet chrome in AZBrowser or FragGate. Functional order only: `pair_token` then FragGate `pair_flag` before garden / stamp / memorial writes. StaticClock stamps time. Suite mesh is presence + QNM live|locked|isolated (default OFF) — not an anonymity network and not AZMail's product-local ring. QNS-CD-1.0 (photon QNS1 packet transfer) is a hub cite / Worker mesh cross-map only: local `qnsd` in [qnm-node](https://github.com/AzielEliab/qnm-node), runtime cites + catalog field in [aziel-runtime](https://github.com/AzielEliab/aziel-runtime), pair custody [AZInterface](https://github.com/AzielEliab/azinterface). Not a Softwares-tab product. No public qnsd proxy.
 
 Always send `User-Agent: Mozilla/5.0`. Cloudflare Workers may 403 an empty agent.
 
@@ -23,7 +23,7 @@ ONE FragGate door. Agents must not treat this Worker as a second MCP brand.
 - Call: `fraggate_call` / `POST https://aziel-runtime.vibelock.workers.dev/v1/fraggate/call` with `{ slug: "aznet", op, payload }`
 - This Worker `GET|POST /mcp` is a **pointer** (never 404) to that door
 - This Worker `/v1/fraggate/*` (list / describe / call / verify) **PROXY** to aziel-runtime via the `AZIEL_RUNTIME` service binding
-- This Worker `/v1/mesh/*` **PROXY** to aziel-runtime suite mesh (default OFF). QNM-BUILD-1.0 live|locked|isolated. No Node Gate. No auto-heal. Not anonymity. Catalog MCP `mesh_*` + FragGate `slug=mesh`
+- This Worker `/v1/mesh/*` **PROXY** to aziel-runtime suite mesh (default OFF). QNM-BUILD-1.0 live|locked|isolated. QNS-CD-1.0 photon QNS1 cite only (qnm-node + aziel-runtime; AZInterface pair custody). Not a Softwares-tab product. No Node Gate. No public qnsd proxy. No auto-heal. Not anonymity. Catalog MCP `mesh_*` + FragGate `slug=mesh`
 
 Catalog LIVE_OPS (same names the Worker UI buttons call): `health`, `pair_status`, `garden_list`, `stamp`, `verify_hash`, `memorial_list`, `memorial_append`, `receipt_verify`, `skill`.
 
@@ -44,7 +44,7 @@ Host: `https://aznet-download-tracker.vibelock.workers.dev`
 | GET | `/v1/fraggate/describe` | PROXY to aziel-runtime FragGate describe. |
 | POST | `/v1/fraggate/call` | PROXY to aziel-runtime FragGate call. |
 | POST | `/v1/fraggate/verify` | PROXY to aziel-runtime FragGate verify. |
-| GET | `/v1/mesh` | PROXY suite mesh status. Default OFF. QNM live\|locked\|isolated. Never enables. |
+| GET | `/v1/mesh` | PROXY suite mesh status. Default OFF. QNM live\|locked\|isolated. QNS-CD-1.0 cite on the payload. Never enables. |
 | GET | `/v1/mesh/nodes` | PROXY Live Nodes roster (5-minute presence). |
 | POST | `/v1/mesh/{enable,disable,join,heartbeat,leave,broadcast}` | PROXY. Bearer required to enable. No auto-heal. Anon-broadcast is not a publish path. |
 | GET | `/v1/health` | Liveness. Does not increment downloads. |
@@ -135,7 +135,7 @@ Author: **Aziel Eliab**. Honest scope: hashes only. Not an alt internet.
 - This Worker OpenAPI: https://aznet-download-tracker.vibelock.workers.dev/openapi.json
 - Sample payload: `GET https://aznet-download-tracker.vibelock.workers.dev/v1/example`
 
-Local UI: Garden Rolodex, Memorial, stamps, receipts, pair-status, FragGate unlock, StaticClock. Worker homepage Live Nodes strip polls `GET /v1/mesh` (default OFF). Device-local `aznet doctor` is not a FragGate live op.
+Local UI: Garden Rolodex, Memorial, stamps, receipts, pair-status, FragGate unlock, StaticClock. Worker homepage Live Nodes strip polls `GET /v1/mesh` (default OFF; QNS-CD-1.0 cite on the payload). Device-local `aznet doctor` is not a FragGate live op.
 
 Works with ChatGPT (GPT Actions / OpenAI), Grok (xAI), Venice, Claude (Anthropic), Cursor (MCP), Glama (MCP), Perplexity, Microsoft Copilot / Bing, Google Gemini / Vertex, Mistral, Meta AI, Apple Intelligence surfaces, Amazon Q tooling, DuckAssist, You.com, Cohere, and other MCP/OpenAPI-capable assistants. Import catalog or Worker OpenAPI as a GPT Action, custom HTTP tool, or custom OpenAPI tool. MCP clients: `POST https://aziel-runtime.vibelock.workers.dev/mcp`.
 
