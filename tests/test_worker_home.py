@@ -26,8 +26,14 @@ def test_seo_and_softwareapplication_json_ld() -> None:
     assert "GPTBot" in HOME
     assert ".pytest_cache" not in HOME
     assert ".wrangler" not in HOME
-    assert "Everblooming sigil" in HOME
+    brandmark = '<img class="brandmark" src="/sigil.png" width="40" height="40" alt="" decoding="async">'
+    assert brandmark in HOME
+    assert brandmark in RUNTIME
     assert "/sigil.png" in HOME
+    assert "Everblooming sigil" not in HOME
+    assert "Everblooming sigil" not in RUNTIME
+    assert "everblooming" not in HOME.lower()
+    assert "everblooming" not in RUNTIME.lower()
 
 
 def test_workspace_calls_real_ops() -> None:
@@ -162,3 +168,12 @@ def test_pairing_and_forbidden_products() -> None:
     assert "Lumen" not in HOME or "Do not wire" in RUNTIME
     for name in ("AZInterface", "AZ-OS Hub"):
         assert name not in HOME
+
+
+def test_official_rose_star_sigil_asset() -> None:
+    sigil = Path("workers/download-tracker/public/sigil.png")
+    data = sigil.read_bytes()
+    assert data[:8] == b"\x89PNG\r\n\x1a\n"
+    assert len(data) == 75035
+    assert '<p class="stamp">Aziel Eliab</p>' in HOME
+    assert '<p class="stamp">Aziel Eliab</p>' in RUNTIME
