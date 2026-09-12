@@ -7,7 +7,7 @@ account_id = "ac575a9b822bea2bed97d0ab73aed238"
 # Parent binds AZNET_DOWNLOADS as DOWNLOADS on first deploy.
 [[kv_namespaces]]
 binding = "DOWNLOADS"
-id = "00000000000000000000000000000001"
+id = "91f9061409c74a83b1e46eeffb7594a2"
 
 [assets]
 directory = "./public"
