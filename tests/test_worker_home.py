@@ -68,6 +68,16 @@ def test_black_white_gold() -> None:
 def test_download_install_and_identity_remain() -> None:
     assert "/download?asset=" in HOME
     assert "aznet-0.1.0.tar.gz" in HOME
+    assert 'id="downloadBtn"' in HOME
+    assert 'href="/download?asset=${DEFAULT_ASSET}"' in HOME or 'href="/download?asset=aznet-0.1.0.tar.gz"' in HOME
+    assert 'class="btn block primary"' in HOME
+    assert ":focus-visible" in HOME
+    assert "prefers-color-scheme: light" in HOME
+    assert 'footer class="quiet"' in HOME
+    assert "AZN-NAME-1.0" in HOME
+    assert ".aziel" in HOME
+    rendered = HOME.split("export function renderHome")[1]
+    assert "THIS IS NOT" not in rendered
     assert "One-click install" in HOME
     assert "Aziel Eliab only" in HOME
     assert "Apache-2.0" in HOME

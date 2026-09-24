@@ -110,8 +110,8 @@ const INSTALL_LINE = "curl -fsSL https://aznet-download-tracker.vibelock.workers
 const MARKER = "Truth Is No Defense — .AZNet — AZ.";
 const DESCRIPTION =
   "AZNet is Aziel Eliab software: a silent verification SIDE-NET (AZN-WP-0.1). Hashes only. AZNet + AZBrowser required. FragGate unlocks access. StaticClock stamps time. Apache-2.0.";
-const HONEST =
-  "THIS IS: a silent verification SIDE-NET (hash continuity, Custodian Garden, Memorial ledger). THIS IS NOT: an alt internet, a host, a payload store, a VPN, or a key store. The Worker is a control-plane / demo garden. Device-local silent node is the real posture. AZNet + AZBrowser are both required. Author Aziel Eliab.";
+const POSTURE =
+  "Silent verification side-net: hash continuity, a Custodian Garden, and a Memorial ledger. This Worker is the control-plane and demo garden. The device-local silent node is the real posture. AZNet and AZBrowser are both required. Author Aziel Eliab.";
 const HOW_TO_CITE =
   "Eliab, Aziel. (2026). AZNet 0.1.0 [Software]. Apache-2.0. https://github.com/AzielEliab/aznet · https://aznet-download-tracker.vibelock.workers.dev/";
 
@@ -316,79 +316,116 @@ export function renderHome(stats) {
 <style>
   :root {
     color-scheme: dark;
-    --bg: #000000; --panel: #0d0d0d; --ink: #ffffff; --muted: #c4c4c4;
-    --line: #3a2f12; --gold: #c9a227; --gold-dim: #c9a227; --pass: #3dba7a; --bad: #d4534b; --focus: #e6d19a;
+    --bg: #000000; --panel: #0d0d0d; --ink: #ffffff; --muted: #c8c8c8;
+    --line: #5c4a1a; --gold: #c9a227; --fill: #c9a227; --on-fill: #000000;
+    --pass: #5dcc8e; --bad: #ff8f86; --focus: #ffffff; --link: #e6d19a;
+    --banner: #14100a; --banner-ink: #f3e2b0; --field: #000000; --on-status: #000000;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      color-scheme: light;
+      --bg: #ffffff; --panel: #f6f5f2; --ink: #141414; --muted: #3a3a3a;
+      --line: #8a7340; --gold: #6e5208; --fill: #141414; --on-fill: #ffffff;
+      --pass: #0d6b3a; --bad: #9b1c1c; --focus: #141414; --link: #6e5208;
+      --banner: #f7f1e3; --banner-ink: #3a2c08; --field: #ffffff; --on-status: #ffffff;
+    }
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
-  body { font: 16px/1.5 system-ui, "Segoe UI", sans-serif; }
-  a { color: #e6d19a; }
+  body { font: 16px/1.5 system-ui, "Segoe UI", sans-serif; overflow-wrap: break-word; }
+  a { color: var(--link); }
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, .goldcard:focus-visible {
+    outline: 2px solid var(--focus); outline-offset: 2px;
+  }
+  a.skip { position: absolute; left: -999px; top: 0; }
+  a.skip:focus {
+    left: 1rem; top: 1rem; z-index: 5; background: var(--fill); color: var(--on-fill);
+    padding: .45rem .75rem; text-decoration: none; outline: 2px solid var(--focus); outline-offset: 2px;
+  }
   code, pre, .mono { font-family: ui-monospace, Menlo, Consolas, monospace; }
-  .wrap { max-width: 60rem; margin: 0 auto; padding: 1.4rem 1.2rem 4.5rem; }
+  .wrap { max-width: 40rem; margin: 0 auto; padding: 1.15rem 1rem 2.6rem; }
+  @media (min-width: 720px) { .wrap { max-width: 60rem; padding: 1.4rem 1.2rem 3rem; } }
   .brandrow { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; }
-  .brandmark { width: 40px; height: 40px; border-radius: 10px; object-fit: cover; flex: 0 0 auto; box-shadow: 0 0 0 1px #d4af3733; }
+  .brandmark { width: 40px; height: 40px; border-radius: 10px; object-fit: cover; flex: 0 0 auto; box-shadow: 0 0 0 1px var(--line); }
   .stamp { margin: 0; color: var(--gold); font-size: .88rem; letter-spacing: .02em; }
-  h1 { font-size: 2rem; letter-spacing: .02em; margin: 0 0 .2rem; color: #fff; }
-  .motto { color: var(--gold); font-style: italic; margin: 0 0 .4rem; }
+  .title-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+  h1 { font-size: 2rem; font-weight: 650; letter-spacing: .02em; margin: 0 0 .2rem; line-height: 1.15; color: var(--ink); }
+  .motto { color: var(--gold); font-style: italic; margin: 0 0 .4rem; font-size: 1.08rem; }
   .marker { color: var(--gold); letter-spacing: .04em; margin: 0 0 .7rem; }
-  .lede { color: var(--muted); margin: 0 0 1rem; max-width: 48rem; }
-  .pill { font: 650 .78rem/1 ui-monospace, Menlo, Consolas, monospace; letter-spacing: .06em; text-transform: uppercase; border: 1px solid var(--gold); border-radius: 999px; padding: .4rem .7rem; color: var(--gold); background: #000; }
-  .pill.ok { color: var(--pass); border-color: #2f6b48; }
-  .pill.bad { color: var(--bad); border-color: #7a2f2c; }
-  nav.toc { display: flex; flex-wrap: wrap; gap: .55rem; margin: 0 0 1.1rem; }
-  nav.toc a { text-decoration: none; color: #fff; border: 1px solid var(--gold); background: var(--panel); border-radius: 999px; padding: .35rem .75rem; font-size: .88rem; }
-  .banner { border: 1px solid var(--gold); background: #14100a; color: #f0d78c; padding: .9rem 1rem; border-radius: 10px; margin: 0 0 1.15rem; font-size: .94rem; }
-  .card, .workspace, .cite { border: 1px solid var(--gold); border-radius: 14px; padding: 1.15rem 1.2rem 1.25rem; background: var(--panel); margin: 0 0 1.1rem; }
-  h2 { font-size: 1.12rem; margin: 0 0 .45rem; letter-spacing: .04em; color: #fff; }
+  .lede { color: var(--muted); margin: 0 0 1rem; max-width: 46rem; }
+  .asset-note { color: var(--muted); font-size: .92rem; margin: 0 0 1rem; }
+  .features { display: grid; grid-template-columns: 1fr; gap: .45rem .1rem; margin: 0 0 1.15rem; padding: 0; list-style: none; max-width: 46rem; }
+  .features li { margin: 0; padding-left: .9rem; position: relative; }
+  .features li::before { content: ""; position: absolute; left: 0; top: .55rem; width: .35rem; height: .35rem; border-radius: 50%; background: var(--gold); }
+  @media (min-width: 720px) { .features { grid-template-columns: 1fr 1fr; gap: .55rem 1.4rem; } }
+  a.btn.block.primary {
+    display: block; width: 100%; max-width: none; margin: 0 0 .7rem; padding: 1.05rem 1.2rem;
+    border: 1px solid transparent; border-radius: 9px; background: var(--fill); color: var(--on-fill);
+    text-align: center; text-decoration: none; font: 700 1.25rem/1.1 ui-monospace, Menlo, Consolas, monospace;
+    letter-spacing: .03em; cursor: pointer;
+  }
+  @media (min-width: 720px) { a.btn.block.primary { max-width: 40rem; } }
+  a.btn.block.primary:hover { filter: brightness(1.08); }
+  .pill { font: 650 .78rem/1 ui-monospace, Menlo, Consolas, monospace; letter-spacing: .06em; text-transform: uppercase; border: 1px solid var(--line); border-radius: 999px; padding: .4rem .7rem; color: var(--gold); background: var(--bg); }
+  .pill.ok { color: var(--pass); border-color: var(--pass); }
+  .pill.bad { color: var(--bad); border-color: var(--bad); }
+  nav.toc { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0 0 1.1rem; }
+  nav.toc a { text-decoration: none; color: var(--ink); border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: .45rem .8rem; font-size: .88rem; }
+  .banner { border: 1px solid var(--line); background: var(--banner); color: var(--banner-ink); padding: .9rem 1rem; border-radius: 10px; margin: 0 0 1.15rem; font-size: .94rem; }
+  .card, .workspace, .cite { border: 1px solid var(--line); border-radius: 14px; padding: 1.15rem 1.1rem 1.25rem; background: var(--panel); margin: 0 0 1.1rem; }
+  h2 { font-size: 1.12rem; margin: 0 0 .45rem; letter-spacing: .04em; color: var(--ink); }
+  h3 { font-size: 1rem; color: var(--ink); }
   .kicker { display: block; font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); margin-bottom: .15rem; font-family: ui-monospace, Menlo, Consolas, monospace; }
   .actions { display: flex; flex-wrap: wrap; gap: .5rem; margin: .95rem 0 .2rem; }
   button, a.btn { font: 700 .88rem/1.1 ui-monospace, Menlo, Consolas, monospace; letter-spacing: .03em; padding: .72rem .9rem; border-radius: 9px; border: 1px solid transparent; cursor: pointer; text-decoration: none; display: inline-block; }
-  button.gold, a.btn.gold { background: var(--gold); color: #000; }
-  button.ghost, a.btn.ghost { background: transparent; color: #fff; border-color: var(--gold); }
-  button.copied { background: var(--pass); color: #000; }
-  .status { margin: 0 0 .8rem; padding: .75rem .85rem; border-radius: 10px; border: 1px solid var(--line); background: #000; color: var(--muted); }
-  .status.ok { color: var(--pass); border-color: #2f6b48; }
-  .status.bad { color: var(--bad); border-color: #7a2f2c; }
-  .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .55rem; margin: 0 0 .85rem; }
-  @media (max-width: 720px) { .metrics { grid-template-columns: 1fr 1fr; } }
-  .metric { border: 1px solid var(--gold); border-radius: 10px; padding: .55rem .65rem; background: #000; }
+  button.gold, a.btn.gold { background: var(--fill); color: var(--on-fill); }
+  button.ghost, a.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+  button.copied { background: var(--pass); color: var(--on-status); }
+  .status { margin: 0 0 .8rem; padding: .75rem .85rem; border-radius: 10px; border: 1px solid var(--line); background: var(--field); color: var(--muted); }
+  .status.ok { color: var(--pass); border-color: var(--pass); }
+  .status.bad { color: var(--bad); border-color: var(--bad); }
+  .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: .55rem; margin: 0 0 .85rem; }
+  @media (min-width: 720px) { .metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .metric { border: 1px solid var(--line); border-radius: 10px; padding: .55rem .65rem; background: var(--field); }
   .metric b { display: block; font-size: .72rem; color: var(--gold); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
-  .metric span { display: block; font-size: .78rem; word-break: break-all; color: #fff; }
-  .rolodex { display: grid; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: .65rem; }
-  .goldcard { border: 1px solid var(--gold); min-height: 7rem; padding: .75rem; border-radius: 10px; background: #000; color: #fff; cursor: pointer; }
+  .metric span { display: block; font-size: .78rem; word-break: break-all; color: var(--ink); }
+  .rolodex { display: grid; grid-template-columns: 1fr; gap: .65rem; }
+  @media (min-width: 520px) { .rolodex { grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); } }
+  .goldcard { border: 1px solid var(--line); min-height: 7rem; padding: .75rem; border-radius: 10px; background: var(--field); color: var(--ink); cursor: pointer; }
   .goldcard .full { display: none; font: 11px/1.3 ui-monospace, Menlo, Consolas, monospace; word-break: break-all; color: var(--gold); }
-  .goldcard:hover .full { display: block; }
-  .goldcard:hover .hint { display: none; }
-  input, select { width: 100%; padding: .58rem .7rem; border: 1px solid var(--gold); border-radius: 8px; background: #000; color: #fff; font: inherit; }
+  .goldcard:hover .full, .goldcard:focus-visible .full { display: block; }
+  .goldcard:hover .hint, .goldcard:focus-visible .hint { display: none; }
+  input, select { width: 100%; max-width: 100%; padding: .58rem .7rem; border: 1px solid var(--line); border-radius: 8px; background: var(--field); color: var(--ink); font: inherit; }
   .nums { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; margin: 0 0 1rem; }
-  .count { font-size: 2.1rem; font-variant-numeric: tabular-nums; font-weight: 700; margin: 0; color: #fff; }
+  .count { font-size: 2.1rem; font-variant-numeric: tabular-nums; font-weight: 700; margin: 0; color: var(--ink); }
   .count span { display: block; font-size: .92rem; font-weight: 500; color: var(--muted); }
-  .btns { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin: 0 0 .85rem; }
-  @media (max-width: 520px) { .btns { grid-template-columns: 1fr; } }
-  a.btn.block, button.btn.block { display: block; width: 100%; text-align: center; font-size: 1.15rem; padding: 1rem 1.1rem; }
-  a.btn.primary { background: #fff; color: #000; }
-  button.btn.install { background: var(--gold); color: #000; }
-  pre { background: #000; padding: .75rem .9rem; overflow: auto; border-radius: 8px; font-size: .82rem; border: 1px solid var(--line); color: #fff; }
-  .meta { margin-top: 1rem; color: var(--muted); font-size: .92rem; }
-  footer { color: var(--muted); font-size: .9rem; }
-  #meshStrip { border: 1px solid var(--gold); border-radius: 14px; padding: .85rem 1rem; background: var(--panel); margin: 0 0 1.1rem; display: flex; flex-wrap: wrap; align-items: center; gap: .7rem 1rem; font-size: .88rem; color: var(--muted); }
-  #meshStrip .live { color: #fff; }
+  a.btn.block, button.btn.block { display: block; width: 100%; max-width: 100%; text-align: center; }
+  button.btn.install { background: transparent; color: var(--ink); border: 1px solid var(--line); font-size: 1rem; padding: .85rem 1rem; }
+  pre { background: var(--field); padding: .75rem .9rem; overflow: auto; border-radius: 8px; font-size: .82rem; border: 1px solid var(--line); color: var(--ink); max-width: 100%; }
+  .meta { margin-top: 1rem; color: var(--muted); font-size: .92rem; overflow-wrap: anywhere; }
+  footer.quiet { color: var(--muted); font-size: .9rem; margin-top: .4rem; }
+  footer.quiet p { margin: .35rem 0; }
+  footer.quiet a { color: var(--ink); }
+  #meshStrip { border: 1px solid var(--line); border-radius: 14px; padding: .85rem 1rem; background: var(--panel); margin: 0 0 1.1rem; display: flex; flex-wrap: wrap; align-items: center; gap: .7rem 1rem; font-size: .88rem; color: var(--muted); }
+  #meshStrip .live { color: var(--ink); }
   #meshStrip .live b { color: var(--gold); font-size: 1.35rem; margin-right: .35rem; }
   #meshStrip .rollup b { color: var(--gold); }
-  #meshStrip button { font: 700 .78rem/1 ui-monospace, Menlo, Consolas, monospace; height: 2rem; padding: 0 .75rem; border-radius: 8px; background: #000; color: #fff; border: 1px solid var(--gold); cursor: pointer; }
-  #meshStrip button:hover { background: #241c0d; color: var(--gold); }
-  #meshStrip input { width: 10rem; padding: .4rem .55rem; border: 1px solid var(--gold); border-radius: 8px; background: #000; color: #fff; font: inherit; }
-  #meshProducts { flex-basis: 100%; margin: 0; }
+  .mesh-actions { display: flex; flex-wrap: wrap; gap: .45rem; width: 100%; }
+  #meshStrip button { font: 700 .78rem/1 ui-monospace, Menlo, Consolas, monospace; min-height: 2rem; padding: 0 .75rem; border-radius: 8px; background: var(--field); color: var(--ink); border: 1px solid var(--line); cursor: pointer; }
+  #meshStrip button:hover { color: var(--gold); }
+  #meshStrip input { width: min(100%, 16rem); max-width: 100%; padding: .4rem .55rem; border: 1px solid var(--line); border-radius: 8px; background: var(--field); color: var(--ink); font: inherit; }
+  #meshProducts { flex-basis: 100%; margin: 0; overflow-wrap: anywhere; }
 </style>
 </head>
 <body>
+  <a class="skip" href="#install">Skip to install</a>
   <div class="wrap">
-    <header>
+    <header class="hero">
       <div class="brandrow">
         <img class="brandmark" src="/sigil.png" width="40" height="40" alt="" decoding="async">
         <p class="stamp">Aziel Eliab</p>
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap">
+      <div class="title-row">
         <div>
           <h1>AZNet</h1>
           <p class="motto">Verification without hosting. Presence without authority.</p>
@@ -396,7 +433,15 @@ export function renderHome(stats) {
         </div>
         <p class="pill" id="api-pill">API · checking</p>
       </div>
-      <p class="lede">v${VERSION} software by <strong>${AUTHOR}</strong> only. Silent verification SIDE-NET. Hashes only. AZNet + <a href="${AZBROWSER}">AZBrowser</a> are both required. FragGate unlocks access. StaticClock stamps time. Forks are welcome and always allowed.</p>
+      <p class="lede">v${VERSION} software by <strong>${AUTHOR}</strong> only. Silent verification side-net. Hashes only. AZNet + <a href="${AZBROWSER}">AZBrowser</a> are both required. FragGate unlocks access. StaticClock stamps time. Forks are welcome and always allowed.</p>
+      <a class="btn block primary" id="downloadBtn" href="/download?asset=${DEFAULT_ASSET}" aria-describedby="downloadNote">Download</a>
+      <p class="asset-note" id="downloadNote">${n} downloads · ${DEFAULT_ASSET} · one package, counted on this Worker for every branch and fork</p>
+      <ul class="features">
+        <li>Hashes only. This page stamps and verifies them.</li>
+        <li>Custodian Garden, receipts, and a Memorial ledger stay on this page.</li>
+        <li>Pair with AZBrowser, then FragGate unlocks access. StaticClock stamps time.</li>
+        <li>The package resolves <code>.aziel</code> names from a local signed ledger (AZN-NAME-1.0). Regular browsers do not see them.</li>
+      </ul>
       <nav class="toc" aria-label="Product sections">
         <a href="#garden">Garden</a>
         <a href="#memorial">Memorial</a>
@@ -404,13 +449,13 @@ export function renderHome(stats) {
         <a href="#receipts">Receipts</a>
         <a href="#pair">Pair</a>
         <a href="#meshStrip">Live Nodes</a>
-        <a href="#install">Download / install</a>
+        <a href="#install">Install</a>
         <a href="/v1/skill">Skill</a>
         <a href="/openapi.json">OpenAPI</a>
         <a href="/mcp">/mcp pointer</a>
         <a href="${GITHUB_REPO}">GitHub</a>
       </nav>
-      <p class="banner">${escapeHtml(HONEST)}</p>
+      <p class="banner">${escapeHtml(POSTURE)}</p>
     </header>
 
     <div id="meshStrip" aria-label="Suite Live Nodes">
@@ -418,7 +463,7 @@ export function renderHome(stats) {
       <div id="meshLine">Suite mesh: off (default). QNM-BUILD-1.0. QNS-CD-1.0. Not an anonymity network.</div>
       <div class="rollup">live <b id="qnmLive">0</b> · locked <b id="qnmLocked">0</b> · isolated <b id="qnmIsolated">0</b></div>
       <div>No Node Gate · No auto-heal · Aziel Eliab only</div>
-      <div>
+      <div class="mesh-actions">
         <input id="meshBearer" type="text" maxlength="80" placeholder="bearer (required to enable)" aria-label="mesh bearer">
         <button id="meshEnable" type="button" title="Enable suite mesh. Declared bearer required. Default off.">Enable</button>
         <button id="meshDisable" type="button" title="Disable suite mesh (always allowed)">Disable</button>
@@ -471,7 +516,7 @@ export function renderHome(stats) {
     <section class="card" id="memorial">
       <h2><span class="kicker">memorial</span>Memorial ledger</h2>
       <p>Terminal compromise: genesis / final hash, timestamps, non-actionable summary. No exploit details.</p>
-      <select id="reason">
+      <select id="reason" aria-label="Memorial reason">
         <option>isolation</option>
         <option>ui_altered</option>
         <option>integrity_refuse</option>
@@ -505,11 +550,8 @@ export function renderHome(stats) {
         <p class="count">${v}<span>Views</span></p>
         <p class="count">${n}<span>Downloads</span></p>
       </div>
-      <p>Download saves the gzip from this Worker (HTTP 200, counted). After install, run <code>aznet ui</code> and open http://127.0.0.1:8771 on this computer only.</p>
-      <div class="btns">
-        <a class="btn block primary" href="/download?asset=${DEFAULT_ASSET}">Download</a>
-        <button type="button" class="btn block install" id="install-btn">One-click install</button>
-      </div>
+      <p>The Download button above saves the gzip from this Worker (HTTP 200, counted). The same file is <a href="/download?asset=${DEFAULT_ASSET}">${DEFAULT_ASSET}</a>. After install, run <code>aznet ui</code> and open http://127.0.0.1:8771 on this computer only.</p>
+      <button type="button" class="btn block install" id="install-btn">One-click install</button>
       <pre id="install-cmd">${INSTALL_LINE}</pre>
       <p class="meta">The download count ticks on the Download click. No 302 to GitHub. ${DEFAULT_ASSET} — ${n} counted.</p>
       <p class="iso">Isolated counter: Worker <code>aznet-download-tracker</code>, project <code>aznet</code>, KV <code>AZNET_DOWNLOADS</code>. /v1 and /mcp do not increment downloads.</p>
@@ -528,10 +570,10 @@ export function renderHome(stats) {
       <p><a href="${CATALOG}">Catalog</a> · <a href="${CATALOG_PRODUCT}">Catalog product</a> · <a href="${GITHUB_REPO}">GitHub</a> · <a href="${HOST}/download">Download</a> · <a href="/llms.txt">llms.txt</a></p>
     </section>
 
-    <footer>
+    <footer class="quiet">
       <p>Apache-2.0 · ${AUTHOR} · AZNet v${VERSION}</p>
       <p>${escapeHtml(MARKER)}</p>
-      <p>Hashes only. UI is a mandatory witness. The sequence cannot be altered without detection.</p>
+      <p><a href="${GITHUB_REPO}">GitHub</a> · <a href="/openapi.json">OpenAPI</a> · <a href="/mcp">MCP</a> · <a href="/cite.json">Cite</a> · <a href="/count">Count</a></p>
     </footer>
   </div>
   <script>
@@ -616,8 +658,14 @@ export function renderHome(stats) {
         (g.cards || []).forEach(function (c) {
           var el = document.createElement("div");
           el.className = "goldcard";
-          el.innerHTML = "<div class='kicker'>" + c.label + "</div><div class='hint'>hover reveal</div><div class='full'>" + c.hash_hex + "</div>";
+          el.tabIndex = 0;
+          el.setAttribute("role", "button");
+          el.setAttribute("aria-label", "Use hash " + c.label);
+          el.innerHTML = "<div class='kicker'>" + c.label + "</div><div class='hint'>reveal hash</div><div class='full'>" + c.hash_hex + "</div>";
           el.onclick = function () { $("hash-hex").value = c.hash_hex; };
+          el.onkeydown = function (ev) {
+            if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); el.click(); }
+          };
           box.appendChild(el);
         });
       }).catch(function () {});
