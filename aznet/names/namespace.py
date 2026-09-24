@@ -308,7 +308,8 @@ def alignment_points() -> list[dict[str, str]]:
             "note": (
                 f"Friendly claims are checked against {BLOCKLIST_VERSION}, the runtime token list "
                 "plus the tokens this library already refused. It is a label list, not a classifier. "
-                "Paraphrases, misspellings, and other languages are misses. A hit here is POLICY. "
+                "Separators are stripped and digit lookalikes 0, 1, 3, 4, 5, and 7 are folded, "
+                "matching nameBlockHit. Other misspellings and other languages are misses. A hit here is POLICY. "
                 "The relay records NAME-BLOCK from the claimant's own signature."
             ),
         },

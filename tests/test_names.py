@@ -10,6 +10,7 @@ from aznet.errors import NameRefuse
 from aznet.names import honesty, resolve, sign_advisory, sign_appeal, sign_isolation, sign_record, sign_vouch, sign_witness
 from aznet.names.codec import b64url_decode, canonicalize, handle_from_public, statement_hash
 from aznet.names.ed25519 import public_key, sign, verify
+from aznet.names.blocklist import BLOCKLIST_VERSION, name_blocked
 from aznet.names.ledger import NameLedger
 from aznet.names.namespace import internet_reach
 from aznet.names.record import prepare_statement
@@ -624,6 +625,23 @@ def test_honesty_machine_surface() -> None:
     assert surface["relay_gossip"] is False
     assert surface["products_merged"] is False
     assert "azgrid" in surface["factory_labels"]
+
+
+def test_blocklist_fold_matches_runtime() -> None:
+    """Shared with aziel-runtime nameBlockHit: separators and digit lookalikes."""
+    for label in ("child.porn", "child-porn", "ch1ldp0rn", "child.porn.aziel", "child-porn.aziel", "ch1ldp0rn.aziel"):
+        assert name_blocked(label) == BLOCKLIST_VERSION
+    for label in ("sussex", "analysis", "essex", "sussex.aziel", "analysis.aziel", "child", "childcare"):
+        assert name_blocked(label) is None
+    owner = _seed(89)
+    for label in ("child-porn.aziel", "ch1ldp0rn.aziel"):
+        try:
+            _claim(owner, label)
+            raise AssertionError(f"{label} must be refused")
+        except NameRefuse as exc:
+            assert exc.code == "POLICY"
+            assert "porn" not in str(exc)
+            assert "child" not in str(exc)
 
 
 def test_reserved_slots_blocklist_and_self_cert_outside_the_cap() -> None:
