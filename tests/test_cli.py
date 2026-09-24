@@ -66,8 +66,9 @@ def test_cli_garden_and_time(capsys) -> None:
 def test_cli_welcome_help_and_misuse(capsys) -> None:
     assert main([]) == 0
     welcome = capsys.readouterr().out
-    assert "aznet pair" in welcome
-    assert "aznet ui" in welcome
+    assert "Next: open the local page." in welcome
+    assert welcome.index("aznet ui") < welcome.index("aznet pair")
+    assert "pair this node" not in welcome
     assert "Not an alt" not in welcome
     assert "required" not in welcome.lower()
     assert main(["--help"]) == 0

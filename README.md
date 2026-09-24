@@ -1,6 +1,6 @@
 # AZNet
 
-AZNet keeps a device-local hash record and pairs with AZBrowser before a stamp is written.
+AZNet keeps a device-local hash record. The local page writes a pair token on this ledger when one is not there yet.
 
 **Author:** Aziel Eliab
 **Date:** September 2026 · v0.1.0
@@ -10,7 +10,7 @@ AZNet keeps a device-local hash record and pairs with AZBrowser before a stamp i
 
 1. Install: `python -m venv .venv && source .venv/bin/activate && pip install -e .`
 2. Open the local page: `aznet ui`
-3. The terminal prints `Open http://127.0.0.1:8771/`. Click **Pair AZBrowser**.
+3. The terminal prints `Open http://127.0.0.1:8771/`. The page shows **Paired** when that token is on the ledger. Gold Pages and stamps are under **Advanced**.
 
 `aznet doctor` prints a pass/fail check. `aznet --help` lists commands. Add `--json` for the machine-readable fields (`aznet time --json`).
 
@@ -102,7 +102,8 @@ Parent lists after deploy. Expected URL:
 
 `aznet ui` prints `Open http://127.0.0.1:8771/` and serves that page on this machine only.
 
-The first screen is **Pair AZBrowser**, a short status line, and the time in words.
+The first screen shows **Paired** when the ledger token is fine, plus the time in words.
+Re-pair stays under **Advanced**, and is the primary button only when the token is broken or the write did not finish.
 Stamps, Gold Pages, memorials, and receipts are under **Advanced**.
 Light and dark follow the system. **Theme** on the page can switch them.
 Keyboard focus uses a gold ring. The layout fits a phone width.
@@ -129,8 +130,8 @@ aznet doctor
 Default ledger is `./aznet_ledger.jsonl`. Override with
 `AZNET_LEDGER` or `--ledger`.
 
-Pairing is mandatory. Stamp refuses until AZNet + AZBrowser are paired
-and FragGate has unlocked access.
+`aznet ui` writes a local pair token when the ledger is unpaired.
+A stamp still needs that token and FragGate unlock.
 
 ## iPhone & Android
 
@@ -280,7 +281,7 @@ Author: **Aziel Eliab**. Honest scope: hashes only.
 - This Worker skill: `GET https://aznet-download-tracker.vibelock.workers.dev/v1/skill`
 - This Worker OpenAPI: https://aznet-download-tracker.vibelock.workers.dev/openapi.json
 
-Local page: Pair, time in words, and Advanced for Gold Pages, memorials, stamps, receipts, and FragGate unlock. Worker homepage adds the suite Live Nodes strip (`GET /v1/mesh`). Then `aznet doctor`.
+Local page: Paired when the ledger token is fine, time in words, and Advanced for Gold Pages, memorials, stamps, receipts, Re-pair, and FragGate unlock. Worker homepage adds the suite Live Nodes strip (`GET /v1/mesh`). Then `aznet doctor`.
 
 Counted download (gzip HTTP 200, no 302): https://aznet-download-tracker.vibelock.workers.dev/download?asset=aznet-0.1.0.tar.gz
 Count JSON: https://aznet-download-tracker.vibelock.workers.dev/count

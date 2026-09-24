@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import html
 import json
+import socket
 import sys
+import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
 
@@ -15,6 +17,8 @@ from aznet.garden import garden_view
 from aznet.witness import expected_witness
 
 AUTHOR = "Aziel Eliab"
+AZBROWSER_PROBE = ("127.0.0.1", 8878)
+_PAIR_LOCK = threading.Lock()
 PAGE = """<!doctype html>
 <html lang="en">
 <head>
@@ -156,7 +160,7 @@ try {
 </style>
 </head>
 <body>
-  <a class="skip" href="#pair">Skip to Pair</a>
+  <a class="skip" href="#pair">Skip to AZNet</a>
   <header class="bar">
     <div><span class="brand">AZNet</span><span class="who">Aziel Eliab</span></div>
     <button type="button" class="theme" id="theme">Theme</button>
@@ -164,11 +168,13 @@ try {
   <main class="wrap">
     <section class="card hero" id="pair">
       <span class="kicker">On this machine</span>
-      <h1>Pair with AZBrowser</h1>
-      <p class="lead">AZNet keeps a device-local hash record. Pair before a stamp is written.</p>
+      <h1>AZNet</h1>
+      <p class="lead">This machine keeps a local hash record. The pair token is a ledger record.</p>
       <p id="pair-status" class="status">__STATUS__</p>
+      <p id="peer-line" class="next">__PEER__</p>
       <div class="actions">
-        <button type="button" class="primary" id="btn-pair">Pair AZBrowser</button>
+        <button type="button" class="primary" id="btn-open"__OPEN_HIDDEN__>Open Advanced</button>
+        <button type="button" class="primary" id="btn-pair-now"__PAIR_HIDDEN__>__PAIR_LABEL__</button>
       </div>
       <p id="notice" class="notice" role="status"></p>
       <p class="next">Then <code>aznet doctor</code> checks this install.</p>
@@ -182,9 +188,17 @@ try {
     <details class="fold" id="more">
       <summary>Advanced</summary>
 
+      <div class="section">
+        <h2>Pair token</h2>
+        <p>Re-pair appends another local pair token to this ledger.</p>
+        <div class="actions">
+          <button type="button" id="btn-pair">Re-pair</button>
+        </div>
+      </div>
+
       <section class="section" id="unlock">
         <h2>FragGate unlock</h2>
-        <p>Unlock after Pair. FragGate sets the pair flag for garden, stamp, and memorial writes.</p>
+        <p>Unlock sets the pair flag for a stamp, memorial, or other write.</p>
         <p>Kernel: <a href="https://github.com/AzielEliab/fraggate">fraggate</a>. Catalog slug <code>aznet</code>.</p>
         <div class="actions">
           <button type="button" id="btn-unlock">FragGate unlock</button>
@@ -199,7 +213,7 @@ try {
 
       <section class="section" id="stamps">
         <h2>Stamp</h2>
-        <p>Stores one hash. Pair and unlock first.</p>
+        <p>Stores one hash. Unlock first when a write needs the pair flag.</p>
         <label for="hash-hex">Hash (64 hex characters)</label>
         <input id="hash-hex" maxlength="64" autocomplete="off" spellcheck="false" placeholder="64 hex characters">
         <div class="actions">
@@ -256,16 +270,27 @@ try {
     }
     function statusWords(pair, unlock) {
       if (pair === "PAIRED" && unlock === "UNLOCKED") return "Paired and unlocked.";
-      if (pair === "PAIRED") return "Paired. FragGate is still locked.";
-      if (pair === "BROKEN") return "Pair is broken. Pair again to continue.";
-      if (!pair || pair === "UNPAIRED") return "Not paired yet — click Pair.";
+      if (pair === "PAIRED") return "Paired. Ready.";
+      if (pair === "BROKEN") return "Pair is broken. Re-pair to continue.";
+      if (!pair || pair === "UNPAIRED") return "Not paired. The ledger write did not finish.";
       return "Pair status: " + pair + ".";
+    }
+    function paintHero(pair, unlock) {
+      document.getElementById("pair-status").textContent = statusWords(pair, unlock);
+      var needs = pair !== "PAIRED";
+      var openBtn = document.getElementById("btn-open");
+      var pairBtn = document.getElementById("btn-pair-now");
+      if (openBtn) openBtn.hidden = needs;
+      if (pairBtn) {
+        pairBtn.hidden = !needs;
+        pairBtn.textContent = pair === "BROKEN" ? "Re-pair" : "Pair";
+      }
     }
     function fail(err) {
       var msg = (err && err.message) ? String(err.message) : "That did not work.";
       var next = "";
       if (msg.indexOf("pair_flag required") !== -1) next = " Next: open Advanced and choose FragGate unlock.";
-      else if (msg.indexOf("pair_token") !== -1) next = " Next: click Pair.";
+      else if (msg.indexOf("pair_token") !== -1) next = " Next: open Advanced and choose Re-pair.";
       else if (msg.indexOf("64-char") !== -1) next = " Next: choose a Gold Pages card, then Stamp.";
       else next = " Next: aznet doctor";
       document.getElementById("notice").textContent = msg + next;
@@ -282,11 +307,9 @@ try {
       }
     }
     function show(data) {
-      if (data.pair_status) {
-        document.getElementById("pair-status").textContent = statusWords(data.pair_status, data.unlock_status || "");
-      }
+      if (data.pair_status) paintHero(data.pair_status, data.unlock_status || "");
       var line = "";
-      if (data.action === "paired") line = "Paired. FragGate is still locked.";
+      if (data.action === "paired") line = "Paired. Ready.";
       else if (data.action === "unlocked") line = "Paired and unlocked.";
       else if (data.action === "stamped") line = "Stamp written.";
       else if (data.action === "verify") line = data.ok ? "Ledger intact." : "Ledger check failed.";
@@ -382,9 +405,17 @@ try {
       try { localStorage.setItem("aznet-theme", themeMode); } catch (e) {}
       applyTheme(themeMode);
     });
-    document.getElementById("btn-pair").addEventListener("click", function (ev) {
-      api("/local/pair", {}, ev.currentTarget).then(show).catch(fail);
+    document.getElementById("btn-open").addEventListener("click", function () {
+      var more = document.getElementById("more");
+      more.open = true;
+      var garden = document.getElementById("garden");
+      if (garden) garden.scrollIntoView({ block: "start" });
     });
+    function repair(ev) {
+      api("/local/pair", {}, ev.currentTarget).then(show).catch(fail);
+    }
+    document.getElementById("btn-pair").addEventListener("click", repair);
+    document.getElementById("btn-pair-now").addEventListener("click", repair);
     document.getElementById("btn-unlock").addEventListener("click", function (ev) {
       api("/local/unlock", {}, ev.currentTarget).then(show).catch(fail);
     });
@@ -414,27 +445,65 @@ def pair_words(pair: str, unlock: str) -> str:
     if pair == "PAIRED" and unlock == "UNLOCKED":
         return "Paired and unlocked."
     if pair == "PAIRED":
-        return "Paired. FragGate is still locked."
+        return "Paired. Ready."
     if pair == "BROKEN":
-        return "Pair is broken. Pair again to continue."
+        return "Pair is broken. Re-pair to continue."
     if not pair or pair == "UNPAIRED":
-        return "Not paired yet — click Pair."
+        return "Not paired. The ledger write did not finish."
     return f"Pair status: {pair}."
 
 
-def render_page() -> str:
+def azbrowser_seen(host: str = AZBROWSER_PROBE[0], port: int = AZBROWSER_PROBE[1], timeout: float = 0.3) -> bool:
+    """True when a TCP connection to the AZBrowser loopback port is accepted."""
     try:
-        ledger = Ledger.load(default_ledger_path())
-        status = pair_words(ledger.pair_status(), ledger.unlock_status())
+        with socket.create_connection((host, port), timeout):
+            return True
+    except OSError:
+        return False
+
+
+def ensure_local_pair(ledger: Ledger | None = None) -> Ledger:
+    """Write one PAIR receipt when the ledger is UNPAIRED. Leave BROKEN alone."""
+    current = ledger if ledger is not None else Ledger.load(default_ledger_path())
+    if current.pair_status() != "UNPAIRED":
+        return current
+    with _PAIR_LOCK:
+        path = current.path if current.path is not None else default_ledger_path()
+        fresh = Ledger.load(path)
+        if fresh.pair_status() != "UNPAIRED":
+            return fresh
+        try:
+            fresh.pair()
+        except Exception:
+            return fresh
+        return fresh
+
+
+def render_page() -> str:
+    peer = azbrowser_seen()
+    try:
+        ledger = ensure_local_pair()
+        pair = ledger.pair_status()
+        unlock = ledger.unlock_status()
     except Exception:
-        status = pair_words("UNPAIRED", "LOCKED")
+        pair, unlock = "UNPAIRED", "LOCKED"
+    needs = pair != "PAIRED"
+    peer_line = (
+        "127.0.0.1:8878 accepted a connection."
+        if peer
+        else "AZBrowser was not seen on 127.0.0.1:8878."
+    )
     return (
         PAGE.replace("__MARKER__", html.escape(MARKER))
         .replace("__HONEST__", html.escape(HONEST))
         .replace("__WITNESS__", witness_digest())
         .replace("__SECTIONS__", json.dumps(list(WITNESS_SECTIONS)))
-        .replace("__STATUS__", html.escape(status))
+        .replace("__STATUS__", html.escape(pair_words(pair, unlock)))
+        .replace("__PEER__", html.escape(peer_line))
         .replace("__VERSION__", html.escape(VERSION))
+        .replace("__OPEN_HIDDEN__", " hidden" if needs else "")
+        .replace("__PAIR_HIDDEN__", "" if needs else " hidden")
+        .replace("__PAIR_LABEL__", "Re-pair" if pair == "BROKEN" else "Pair")
     )
 
 
@@ -527,6 +596,14 @@ def serve(host: str = "127.0.0.1", port: int = 8771) -> int:
             file=sys.stderr,
         )
         return 1
+    try:
+        ensure_local_pair()
+    except Exception as exc:
+        print(
+            f"Could not write a pair token. {exc}\nNext: open the page, or run aznet pair",
+            file=sys.stderr,
+            flush=True,
+        )
     print(f"Open http://{host}:{port}/", flush=True)
     try:
         httpd.serve_forever()

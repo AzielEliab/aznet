@@ -29,5 +29,5 @@ echo
 echo "Installed AZNet."
 echo "Next: aznet ui"
 echo "Open http://127.0.0.1:8771/"
-echo "Then click Pair AZBrowser."
+echo "The page writes a local pair token if the ledger does not have one."
 echo "Author: Aziel Eliab."

@@ -41,8 +41,8 @@ from aznet.witness import expected_witness
 HELP = f"""\
 usage: aznet [--json] <command> [options]
 
-AZNet keeps a device-local hash record and pairs with AZBrowser
-before a stamp is written.
+AZNet keeps a device-local hash record.
+The local page writes a pair token on this ledger when one is not there yet.
 
 Author: Aziel Eliab
 
@@ -72,9 +72,9 @@ Advanced:
 Examples:
   aznet
   aznet ui
-  aznet pair
   aznet doctor
   aznet time --json
+  aznet pair
 
 --json prints the same fields the local API returns.
 Version {__version__}.
@@ -85,14 +85,15 @@ def _welcome() -> str:
     return (
         f"AZNet {__version__} — Aziel Eliab\n"
         "\n"
-        "AZNet keeps a device-local hash record and pairs with AZBrowser before a stamp is written.\n"
+        "AZNet keeps a device-local hash record. The local page writes a pair token on this ledger when one is not there yet.\n"
         "\n"
-        "Next: pair this node, or open the local page.\n"
+        "Next: open the local page.\n"
         "\n"
-        "  aznet pair\n"
         "  aznet ui\n"
         "  aznet doctor\n"
         "  aznet --help\n"
+        "\n"
+        "Re-pair the local token with: aznet pair\n"
     )
 
 
@@ -174,7 +175,7 @@ def _build_parser() -> FriendlyParser:
     )
     p_ui.add_argument("--port", type=int, default=8771, help="Bind port (default 8771).")
 
-    p_pair = sub.add_parser("pair", help="Pair this node with AZBrowser.")
+    p_pair = sub.add_parser("pair", help="Write a local pair token. Recovery when the ledger is unpaired or broken.")
     _json_arg(p_pair, suppress=True)
     p_pair.add_argument("--azbrowser", default="https://github.com/AzielEliab/azbrowser")
     p_pair.add_argument("--aznet-node", default="device-local", dest="aznet_node")
