@@ -787,15 +787,15 @@ def test_isolation_hides_names_and_appeal_does_not_lift_it(tmp_path: Path) -> No
 
 
 def test_cli_resolve_fallthrough_and_names(capsys) -> None:
-    assert main(["names"]) == 0
+    assert main(["names", "--json"]) == 0
     payload = json.loads(capsys.readouterr().out)
     assert payload["icann_registration"] is False
     assert payload["pow_bits_min"] == 8
-    assert main(["resolve", "baku.az"]) == 1
+    assert main(["--json", "resolve", "baku.az"]) == 1
     refused = json.loads(capsys.readouterr().out)
     assert refused["code"] == "DNS_FALLTHROUGH"
     handle = _handle(_seed(90))
-    assert main(["resolve", handle[1:].lower() + ".aziel"]) == 0
+    assert main(["resolve", "--json", handle[1:].lower() + ".aziel"]) == 0
     owned = json.loads(capsys.readouterr().out)
     assert owned["code"] == "SELF_CERT"
     assert owned["owner"] == handle

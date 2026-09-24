@@ -27,6 +27,7 @@ python -m pip install -e .
 
 echo
 echo "Installed AZNet."
-echo "Run:  aznet ui"
-echo "Then open http://127.0.0.1:8771  (loopback only)"
+echo "Next: aznet ui"
+echo "Open http://127.0.0.1:8771/"
+echo "Then click Pair AZBrowser."
 echo "Author: Aziel Eliab."

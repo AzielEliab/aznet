@@ -1,28 +1,27 @@
 # AZNet
 
-Open-source **silent verification SIDE-NET** — hash continuity without
-hosting (AZN-WP-0.1). Mirrors cryptographic hashes only. Never payloads,
-keys, or user content. AZNet + AZBrowser are both required to run.
+AZNet keeps a device-local hash record and pairs with AZBrowser before a stamp is written.
 
-**Author:** Aziel Eliab only
+**Author:** Aziel Eliab
 **Date:** September 2026 · v0.1.0
 **License:** [Apache-2.0](LICENSE)
 
+## Start
+
+1. Install: `python -m venv .venv && source .venv/bin/activate && pip install -e .`
+2. Open the local page: `aznet ui`
+3. The terminal prints `Open http://127.0.0.1:8771/`. Click **Pair AZBrowser**.
+
+`aznet doctor` prints a pass/fail check. `aznet --help` lists commands. Add `--json` for the machine-readable fields (`aznet time --json`).
+
 > Truth Is No Defense — .AZNet — AZ.
 
-See the spec: [docs/whitepaper.md](docs/whitepaper.md) ·
+Spec: [docs/whitepaper.md](docs/whitepaper.md) ·
 [docs/AZNet_v0_spec.md](docs/AZNet_v0_spec.md) ·
 [aznet_schema.json](aznet_schema.json).
-How to contribute: [CONTRIBUTING.md](CONTRIBUTING.md).
+Contributing: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 **Forks are welcome and always allowed.**
-
-## Quick start
-
-```bash
-python -m venv .venv && source .venv/bin/activate && pip install -e ".[dev]"
-aznet ui
-```
 
 ## One-click install
 
@@ -99,13 +98,16 @@ Parent lists after deploy. Expected URL:
 
 ---
 
-## Local UI
+## Local page
 
-`aznet ui` serves a loopback dashboard at http://127.0.0.1:8771
+`aznet ui` prints `Open http://127.0.0.1:8771/` and serves that page on this machine only.
 
-Binds to `127.0.0.1` only. Self-contained HTML (no CDN). Black
-background, white text, gold trim. Garden Rolodex, Memorial, stamps,
-receipts, pair-status, FragGate unlock, StaticClock.
+The first screen is **Pair AZBrowser**, a short status line, and the time in words.
+Stamps, Gold Pages, memorials, and receipts are under **Advanced**.
+Light and dark follow the system. **Theme** on the page can switch them.
+Keyboard focus uses a gold ring. The layout fits a phone width.
+
+The `/local/…` routes stay JSON. `--json` on the CLI prints those same fields.
 
 ## CLI smoke
 
@@ -119,6 +121,7 @@ aznet memorial --reason isolation
 aznet receipts
 aznet verify
 aznet time
+aznet time --json
 aznet witness
 aznet doctor
 ```
@@ -144,7 +147,7 @@ The `android/` and `ios/` folders in this tree are skeleton READMEs until you ru
 
 ## What it does
 
-AZNet is a **silent verification SIDE-NET**. It is not an alt internet.
+AZNet is a silent verification side-net. It keeps hash continuity on this machine.
 
 Principles:
 
@@ -154,7 +157,8 @@ Principles:
 - silence as security
 
 The Custodian Garden / Gold Pages is a shifting, non-ranked hash
-directory. Hover reveal. Manual intent. No favorites, analytics, or
+directory. A card shows its hash. Select it with a tap or the keyboard
+to place that hash in the stamp field. No favorites, analytics, or
 personalization.
 
 Each action writes a hash-chained lattice receipt. StaticClock stamps
@@ -254,7 +258,7 @@ Agents use FragGate only via aziel-runtime (`fraggate_call` / `POST /v1/fraggate
 
 Always send `User-Agent: Mozilla/5.0`.
 
-## Honest banner
+## Notes
 
 THIS IS: a silent verification SIDE-NET (hash continuity, Custodian Garden, Memorial ledger).
 THIS IS NOT: an alt internet, a host, a payload store, a VPN, or a key store.
@@ -267,7 +271,7 @@ Apache-2.0. Forks are welcome and always allowed.
 
 ## Catalog + local UI
 
-Author: **Aziel Eliab**. Honest scope: hashes only. Not an alt internet.
+Author: **Aziel Eliab**. Honest scope: hashes only.
 
 - Product homepage (workspace + counted download): https://aznet-download-tracker.vibelock.workers.dev/
 - Catalog product (when listed): https://aziel-runtime.vibelock.workers.dev/p/aznet/
@@ -276,7 +280,7 @@ Author: **Aziel Eliab**. Honest scope: hashes only. Not an alt internet.
 - This Worker skill: `GET https://aznet-download-tracker.vibelock.workers.dev/v1/skill`
 - This Worker OpenAPI: https://aznet-download-tracker.vibelock.workers.dev/openapi.json
 
-Local UI: Garden Rolodex (hover reveal), Memorial, stamps, receipts, pair-status, FragGate unlock, StaticClock. Worker homepage adds the suite Live Nodes strip (`GET /v1/mesh`). Then `aznet doctor`.
+Local page: Pair, time in words, and Advanced for Gold Pages, memorials, stamps, receipts, and FragGate unlock. Worker homepage adds the suite Live Nodes strip (`GET /v1/mesh`). Then `aznet doctor`.
 
 Counted download (gzip HTTP 200, no 302): https://aznet-download-tracker.vibelock.workers.dev/download?asset=aznet-0.1.0.tar.gz
 Count JSON: https://aznet-download-tracker.vibelock.workers.dev/count

@@ -23,7 +23,7 @@ def test_cli_pair_unlock_stamp_verify(tmp_path: Path, capsys) -> None:
     rc = main(["stamp", "--ledger", str(path), "--hash", "c" * 64])
     assert rc == 0
     capsys.readouterr()
-    rc = main(["verify", str(path)])
+    rc = main(["verify", "--json", str(path)])
     assert rc == 0
     payload = json.loads(capsys.readouterr().out)
     assert payload["ok"] is True
@@ -46,9 +46,40 @@ def test_cli_verify_missing(tmp_path: Path) -> None:
 
 def test_cli_garden_and_time(capsys) -> None:
     assert main(["garden"]) == 0
+    human_garden = capsys.readouterr().out
+    assert "Gold Pages" in human_garden
+    assert not human_garden.lstrip().startswith("{")
+    assert main(["garden", "--json"]) == 0
     garden = json.loads(capsys.readouterr().out)
     assert garden["favorites"] is False
     assert garden["cards"]
-    assert main(["time"]) == 0
+    assert main(["--json", "time"]) == 0
     clock = json.loads(capsys.readouterr().out)
     assert clock["note"].startswith("StaticClock")
+    assert main(["time"]) == 0
+    human_time = capsys.readouterr().out
+    assert "Zone" in human_time
+    assert "StaticClock" in human_time
+    assert not human_time.lstrip().startswith("{")
+
+
+def test_cli_welcome_help_and_misuse(capsys) -> None:
+    assert main([]) == 0
+    welcome = capsys.readouterr().out
+    assert "aznet pair" in welcome
+    assert "aznet ui" in welcome
+    assert "Not an alt" not in welcome
+    assert "required" not in welcome.lower()
+    assert main(["--help"]) == 0
+    help_text = capsys.readouterr().out
+    assert "Common commands:" in help_text
+    assert "aznet doctor" in help_text
+    assert "Not an alt" not in help_text
+    assert main(["bogus"]) == 2
+    err = capsys.readouterr().err
+    assert 'Unknown command "bogus"' in err
+    assert "aznet --help" in err
+    assert main(["stamp"]) == 2
+    missing = capsys.readouterr().err
+    assert "64-character" in missing
+    assert "aznet stamp --hash" in missing
