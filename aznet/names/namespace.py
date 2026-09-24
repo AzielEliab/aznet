@@ -294,31 +294,32 @@ def alignment_points() -> list[dict[str, str]]:
         },
         {
             "id": "slot-split",
-            "status": "open",
+            "status": "matched",
             "note": (
-                "FED-MESH NAME_CAP is still 7 with no reserved split. This library refuses "
-                "ae.aziel, corpus.aziel, godlock.aziel, and hdj.aziel, and allows 3 user claims. "
-                "The self-certifying name does not use a slot. MirageGrid factory labels stay a "
-                "separate layer and are not renamed. This library does not restore or host the mirrors."
+                "USER_SLOT_CAP is 3 and RESERVED_SLOT_CAP is 4, matching FED-MESH. "
+                "ae.aziel, corpus.aziel, godlock.aziel, and hdj.aziel are reserved. "
+                "MirageGrid factory labels are refused as .aziel names and are not renamed. "
+                "The self-certifying name does not use a slot. This library does not restore or host the mirrors."
             ),
         },
         {
             "id": "name-blocklist",
-            "status": "open",
+            "status": "matched",
             "note": (
-                f"Friendly claims are checked against {BLOCKLIST_VERSION}. It is a label list, "
-                "not a classifier. Paraphrases, misspellings, and other languages are misses. "
-                "The runtime spec does not publish this list yet."
+                f"Friendly claims are checked against {BLOCKLIST_VERSION}, the runtime token list "
+                "plus the tokens this library already refused. It is a label list, not a classifier. "
+                "Paraphrases, misspellings, and other languages are misses. A hit here is POLICY. "
+                "The relay records NAME-BLOCK from the claimant's own signature."
             ),
         },
         {
             "id": "isolation-record",
-            "status": "open",
+            "status": "matched",
             "note": (
-                "An isolation record is signed by the subject handle. Evidence is a hash, never "
-                "the content. An appeal requests a re-check and does not lift isolation. A peer "
-                "cannot isolate a handle that never signs the record. Classifiers and publish "
-                "checks belong to qnm-node, not this library."
+                "A self-signed isolation uses reason NUDITY, CHILD, HATE, or CSAM, plus check, "
+                "model, and evidence_hash. An appeal carries note and does not lift isolation. "
+                "A peer cannot isolate a handle that never signs the record. Classifiers and "
+                "publish checks belong to qnm-node, not this library."
             ),
         },
         {

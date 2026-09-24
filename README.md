@@ -179,7 +179,7 @@ Ed25519 public key (FED-MESH-1.0), and that handle already owns
 8-bit proof-of-work, then 72 hours and 2 witness handles. Each handle
 has 4 reserved hub-mirror names (`ae`, `corpus`, `godlock`, `hdj`) and
 3 user names, plus the automatic `<handle>.aziel`. Factory Cap-7 labels
-stay a separate layer. `.az` stays on normal DNS except the Cap-7 allowlist (`azgrid`,
+stay a separate cite layer and are not claimable `.aziel` names. `.az` stays on normal DNS except the Cap-7 allowlist (`azgrid`,
 `azbooth`, `azcloak`, `azvault`, `azshift`, `azflag`, `azstandby`). The
 four AZ.* display names are hub cites, not name records.
 

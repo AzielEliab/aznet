@@ -1,10 +1,9 @@
 """AZN-NAME-1.0 statements in FED-MESH-1.0 canonical form.
 
 Handle, signature, statement hash, proof-of-work, and witness count match
-aziel-runtime FED-MESH-1.0 section 11. The per-handle slot split (4 reserved
-hub-mirror names plus 3 user claims) is this library's reading of the
-operator brief. The runtime spec still publishes one undifferentiated
-NAME_CAP of 7.
+aziel-runtime FED-MESH-1.0. Per-handle slots match that spec's
+``USER_SLOT_CAP`` of 3 and ``RESERVED_SLOT_CAP`` of 4. Self-signed
+isolation uses the content reason codes NUDITY, CHILD, HATE, and CSAM.
 
 Author: Aziel Eliab only.
 """
@@ -24,9 +23,10 @@ AUTHOR = "Aziel Eliab"
 
 MESH_TLD = "aziel"
 DNS_CCTLD_AZ = "az"
-# Seven slots per handle: 4 reserved hub mirrors plus 3 user claims.
-# The self-certifying name is outside that seven. MirageGrid factory
-# labels (azgrid and the rest) are a separate global layer.
+# Seven slots per handle: RESERVED_SLOT_CAP hub mirrors plus USER_SLOT_CAP
+# user claims, matching FED-MESH. The self-certifying name is outside that
+# seven. MirageGrid factory labels are refused as .aziel names. They stay
+# a separate .az cite layer and are not renamed.
 CAP_PER_HANDLE = 7
 USER_SLOTS = 3
 RESERVED_SLOTS = 4
@@ -55,7 +55,9 @@ OPS = ("claim", "update", "transfer", "release", "renew")
 TARGET_KINDS = ("object", "ref", "node", "none")
 RENEWALS = ("until-release", "expiring")
 ADVISORY_NOTE_MAX = 160
-ISOLATION_REASONS = ("name-policy", "content-policy", "csam-hash")
+# Self-signed content isolation. NAME-BLOCK is a relay record of the
+# claimant's own name statement, not a reason this library signs.
+ISOLATION_REASONS = ("NUDITY", "CHILD", "HATE", "CSAM")
 
 HANDLE_RE = re.compile(r"^#[0-9A-HJKMNP-TV-Z]{11}$")
 HANDLE_BODY_RE = re.compile(r"^[0-9a-hjkmnp-tv-z]{11}$")

@@ -9,6 +9,7 @@ Author: Aziel Eliab only.
 
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 from typing import Any, Mapping
 
@@ -25,7 +26,7 @@ from aznet.names.codec import (
     statement_hash,
 )
 from aznet.names.ed25519 import public_key, sign, verify
-from aznet.names.namespace import classify
+from aznet.names.namespace import CAP7_FACTORY_LABELS, classify
 from aznet.names.wire import (
     ADVISORY_NOTE_MAX,
     BAD_SIGNATURE,
@@ -120,6 +121,8 @@ def _canonical_name(raw: str) -> tuple[str, str]:
     label = classified.name.split(".", 1)[0]
     if label in RESERVED_LABELS:
         raise NameRefuse(RESERVED, "ae, corpus, godlock, and hdj are reserved hub-mirror slots")
+    if label in CAP7_FACTORY_LABELS:
+        raise NameRefuse(RESERVED, "MirageGrid factory labels are not .aziel names")
     if classified.kind != "self_cert" and name_blocked(classified.name):
         raise NameRefuse(POLICY, "name matches the versioned blocklist")
     return classified.name, classified.kind
@@ -309,6 +312,7 @@ def sign_isolation(seed: bytes, **fields: Any) -> dict[str, Any]:
         "evidence_hash": fields.get("evidence_hash") or "",
         "handle": handle,
         "kind": KIND_ISOLATION,
+        "model": fields.get("model") or "absent",
         "prev": fields.get("prev") or GENESIS_PREV,
         "public_key": public,
         "reason": fields.get("reason") or "",
@@ -326,10 +330,10 @@ def sign_appeal(seed: bytes, **fields: Any) -> dict[str, Any]:
     _refuse_material(fields)
     handle, public, _raw = _identity(seed)
     statement = {
-        "check": fields.get("check") or "",
         "handle": handle,
         "isolation_hash": fields.get("isolation_hash") or "",
         "kind": KIND_APPEAL,
+        "note": fields.get("note") or "",
         "prev": fields.get("prev") or GENESIS_PREV,
         "public_key": public,
         "seq": fields.get("seq"),
@@ -370,6 +374,7 @@ def prepare_statement(data: Mapping[str, Any], *, check_signature: bool = True) 
         "subject",
         "subject_public_key",
         "note",
+        "model",
         "reason",
         "check",
         "evidence_hash",
@@ -595,10 +600,21 @@ def _advisory_body(
     }
 
 
-def _check_label(value: str, *, limit: int = 80) -> str:
+_CHECK_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
+_MODEL_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$")
+
+
+def _check_label(value: str) -> str:
     text = str(value or "")
-    if not text or len(text) > limit or any(ch in text for ch in "\n\r"):
-        raise NameRefuse(MALFORMED, "check names the verifier and stays on one short line")
+    if not _CHECK_RE.match(text):
+        raise NameRefuse(MALFORMED, "check names the local check, 1 to 64 characters [a-z0-9._-]")
+    return text
+
+
+def _model_label(value: str) -> str:
+    text = str(value or "")
+    if not _MODEL_RE.match(text):
+        raise NameRefuse(MALFORMED, "model is a version string, or absent")
     return text
 
 
@@ -617,7 +633,7 @@ def _isolation_body(
     if subject != handle:
         raise NameRefuse(NOT_OWNER, "the isolated handle signs its own isolation record")
     if reason not in ISOLATION_REASONS:
-        raise NameRefuse(MALFORMED, "reason is name-policy, content-policy, or csam-hash")
+        raise NameRefuse(MALFORMED, "reason is NUDITY, CHILD, HATE, or CSAM")
     if not is_hash(evidence):
         raise NameRefuse(MALFORMED, "evidence_hash is 64 hex characters and not the content")
     return {
@@ -625,6 +641,7 @@ def _isolation_body(
         "evidence_hash": evidence,
         "handle": handle,
         "kind": KIND_ISOLATION,
+        "model": _model_label(str(data.get("model") or "")),
         "prev": prev,
         "public_key": public_b64,
         "reason": reason,
@@ -642,13 +659,16 @@ def _appeal_body(
     prev: str,
 ) -> dict[str, Any]:
     isolation_hash = str(data.get("isolation_hash") or "")
+    note = str(data.get("note") or "")
     if not is_hash(isolation_hash):
         raise NameRefuse(MALFORMED, "an appeal names the isolation statement hash")
+    if not note or len(note) > ADVISORY_NOTE_MAX:
+        raise NameRefuse(MALFORMED, f"note is 1 to {ADVISORY_NOTE_MAX} characters")
     return {
-        "check": _check_label(str(data.get("check") or "")),
         "handle": handle,
         "isolation_hash": isolation_hash,
         "kind": KIND_APPEAL,
+        "note": note,
         "prev": prev,
         "public_key": public_b64,
         "seq": seq,

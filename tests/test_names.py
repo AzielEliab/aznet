@@ -516,13 +516,18 @@ def test_az_allowlist_and_dns_fallthrough() -> None:
     assert missing.code == "UNCLAIMED"
     assert missing.name == "azgrid.aziel"
     assert missing.resolves_to_hub is False
-    claim = _claim(_seed(70), "azgrid.aziel", target=_handle(_seed(70)), target_kind="handle")
-    _finalize(ledger, claim, [_seed(71), _seed(72)])
-    via_az = resolve(ledger, "AZGRID.AZ", now=FINAL_AT)
-    via_aziel = resolve(ledger, "azgrid.aziel", now=FINAL_AT)
-    assert via_az.ok and via_aziel.ok
-    assert via_az.target == via_aziel.target == _handle(_seed(70))
-    assert via_az.resolves_to_hub is False
+    try:
+        _claim(_seed(70), "azgrid.aziel", target=_handle(_seed(70)), target_kind="handle")
+        raise AssertionError("azgrid.aziel is a factory label")
+    except NameRefuse as exc:
+        assert exc.code == "RESERVED"
+    try:
+        _claim(_seed(70), "azgrid.az")
+        raise AssertionError("the .az alias is the same reserved name")
+    except NameRefuse as exc:
+        assert exc.code == "RESERVED"
+    assert resolve(ledger, "AZGRID.AZ", now=FINAL_AT).code == "UNCLAIMED"
+    assert resolve(ledger, "azgrid.aziel", now=FINAL_AT).code == "UNCLAIMED"
     decoy = resolve(ledger, "azbooth.az")
     assert decoy.code == "UNCLAIMED"
     assert decoy.false_site is True
@@ -607,6 +612,7 @@ def test_honesty_machine_surface() -> None:
     assert surface["factory_cap7_separate_layer"] is True
     assert surface["pow_bits_min"] == POW_BITS_MIN == 8
     assert surface["witness_k"] == WITNESS_K == 2
+    assert surface["blocklist_version"] == "FED-MESH-BLOCKLIST-1"
     assert surface["blocklist_is_a_classifier"] is False
     assert surface["isolation_lifts_on_appeal"] is False
     assert surface["classifiers_in_this_library"] is False
@@ -623,13 +629,13 @@ def test_honesty_machine_surface() -> None:
 def test_reserved_slots_blocklist_and_self_cert_outside_the_cap() -> None:
     owner = _seed(90)
     ledger = NameLedger()
-    for label in ("ae", "corpus", "godlock", "hdj"):
+    for label in ("ae", "corpus", "godlock", "hdj", "azgrid", "azbooth", "azcloak", "azvault", "azshift", "azflag", "azstandby"):
         try:
             _claim(owner, f"{label}.aziel")
             raise AssertionError(f"{label}.aziel is reserved")
         except NameRefuse as exc:
             assert exc.code == "RESERVED"
-    for blocked in ("porn.aziel", "my-porn-site.aziel", "csam.aziel", "xxx.aziel"):
+    for blocked in ("porn.aziel", "my-porn-site.aziel", "csam.aziel", "xxx.aziel", "nazism.aziel", "whitepower.aziel", "kkk.aziel", "childsex.aziel"):
         try:
             _claim(owner, blocked)
             raise AssertionError(f"{blocked} matches the blocklist")
@@ -638,9 +644,10 @@ def test_reserved_slots_blocklist_and_self_cert_outside_the_cap() -> None:
             assert "porn" not in str(exc)
             assert "csam" not in str(exc)
     assert _claim(owner, "analysis.aziel")["name"] == "analysis.aziel"
+    assert _claim(owner, "sussex.aziel")["name"] == "sussex.aziel"
     assert _claim(owner, "garden.aziel")["name"] == "garden.aziel"
     previous = GENESIS_PREV
-    for index, label in enumerate(("one", "two", "azgrid"), start=1):
+    for index, label in enumerate(("one", "two", "three"), start=1):
         claim = _claim(owner, f"{label}.aziel", seq=index, prev=previous)
         assert ledger.accept(claim, now=OPENED).code == "OK"
         previous = claim["record_hash"]
@@ -676,7 +683,7 @@ def test_isolation_hides_names_and_appeal_does_not_lift_it(tmp_path: Path) -> No
             _seed(93),
             seq=1,
             subject=claim["handle"],
-            reason="csam-hash",
+            reason="CSAM",
             evidence_hash=evidence,
             check="label-blocklist",
         )
@@ -684,7 +691,7 @@ def test_isolation_hides_names_and_appeal_does_not_lift_it(tmp_path: Path) -> No
     except NameRefuse as exc:
         assert exc.code == "NOT_OWNER"
     try:
-        sign_isolation(owner, seq=2, prev=claim["record_hash"], reason="csam-hash", evidence_hash="zz", check="label")
+        sign_isolation(owner, seq=2, prev=claim["record_hash"], reason="CSAM", evidence_hash="zz", check="label")
         raise AssertionError("evidence must be a hash")
     except NameRefuse as exc:
         assert exc.code == "MALFORMED"
@@ -693,7 +700,19 @@ def test_isolation_hides_names_and_appeal_does_not_lift_it(tmp_path: Path) -> No
             owner,
             seq=2,
             prev=claim["record_hash"],
-            reason="csam-hash",
+            reason="name-policy",
+            evidence_hash=evidence,
+            check="label",
+        )
+        raise AssertionError("old reason codes are not isolation reasons")
+    except NameRefuse as exc:
+        assert exc.code == "MALFORMED"
+    try:
+        sign_isolation(
+            owner,
+            seq=2,
+            prev=claim["record_hash"],
+            reason="CSAM",
             evidence_hash=evidence,
             check="label",
             image=b"not-stored",
@@ -705,11 +724,14 @@ def test_isolation_hides_names_and_appeal_does_not_lift_it(tmp_path: Path) -> No
         owner,
         seq=2,
         prev=claim["record_hash"],
-        reason="csam-hash",
+        reason="CSAM",
         evidence_hash=evidence,
-        check="AZN-BLOCK-1.0",
+        check="image-nudity",
+        model="absent",
     )
     assert "image" not in isolation
+    assert isolation["reason"] == "CSAM"
+    assert isolation["model"] == "absent"
     assert isolation["evidence_hash"] == evidence
     assert ledger.accept(isolation, now=LATER).code == "OK"
     assert ledger.is_isolated(claim["handle"])
@@ -727,8 +749,10 @@ def test_isolation_hides_names_and_appeal_does_not_lift_it(tmp_path: Path) -> No
         seq=3,
         prev=isolation["record_hash"],
         isolation_hash=isolation["record_hash"],
-        check="operator re-check requested",
+        note="operator re-check requested",
     )
+    assert appeal["note"] == "operator re-check requested"
+    assert "check" not in appeal
     assert ledger.accept(appeal, now=FINAL_AT).code == "OK"
     view = ledger.trust_view(claim["handle"])
     assert view["isolated"] is True

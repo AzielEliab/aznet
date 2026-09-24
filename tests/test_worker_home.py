@@ -96,7 +96,7 @@ def test_worker_serves_home_and_seo() -> None:
     assert "by_branch" in INDEX
     assert "by_fork" in INDEX
     assert "totalKey()" in INDEX
-    assert 'await increment(env, dims)' in INDEX
+    assert 'await increment(env, dims, request)' in INDEX
 
 
 def test_readme_lists_count_stats_and_hubs() -> None:

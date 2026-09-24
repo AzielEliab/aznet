@@ -113,13 +113,12 @@ use a slot. A released name frees its slot. An expired name frees its
 slot. This library refuses the reserved names. It does not host or
 restore the hub mirrors.
 
-MirageGrid factory labels (`azgrid`, `azcloak`, `azvault`, `azshift`,
-and the decoys `azbooth`, `azflag`, `azstandby`) are a separate global
-layer. This wave does not rename them. A factory label claimed as a
-friendly name uses one of the 3 user slots.
+MirageGrid factory labels (`azgrid`, `azbooth`, `azcloak`, `azvault`,
+`azshift`, `azflag`, `azstandby`) stay a separate `.az` cite layer and
+are not renamed. Claiming one as a `.aziel` name returns `RESERVED`.
 
-FED-MESH still publishes one undifferentiated `NAME_CAP` of 7. The split
-above is this library's rule until that spec section lands.
+FED-MESH publishes `USER_SLOT_CAP` 3 and `RESERVED_SLOT_CAP` 4. This
+library uses that split. It does not host or restore the hub mirrors.
 
 A relay that follows FED-MESH section 5.1 still keeps one row per name
 and answers `FED-MESH-NAME-TAKEN` for a second claim. This library keeps
@@ -164,12 +163,14 @@ is attached to the resolve result and does not change `FINAL`.
 ## Name blocklist
 
 A friendly claim is refused with `POLICY` when the label matches
-`AZN-BLOCK-1.0` (`aznet/names/blocklist.py`). The policy is no
-pornography, no sexual content involving children, and no hate names.
-The check folds the label to letters and digits. Tokens of length 4 or
-more match inside the label. Short ambiguous tokens (`sex`, `xxx`,
-`nude`, `nudes`, `milf`, `anal`) match the whole label only, so
-`analysis` and ordinary words are not caught by a fragment.
+`FED-MESH-BLOCKLIST-1` (`aznet/names/blocklist.py`). That list is the
+runtime token list plus the tokens this library already refused,
+including `csam`. The policy is no pornography, no sexual content
+involving children, and no hate names. A token matches the whole label
+or one hyphen-separated part. A token of length 4 or more also matches
+inside the label, except `milf` and `anal`, which stay part-only so
+`analysis` is not refused. `sex`, `xxx`, and `kkk` are shorter than 4,
+so they do not match inside a longer word.
 
 This is a label list. It misses paraphrases, misspellings, leetspeak,
 and words from other languages. It is not an image classifier and it
@@ -178,11 +179,14 @@ token. Self-certifying names are not checked against the list.
 
 ## Isolation
 
-A handle may sign an `isolation` statement for itself. Fields are
-`subject` (the same handle), `reason` (`name-policy`, `content-policy`,
-or `csam-hash`), `check` (a short one-line name of the check), and
-`evidence_hash` (64 hex characters). The content, the image, and the
-bytes are not fields. A statement that offers them returns `LEAK`.
+A handle may sign an `isolation` statement for itself. Fields match the
+runtime record: `subject` (the same handle), `reason` (`NUDITY`,
+`CHILD`, `HATE`, or `CSAM`), `check` (1 to 64 characters,
+`[a-z0-9._-]`), `model` (a version string, or `absent`), and
+`evidence_hash` (64 hex characters). `NAME-BLOCK` is the relay's record
+of a blocked name claim. This library does not sign that reason. The
+content, the image, and the bytes are not fields. A statement that
+offers them returns `LEAK`.
 
 Once that record is anchored, resolve returns `ISOLATED` and no target
 for that handle's names, including the self-certifying name. New acts
@@ -192,9 +196,9 @@ refused. Another handle cannot sign the isolation record (`NOT_OWNER`).
 A node that never emits the record is not isolated by this library. The
 blocklist still refuses blocked names at claim time.
 
-An `appeal` names the isolation statement hash and a check line. It is
-stored. `trust_view` shows `appeal_requested`. `appeal_lifts_isolation`
-stays false. Isolation is not cleared here.
+An `appeal` names the isolation statement hash and a `note` of 1 to 160
+characters. It is stored. `trust_view` shows `appeal_requested`.
+`appeal_lifts_isolation` stays false. Isolation is not cleared here.
 
 Classifiers, publish checks, and fail-closed hosting belong to qnm-node.
 This library does not run them. If a model is absent, that is not a pass
@@ -210,9 +214,9 @@ hash only.
 Queries that end in `.az` and are **not** on this list return
 `DNS_FALLTHROUGH` and no mesh target. The caller uses normal DNS.
 
-Factory labels from aziel-runtime `CAP7-SHUFFLE-1.0`. This resolver
-stores the claim at `{label}.aziel` and accepts the historical `.az`
-spelling as an alias:
+Factory labels from aziel-runtime `CAP7-SHUFFLE-1.0`. A query may use
+the historical `.az` spelling. The canonical key would be
+`{label}.aziel`, and a claim of that name is `RESERVED`:
 
 | Query alias | Ledger name | Cap-7 role |
 | --- | --- | --- |
@@ -345,9 +349,12 @@ These belong to other repos. This library does not claim them.
 
 - Proof-of-work (8 bits) and `WITNESS_K` (2) match FED-MESH-1.0 section 11.
   The 72-hour window is local `anchored_at`, not a relay `accepted_at`.
-- The runtime `NAME_CAP` is still 7 with no reserved split. Reserved names
-  and the 3-user cap are this library's rule. Factory Cap-7 labels are not
-  renamed. Hub-mirror restore is not implemented here.
+- Slots match the runtime: `USER_SLOT_CAP` 3 and `RESERVED_SLOT_CAP` 4.
+  Factory Cap-7 labels are not renamed, and they are not claimable
+  `.aziel` names. Hub-mirror restore is not implemented here.
+  Isolation records match the runtime content reasons. This library
+  refuses a blocked name with `POLICY`. It does not mint the relay's
+  `NAME-BLOCK` isolation from that claim.
 - The blocklist does not catch every violating name. Classifiers are not
   in this library. An appeal does not lift isolation.
 - Witnesses are distinct handles. They are not checked to be relays.
@@ -365,13 +372,13 @@ These belong to other repos. This library does not claim them.
 
 1. **FED-MESH-1.0** — name fields match section 5.1 on the runtime branch. The file is not on main.
 2. **Mesh security constants** — 8-bit `pow` and K=2 match section 11. Age is local `anchored_at`. The runtime still uses relay `accepted_at`.
-3. **Slot split** — runtime `NAME_CAP` is 7 undifferentiated. This library reserves 4 names and allows 3 user claims. Factory Cap-7 is a separate layer.
+3. **Slot split** — `USER_SLOT_CAP` 3 and `RESERVED_SLOT_CAP` 4 match the runtime spec. Factory labels are refused as `.aziel` names. This library does not restore hub mirrors.
 4. **First FINAL versus first anchored** — a relay may refuse the second claim. This library keeps both.
 5. **TemporalLock** — `now` is caller-supplied. No clock proof.
 6. **ChainLock** — local `AZN-NAME-ANCHOR-1.0` log. Not suite ChainLock CL-WP-0.4.
-7. **Cap-7 spelling** — runtime `mesh_name` is `{label}.az`. Claims live at `{label}.aziel`.
+7. **Cap-7 spelling** — runtime `mesh_name` is `{label}.az`. That alias is not a claimable `.aziel` name.
 8. **AZ.* cites** — display names are not name records here. The relay does not resolve them either.
 9. **Relay transport** — sync is an in-process envelope. No socket.
 10. **Self-cert default** — no record yet still returns the handle, with `key_checked` false.
 11. **qnm node id** — suite `mesh_join` ids are not this handle.
-12. **Blocklist and isolation** — `AZN-BLOCK-1.0` is a label list, not a classifier. Isolation is signed by the subject. An appeal does not lift it. The runtime spec does not publish these records yet.
+12. **Blocklist and isolation** — `FED-MESH-BLOCKLIST-1` is the runtime list plus the tokens this library already refused. It is not a classifier. A self-signed isolation uses `NUDITY`, `CHILD`, `HATE`, or `CSAM`. An appeal's `note` does not lift isolation. A blocked claim here is `POLICY`, not a relay-minted `NAME-BLOCK` row.
