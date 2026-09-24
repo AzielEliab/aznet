@@ -110,8 +110,8 @@ const INSTALL_LINE = "curl -fsSL https://aznet-download-tracker.vibelock.workers
 const MARKER = "Truth Is No Defense — .AZNet — AZ.";
 const DESCRIPTION =
   "AZNet is Aziel Eliab software: a silent verification SIDE-NET (AZN-WP-0.1). Hashes only. AZNet + AZBrowser required. FragGate unlocks access. StaticClock stamps time. Apache-2.0.";
-const HONEST =
-  "THIS IS: a silent verification SIDE-NET (hash continuity, Custodian Garden, Memorial ledger). THIS IS NOT: an alt internet, a host, a payload store, a VPN, or a key store. The Worker is a control-plane / demo garden. Device-local silent node is the real posture. AZNet + AZBrowser are both required. Author Aziel Eliab.";
+const POSTURE =
+  "Silent verification side-net: hash continuity, a Custodian Garden, and a Memorial ledger. This Worker is the control-plane and demo garden. The device-local silent node is the real posture. AZNet and AZBrowser are both required. Author Aziel Eliab.";
 const HOW_TO_CITE =
   "Eliab, Aziel. (2026). AZNet 0.1.0 [Software]. Apache-2.0. https://github.com/AzielEliab/aznet · https://aznet-download-tracker.vibelock.workers.dev/";
 
@@ -380,6 +380,92 @@ export function renderHome(stats) {
   #meshStrip input { width: 10rem; padding: .4rem .55rem; border: 1px solid var(--gold); border-radius: 8px; background: #000; color: #fff; font: inherit; }
   #meshProducts { flex-basis: 100%; margin: 0; }
 </style>
+<style id="app-chrome">
+  .app-nav { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0 0 1rem; }
+  .app-nav a {
+    text-decoration: none; color: #ffffff; border: 1px solid #c9a227; background: #0d0d0d;
+    border-radius: 999px; padding: .45rem .8rem; min-height: 2.75rem;
+    display: inline-flex; align-items: center; font-size: .92rem;
+  }
+  #meshStrip, .app-screen, .app-nav { max-width: 100%; min-width: 0; }
+  #meshStrip > * { min-width: 0; max-width: 100%; }
+  #meshStrip input { width: min(100%, 16rem); max-width: 100%; }
+  #meshStrip > div:has(button) { display: flex; flex-wrap: wrap; gap: .45rem; width: 100%; align-items: center; }
+  #meshStrip button.gold { background: #c9a227; color: #000000; border-color: #c9a227; }
+  #meshLine { margin: 0; flex: 1 1 16rem; }
+  .app-screen p, .app-screen code, .app-screen li, #meshStrip, #meshProducts { overflow-wrap: anywhere; }
+  .empty-state {
+    margin: 0 0 .85rem; padding: .9rem 1rem; border-radius: 10px;
+    border: 1px dashed #c9a227; background: transparent; color: #c4c4c4;
+  }
+  .clock-human { font-size: 1.2rem; margin: .35rem 0 .8rem; }
+  details.tech { margin-top: .85rem; }
+  details.tech summary { cursor: pointer; color: #c9a227; font-weight: 650; }
+  .lattice-human { margin: 0 0 .85rem; padding-left: 1.15rem; }
+  .lattice-human li { margin: .2rem 0; }
+  .goldcard:focus .full, .goldcard:focus-visible .full { display: block; }
+  .goldcard:focus .hint, .goldcard:focus-visible .hint { display: none; }
+  @media (hover: none) {
+    .goldcard .full { display: block; }
+    .goldcard .hint { display: none; }
+  }
+  @media (max-width: 420px) {
+    .app-screen .metrics { grid-template-columns: 1fr; }
+  }
+  #meshStrip a:focus-visible,
+  #meshStrip button:focus-visible,
+  #meshStrip input:focus-visible,
+  .app-screen a:focus-visible,
+  .app-screen button:focus-visible,
+  .app-screen input:focus-visible,
+  .app-screen select:focus-visible,
+  .app-screen summary:focus-visible,
+  .app-screen .goldcard:focus-visible,
+  .app-nav a:focus-visible {
+    outline: 2px solid #c9a227;
+    outline-offset: 2px;
+  }
+  @media (prefers-color-scheme: light) {
+    .app-nav, #meshStrip, .app-screen { color-scheme: light; }
+    .app-nav a {
+      color: #141414; background: #ffffff; border-color: #6e5208;
+    }
+    #meshStrip, .app-screen {
+      background: #f6f5f2; color: #141414; border-color: #8a7340;
+    }
+    #meshStrip .live, .app-screen h2, .app-screen h3, .app-screen .metric span, .clock-human, .lattice-human {
+      color: #141414;
+    }
+    #meshLine, .app-screen .lede, .app-screen p, .empty-state, #meshStrip { color: #3a3a3a; }
+    .app-screen .kicker, .app-screen .metric b, #meshStrip .live b, #meshStrip .rollup b, details.tech summary, .app-screen a {
+      color: #6e5208;
+    }
+    .app-screen input, .app-screen select, #meshStrip input, .app-screen pre, .app-screen .metric,
+    .app-screen .goldcard, .app-screen .status, #meshStrip button {
+      background: #ffffff; color: #141414; border-color: #8a7340;
+    }
+    .app-screen .goldcard .full { color: #141414; }
+    .app-screen button.gold, #meshStrip button.gold {
+      background: #c9a227; color: #000000; border-color: #6e5208;
+    }
+    .app-screen button.ghost { background: #ffffff; color: #141414; border-color: #6e5208; }
+    .app-screen .status.ok { color: #0d6b3a; border-color: #0d6b3a; background: #ffffff; }
+    .app-screen .status.bad { color: #9b1c1c; border-color: #9b1c1c; background: #ffffff; }
+    .empty-state { border-color: #8a7340; background: #ffffff; color: #3a3a3a; }
+    #meshStrip a:focus-visible,
+    #meshStrip button:focus-visible,
+    #meshStrip input:focus-visible,
+    .app-screen a:focus-visible,
+    .app-screen button:focus-visible,
+    .app-screen input:focus-visible,
+    .app-screen select:focus-visible,
+    .app-screen summary:focus-visible,
+    .app-screen .goldcard:focus-visible,
+    .app-nav a:focus-visible {
+      outline-color: #6e5208;
+    }
+  }
+</style>
 </head>
 <body>
   <div class="wrap">
@@ -410,93 +496,131 @@ export function renderHome(stats) {
         <a href="/mcp">/mcp pointer</a>
         <a href="${GITHUB_REPO}">GitHub</a>
       </nav>
-      <p class="banner">${escapeHtml(HONEST)}</p>
+      <p class="banner">${escapeHtml(POSTURE)}</p>
     </header>
+
+    <nav class="app-nav" aria-label="App sections">
+      <a href="#meshStrip">Live Nodes</a>
+      <a href="#pair">Pair</a>
+      <a href="#unlock">FragGate</a>
+      <a href="#staticclock">Time</a>
+      <a href="#garden">Garden</a>
+      <a href="#stamps">Stamps</a>
+      <a href="#memorial">Memorial</a>
+      <a href="#receipts">Lattice</a>
+    </nav>
 
     <div id="meshStrip" aria-label="Suite Live Nodes">
       <div class="live"><b id="meshLiveCount">0</b> Live Nodes</div>
-      <div id="meshLine">Suite mesh: off (default). QNM-BUILD-1.0. QNS-CD-1.0. Not an anonymity network.</div>
-      <div class="rollup">live <b id="qnmLive">0</b> · locked <b id="qnmLocked">0</b> · isolated <b id="qnmIsolated">0</b></div>
-      <div>No Node Gate · No auto-heal · Aziel Eliab only</div>
+      <p id="meshLine">The suite mesh is off. Live Nodes stay at zero until it is turned on.</p>
+      <div class="rollup">Live <b id="qnmLive">0</b> · Locked <b id="qnmLocked">0</b> · Isolated <b id="qnmIsolated">0</b></div>
       <div>
-        <input id="meshBearer" type="text" maxlength="80" placeholder="bearer (required to enable)" aria-label="mesh bearer">
-        <button id="meshEnable" type="button" title="Enable suite mesh. Declared bearer required. Default off.">Enable</button>
-        <button id="meshDisable" type="button" title="Disable suite mesh (always allowed)">Disable</button>
-        <button id="meshJoin" type="button" title="Join as aznet. Refused while mesh is OFF. No auto-join. AZBrowser stays separate software.">Join</button>
-        <button id="meshLeave" type="button" title="Leave this node. No auto-heal.">Leave</button>
+        <input id="meshBearer" type="text" maxlength="80" placeholder="Code required to turn the mesh on" aria-label="Code to turn the mesh on">
+        <button id="meshEnable" type="button" class="gold" title="Turn the suite mesh on. A code is required. It stays off until then.">Turn on</button>
+        <button id="meshDisable" type="button" title="Turn the suite mesh off.">Turn off</button>
+        <button id="meshJoin" type="button" title="Join as aznet. Refused while the mesh is off. AZBrowser stays separate software.">Join</button>
+        <button id="meshLeave" type="button" title="Leave this node.">Leave</button>
       </div>
-      <div id="meshProducts">Catalog MCP mesh_* · FragGate slug=mesh · /v1/mesh/* PROXY · QNS-CD-1.0 cite only · not AnonBroadcast · not AZMail ring · AZBrowser is sibling pair only · no public qnsd proxy</div>
+      <details class="tech">
+        <summary>Mesh details</summary>
+        <p>QNM-BUILD-1.0. QNS-CD-1.0. No Node Gate. No auto-heal. Aziel Eliab only. Not an anonymity network. AZBrowser is sibling software. no public qnsd proxy.</p>
+        <p id="meshProducts">Catalog MCP mesh_* · FragGate slug=mesh · /v1/mesh/* PROXY · QNS-CD-1.0 cite only · not AnonBroadcast · not AZMail ring · AZBrowser is sibling pair only · no public qnsd proxy</p>
+      </details>
     </div>
 
-    <section class="card" id="pair">
-      <h2><span class="kicker">pair</span>Pair status</h2>
-      <p>Separate software. Functional pair only: <code>pair_token</code>, then FragGate <code>pair_flag</code>. No AZBrowser chrome is embedded here. Catalog op: <code>pair_status</code>.</p>
-      <p id="pair-status">UNPAIRED · LOCKED</p>
+    <section class="card app-screen" id="pair">
+      <h2><span class="kicker">pair</span>Pair with AZBrowser</h2>
+      <p id="pair-status" class="empty-state">Not paired yet. Pair with AZBrowser when you are ready. Access stays locked until then.</p>
       <div class="actions">
         <button type="button" class="gold" id="btn-pair">Pair AZBrowser</button>
-        <button type="button" class="ghost" id="btn-unlock">FragGate unlock</button>
       </div>
+      <details class="tech">
+        <summary>How pairing works</summary>
+        <p>Separate software. Functional pair only: <code>pair_token</code>, then FragGate <code>pair_flag</code>. No AZBrowser chrome is embedded here. Catalog op: <code>pair_status</code>.</p>
+      </details>
     </section>
 
-    <section class="card" id="unlock">
+    <section class="card app-screen" id="unlock">
       <h2><span class="kicker">unlock</span>FragGate</h2>
-      <p>ONE FragGate door. Agent path is FragGate only: <code>POST /v1/fraggate/call</code> slug=<b>aznet</b>. This Worker <code>/v1/fraggate/*</code> and <code>/v1/mesh/*</code> proxy to aziel-runtime. Catalog MCP: <code>POST https://aziel-runtime.vibelock.workers.dev/mcp</code> (<code>mesh_*</code> + slug=<b>mesh</b>). This host <a href="/mcp">/mcp</a> is a pointer, not a second MCP. AZBrowser is sibling software (functional pair only). Suite mesh default OFF. QNM-BUILD-1.0 live|locked|isolated. QNS-CD-1.0 photon QNS1 cite only (not a Softwares-tab product; no public qnsd proxy). No Node Gate. No auto-heal. Not anonymity.</p>
+      <p>FragGate is the door that unlocks access after pairing.</p>
+      <div class="actions">
+        <button type="button" class="gold" id="btn-unlock">Unlock access</button>
+      </div>
+      <details class="tech">
+        <summary>Door details</summary>
+        <p>ONE FragGate door. Agent path is FragGate only: <code>POST /v1/fraggate/call</code> slug=<b>aznet</b>. This Worker <code>/v1/fraggate/*</code> and <code>/v1/mesh/*</code> proxy to aziel-runtime. Catalog MCP: <code>POST https://aziel-runtime.vibelock.workers.dev/mcp</code> (<code>mesh_*</code> + slug=<b>mesh</b>). This host <a href="/mcp">/mcp</a> is a pointer, not a second MCP. AZBrowser is sibling software (functional pair only). Suite mesh default OFF. QNM-BUILD-1.0 live|locked|isolated. QNS-CD-1.0 photon QNS1 cite only (not a Softwares-tab product; no public qnsd proxy). No Node Gate. No auto-heal. Not anonymity.</p>
+      </details>
     </section>
 
-    <section class="card" id="staticclock">
+    <section class="card app-screen" id="staticclock">
       <h2><span class="kicker">staticclock</span>StaticClock</h2>
-      <p>Advisory time. Not a scheduler. <a href="${STATICCLOCK_HOST}/">staticclock-download-tracker</a></p>
-      <pre id="clock">loading…</pre>
+      <p>Advisory time for a stamp. It does not schedule work. <a href="${STATICCLOCK_HOST}/">staticclock-download-tracker</a></p>
+      <p id="clock-human" class="clock-human">Checking the advisory time…</p>
+      <details class="tech">
+        <summary>Time record</summary>
+        <pre id="clock">loading…</pre>
+      </details>
     </section>
 
-    <section class="workspace" id="garden">
+    <section class="workspace app-screen" id="garden">
       <h2><span class="kicker">garden</span>Custodian Garden / Gold Pages</h2>
-      <p class="lede">Shifting, non-ranked hash directory. Hover to reveal. Click is manual intent. No favorites, analytics, or personalization. Demo garden on this Worker — device-local silent node is the real posture.</p>
+      <p class="lede">A shifting directory of hashes. Nothing is ranked. Choose a card to place its hash in the stamp field. This demo garden is on the Worker. The device-local silent node is the real posture.</p>
+      <p id="garden-empty" class="empty-state">No gold pages yet. They will show here when the directory responds.</p>
       <div class="rolodex" id="rolodex"></div>
     </section>
 
-    <section class="card" id="stamps">
-      <h2><span class="kicker">stamps</span>Stamping ledger</h2>
-      <p>TemporalLock-style stamp of a hash. Never a payload.</p>
-      <label for="hash-hex"><span class="kicker">hash_hex</span></label>
-      <input id="hash-hex" maxlength="64" placeholder="64-char sha256 hex">
+    <section class="card app-screen" id="stamps">
+      <h2><span class="kicker">stamps</span>Stamp a hash</h2>
+      <p>Save the time for a hash. The hash is stored. The file is not.</p>
+      <label for="hash-hex">Hash</label>
+      <input id="hash-hex" maxlength="64" placeholder="64-character SHA-256 hex" autocomplete="off" spellcheck="false">
       <div class="actions">
-        <button type="button" class="gold" id="btn-stamp">Stamp</button>
-        <button type="button" class="ghost" id="btn-verify">Verify hash</button>
-        <button type="button" class="ghost" id="btn-lattice">Lattice</button>
-        <button type="button" class="ghost" id="btn-receipt">Receipt verify</button>
+        <button type="button" class="gold" id="btn-stamp">Stamp hash</button>
+      </div>
+      <div class="actions">
+        <button type="button" class="ghost" id="btn-verify">Check the chain</button>
+        <button type="button" class="ghost" id="btn-lattice">Show lattice</button>
+        <button type="button" class="ghost" id="btn-receipt">Check receipts</button>
       </div>
     </section>
 
-    <section class="card" id="memorial">
+    <section class="card app-screen" id="memorial">
       <h2><span class="kicker">memorial</span>Memorial ledger</h2>
-      <p>Terminal compromise: genesis / final hash, timestamps, non-actionable summary. No exploit details.</p>
+      <p>Write a short note when a node stops. It records hashes and time. It does not include exploit details.</p>
+      <label for="reason">Reason</label>
       <select id="reason">
-        <option>isolation</option>
-        <option>ui_altered</option>
-        <option>integrity_refuse</option>
-        <option>node_withdraw</option>
-        <option>pair_broken</option>
-        <option>witness_fail</option>
+        <option value="isolation">Isolation</option>
+        <option value="ui_altered">The page was changed</option>
+        <option value="integrity_refuse">Integrity check refused</option>
+        <option value="node_withdraw">Node withdrawn</option>
+        <option value="pair_broken">Pairing broke</option>
+        <option value="witness_fail">Witness check failed</option>
       </select>
       <div class="actions">
-        <button type="button" class="ghost" id="btn-memorial">Memorial append</button>
-        <button type="button" class="ghost" id="btn-memorial-list">Memorial list</button>
+        <button type="button" class="gold" id="btn-memorial">Write memorial</button>
+      </div>
+      <div class="actions">
+        <button type="button" class="ghost" id="btn-memorial-list">Show memorials</button>
         <button type="button" class="ghost" id="btn-withdraw">Withdraw</button>
-        <button type="button" class="ghost" id="btn-witness">Witness</button>
+        <button type="button" class="ghost" id="btn-witness">Check witness</button>
       </div>
     </section>
 
-    <section class="card" id="receipts">
+    <section class="card app-screen" id="receipts">
       <h2><span class="kicker">receipts</span>Hash-chained lattice</h2>
-      <div class="status" id="ws-status">Pair AZBrowser, then FragGate unlock. Garden stays hash-only.</div>
+      <div class="status empty-state" id="ws-status">Nothing is chained yet. Pair with AZBrowser, then unlock. Stamps and memorials will list here.</div>
       <div class="metrics">
         <div class="metric"><b>Length</b><span id="chain-length">0</span></div>
-        <div class="metric"><b>Pair</b><span id="last-pair">UNPAIRED</span></div>
+        <div class="metric"><b>Pair</b><span id="last-pair">Not paired</span></div>
         <div class="metric"><b>Last hash</b><span id="last-hash">—</span></div>
         <div class="metric"><b>Date stamp</b><span id="last-date">—</span></div>
       </div>
-      <pre id="receipt-list">[]</pre>
+      <p id="lattice-empty" class="empty-state">The lattice is empty. That is a normal start.</p>
+      <ul id="lattice-human" class="lattice-human" hidden></ul>
+      <details class="tech" id="receipt-details">
+        <summary>Receipt record</summary>
+        <pre id="receipt-list">[]</pre>
+      </details>
     </section>
 
     <section class="card" id="install">
@@ -563,6 +687,25 @@ export function renderHome(stats) {
         el.className = "status" + (kind ? " " + kind : "");
         el.textContent = text;
       }
+      var KIND_LABEL = { PAIR: "Paired", UNLOCK: "Unlocked", STAMP: "Stamped", MEMORIAL: "Memorial", WITHDRAW: "Withdrawn", WITNESS: "Witness" };
+      var ACTION_TEXT = {
+        paired: "Paired with AZBrowser. Unlock is still required.",
+        pair_status: "Paired with AZBrowser. Unlock is still required.",
+        unlocked: "Access is unlocked.",
+        stamped: "The hash is stamped.",
+        memorial: "Memorial written.",
+        memorial_list: "Memorial list loaded.",
+        withdrawn: "This node is withdrawn.",
+        witness: "The page witness check passed.",
+        verify_hash: "The hash chain was checked.",
+        receipt_verify: "Receipts were checked.",
+        receipts: "Lattice loaded."
+      };
+      function pairPlain(pair, unlock) {
+        if (pair !== "PAIRED") return "Not paired yet. Pair with AZBrowser when you are ready. Access stays locked until then.";
+        if (unlock !== "UNLOCKED") return "Paired with AZBrowser. Access is still locked. Unlock with FragGate when you want to stamp or write a memorial.";
+        return "Paired with AZBrowser. Access is unlocked.";
+      }
       function render() {
         $("chain-length").textContent = String(ledger.length);
         var last = ledger.length ? ledger[ledger.length - 1] : null;
@@ -575,9 +718,29 @@ export function renderHome(stats) {
           if (r.event_kind === "UNLOCK" && r.unlock_status) unlock = r.unlock_status;
         });
         if (pair !== "PAIRED") unlock = "LOCKED";
-        $("last-pair").textContent = pair;
-        $("pair-status").textContent = pair + " · " + unlock;
+        $("last-pair").textContent = pair === "PAIRED" ? "Paired" : "Not paired";
+        var pairEl = $("pair-status");
+        pairEl.textContent = pairPlain(pair, unlock);
+        pairEl.className = pair === "PAIRED" ? "status ok" : "empty-state";
         $("receipt-list").textContent = JSON.stringify(lastResult || ledger, null, 2);
+        var latticeEmpty = $("lattice-empty");
+        if (latticeEmpty) latticeEmpty.hidden = ledger.length > 0;
+        var human = $("lattice-human");
+        if (human) {
+          human.textContent = "";
+          if (!ledger.length) {
+            human.hidden = true;
+          } else {
+            human.hidden = false;
+            ledger.forEach(function (r) {
+              var li = document.createElement("li");
+              var kind = KIND_LABEL[r.event_kind] || r.event_kind || "Receipt";
+              var when = r.date_stamp || "";
+              li.textContent = when ? (kind + " · " + when) : kind;
+              human.appendChild(li);
+            });
+          }
+        }
       }
       async function api(path, body, method) {
         var res = await fetch(path, {
@@ -593,37 +756,83 @@ export function renderHome(stats) {
         lastResult = data;
         if (Array.isArray(data.ledger)) ledger = data.ledger;
         saveLedger();
-        setStatus(data.ok === false || data.error ? "bad" : "ok", data.message || data.action || fallbackMsg);
+        var plain = (data && data.message) || (data && ACTION_TEXT[data.action]) || fallbackMsg;
+        if (data && data.ok === false) {
+          var reason = data.error || (Array.isArray(data.errors) && data.errors.length ? data.errors.join("; ") : "") || "The check did not pass.";
+          setStatus("bad", reason);
+        } else if (data && data.error) {
+          setStatus("bad", String(data.error));
+        } else {
+          setStatus("ok", plain || "Done.");
+        }
         render();
       }
       async function run(fn, label) {
         try { applyResult(await fn(), label); }
-        catch (err) { setStatus("bad", String(err.message || err)); }
+        catch (err) {
+          var raw = String((err && err.message) || err || "");
+          if (raw.indexOf("pair_token") !== -1) raw = "Unlock needs a pair first. Pair with AZBrowser, then try again. " + raw;
+          setStatus("bad", raw);
+        }
       }
-      $("btn-pair").onclick = function () { run(function () { return api("/v1/pair_status", { azbrowser: "${AZBROWSER}" }); }, "Paired. FragGate still required."); };
-      $("btn-unlock").onclick = function () { run(function () { return api("/v1/unlock", {}); }, "FragGate unlocked."); };
-      $("btn-stamp").onclick = function () { run(function () { return api("/v1/stamp", { hash_hex: $("hash-hex").value }); }, "Stamped. Hash only."); };
-      $("btn-verify").onclick = function () { run(function () { return api("/v1/verify_hash", {}); }, "Verify walked hashes and prev links."); };
-      $("btn-lattice").onclick = function () { run(function () { return api("/v1/lattice", {}); }, "Lattice walk."); };
-      $("btn-receipt").onclick = function () { run(function () { return api("/v1/receipt_verify", {}); }, "Receipt verify."); };
-      $("btn-memorial").onclick = function () { run(function () { return api("/v1/memorial_append", { reason: $("reason").value }); }, "Memorial written. Non-actionable."); };
-      $("btn-memorial-list").onclick = function () { run(function () { return api("/v1/memorial_list", {}); }, "Memorial list."); };
-      $("btn-withdraw").onclick = function () { run(function () { return api("/v1/withdraw", {}); }, "Withdrawn. Silence as security."); };
-      $("btn-witness").onclick = function () { run(function () { return api("/v1/witness", { witness_hash: witnessHash }); }, "UI witness intact."); };
+      $("btn-pair").onclick = function () { run(function () { return api("/v1/pair_status", { azbrowser: "${AZBROWSER}" }); }, "Paired with AZBrowser. Unlock is still required."); };
+      $("btn-unlock").onclick = function () { run(function () { return api("/v1/unlock", {}); }, "Access is unlocked."); };
+      $("btn-stamp").onclick = function () { run(function () { return api("/v1/stamp", { hash_hex: $("hash-hex").value }); }, "The hash is stamped."); };
+      $("btn-verify").onclick = function () { run(function () { return api("/v1/verify_hash", {}); }, "The hash chain was checked."); };
+      $("btn-lattice").onclick = function () { run(function () { return api("/v1/lattice", {}); }, "Lattice loaded."); };
+      $("btn-receipt").onclick = function () { run(function () { return api("/v1/receipt_verify", {}); }, "Receipts were checked."); };
+      $("btn-memorial").onclick = function () { run(function () { return api("/v1/memorial_append", { reason: $("reason").value }); }, "Memorial written."); };
+      $("btn-memorial-list").onclick = function () { run(function () { return api("/v1/memorial_list", {}); }, "Memorial list loaded."); };
+      $("btn-withdraw").onclick = function () { run(function () { return api("/v1/withdraw", {}); }, "This node is withdrawn."); };
+      $("btn-witness").onclick = function () { run(function () { return api("/v1/witness", { witness_hash: witnessHash }); }, "The page witness check passed."); };
       fetch("/v1/garden_list").then(function (r) { return r.json(); }).then(function (g) {
         var box = $("rolodex");
         box.textContent = "";
-        (g.cards || []).forEach(function (c) {
+        var cards = g.cards || [];
+        var gardenEmpty = $("garden-empty");
+        if (gardenEmpty) gardenEmpty.hidden = cards.length > 0;
+        cards.forEach(function (c) {
           var el = document.createElement("div");
           el.className = "goldcard";
           el.innerHTML = "<div class='kicker'>" + c.label + "</div><div class='hint'>hover reveal</div><div class='full'>" + c.hash_hex + "</div>";
           el.onclick = function () { $("hash-hex").value = c.hash_hex; };
           box.appendChild(el);
         });
-      }).catch(function () {});
+        box.querySelectorAll(".goldcard").forEach(function (el) {
+          if (!el.hasAttribute("tabindex")) el.tabIndex = 0;
+          if (!el.getAttribute("role")) el.setAttribute("role", "button");
+          if (!el.getAttribute("aria-label")) {
+            var kick = el.querySelector(".kicker");
+            el.setAttribute("aria-label", kick && kick.textContent ? ("Use hash " + kick.textContent) : "Use this hash");
+          }
+          if (!el.onkeydown) {
+            el.onkeydown = function (ev) {
+              if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); el.click(); }
+            };
+          }
+        });
+      }).catch(function () {
+        var gardenEmpty = $("garden-empty");
+        if (gardenEmpty) {
+          gardenEmpty.hidden = false;
+          gardenEmpty.textContent = "The garden could not be loaded. You can try again in a moment.";
+        }
+      });
       fetch("/v1/time").then(function (r) { return r.json(); }).then(function (t) {
+        var human = $("clock-human");
+        var when = t && (t.local || "");
+        var zone = t && t.zone ? t.zone : "UTC";
+        if (human) {
+          human.textContent = when
+            ? ("Advisory time: " + when + " (" + zone + "). This records the moment. It does not schedule work.")
+            : "Advisory time is unavailable right now.";
+        }
         $("clock").textContent = JSON.stringify(t, null, 2);
-      }).catch(function () { $("clock").textContent = "StaticClock unavailable"; });
+      }).catch(function () {
+        var human = $("clock-human");
+        if (human) human.textContent = "Advisory time is unavailable right now.";
+        $("clock").textContent = "StaticClock unavailable";
+      });
       fetch("/v1/witness").then(function (r) { return r.json(); }).then(function (w) {
         witnessHash = w.witness_hash || "";
       }).catch(function () {});
@@ -691,9 +900,9 @@ export function renderHome(stats) {
         $("qnmLocked").textContent = String(locked);
         $("qnmIsolated").textContent = String(isolated);
         var line = $("meshLine");
-        if (on) line.textContent = "Suite mesh: on · live " + live + " · locked " + locked + " · isolated " + isolated + ". QNS-CD-1.0 cite only. Not an anonymity network.";
-        else if (j.status === "unavailable" || (j.ok === false && j.error)) line.textContent = "Suite mesh: off (unavailable). QNM-BUILD-1.0. QNS-CD-1.0. Not an anonymity network.";
-        else line.textContent = "Suite mesh: off (default). QNM-BUILD-1.0. QNS-CD-1.0. Not an anonymity network.";
+        if (on) line.textContent = "The suite mesh is on. " + live + " live, " + locked + " locked, " + isolated + " isolated.";
+        else if (j.status === "unavailable" || (j.ok === false && j.error)) line.textContent = "The suite mesh could not be reached. It stays off, and Live Nodes stay at zero.";
+        else line.textContent = "The suite mesh is off. Live Nodes stay at zero until it is turned on.";
         var products = j.products_present || j.products || [];
         var names = Array.isArray(products) ? products.map(function (p) { return typeof p === "string" ? p : (p && (p.product || p.slug)) || ""; }).filter(Boolean) : [];
         var nodes = Array.isArray(j.nodes) ? j.nodes : [];

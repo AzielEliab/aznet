@@ -170,6 +170,41 @@ def test_pairing_and_forbidden_products() -> None:
         assert name not in HOME
 
 
+def test_app_screens_use_plain_language_and_focus() -> None:
+    rendered = HOME.split("export function renderHome")[1]
+    assert "prefers-color-scheme: light" in rendered
+    assert ":focus-visible" in rendered
+    assert "outline: 2px solid #c9a227" in rendered
+    assert "Not paired yet" in rendered
+    assert "The suite mesh is off" in rendered
+    assert "The lattice is empty" in rendered
+    assert 'id="clock-human"' in rendered
+    assert 'id="garden-empty"' in rendered
+    assert 'id="lattice-empty"' in rendered
+    assert "<details" in rendered
+    assert 'id="meshLiveCount"' in rendered
+    assert "Live Nodes" in rendered
+    assert ">Views<" in rendered or ">Views</span>" in rendered
+    assert "Downloads" in rendered
+    assert "QNM-BUILD-1.0" in rendered
+    assert "no public qnsd proxy" in rendered
+    assert "Not an anonymity network" in rendered
+    assert "No Node Gate" in rendered
+    assert "No auto-heal" in rendered
+    assert "AZBrowser is sibling" in rendered
+    lead = rendered.split('id="meshLine"')[1].split("</p>")[0]
+    assert "QNM-BUILD-1.0" not in lead
+    assert "THIS IS NOT" not in rendered
+    app = rendered.split('id="meshStrip"')[1].split('id="install"')[0]
+    assert "UNPAIRED · LOCKED" not in app
+    assert 'id="btn-pair"' in app
+    assert 'id="btn-unlock"' in app
+    assert 'id="btn-stamp"' in app
+    assert 'id="btn-memorial"' in app
+    assert 'value="isolation"' in app
+    assert 'value="ui_altered"' in app
+
+
 def test_official_rose_star_sigil_asset() -> None:
     sigil = Path("workers/download-tracker/public/sigil.png")
     data = sigil.read_bytes()
