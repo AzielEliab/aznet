@@ -381,13 +381,7 @@ export function renderHome(stats) {
   #meshProducts { flex-basis: 100%; margin: 0; }
 </style>
 <style id="app-chrome">
-  .app-nav { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0 0 1rem; }
-  .app-nav a {
-    text-decoration: none; color: #ffffff; border: 1px solid #c9a227; background: #0d0d0d;
-    border-radius: 999px; padding: .45rem .8rem; min-height: 2.75rem;
-    display: inline-flex; align-items: center; font-size: .92rem;
-  }
-  #meshStrip, .app-screen, .app-nav { max-width: 100%; min-width: 0; }
+  #meshStrip, .app-screen { max-width: 100%; min-width: 0; }
   #meshStrip > * { min-width: 0; max-width: 100%; }
   #meshStrip input { width: min(100%, 16rem); max-width: 100%; }
   #meshStrip > div:has(button) { display: flex; flex-wrap: wrap; gap: .45rem; width: 100%; align-items: center; }
@@ -420,16 +414,12 @@ export function renderHome(stats) {
   .app-screen input:focus-visible,
   .app-screen select:focus-visible,
   .app-screen summary:focus-visible,
-  .app-screen .goldcard:focus-visible,
-  .app-nav a:focus-visible {
+  .app-screen .goldcard:focus-visible {
     outline: 2px solid #c9a227;
     outline-offset: 2px;
   }
   @media (prefers-color-scheme: light) {
-    .app-nav, #meshStrip, .app-screen { color-scheme: light; }
-    .app-nav a {
-      color: #141414; background: #ffffff; border-color: #6e5208;
-    }
+    #meshStrip, .app-screen { color-scheme: light; }
     #meshStrip, .app-screen {
       background: #f6f5f2; color: #141414; border-color: #8a7340;
     }
@@ -460,8 +450,7 @@ export function renderHome(stats) {
     .app-screen input:focus-visible,
     .app-screen select:focus-visible,
     .app-screen summary:focus-visible,
-    .app-screen .goldcard:focus-visible,
-    .app-nav a:focus-visible {
+    .app-screen .goldcard:focus-visible {
       outline-color: #6e5208;
     }
   }
@@ -498,17 +487,6 @@ export function renderHome(stats) {
       </nav>
       <p class="banner">${escapeHtml(POSTURE)}</p>
     </header>
-
-    <nav class="app-nav" aria-label="App sections">
-      <a href="#meshStrip">Live Nodes</a>
-      <a href="#pair">Pair</a>
-      <a href="#unlock">FragGate</a>
-      <a href="#staticclock">Time</a>
-      <a href="#garden">Garden</a>
-      <a href="#stamps">Stamps</a>
-      <a href="#memorial">Memorial</a>
-      <a href="#receipts">Lattice</a>
-    </nav>
 
     <div id="meshStrip" aria-label="Suite Live Nodes">
       <div class="live"><b id="meshLiveCount">0</b> Live Nodes</div>
