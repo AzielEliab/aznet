@@ -345,10 +345,12 @@ try {
           el.appendChild(kicker);
           el.appendChild(full);
           el.addEventListener("click", function () {
-            document.getElementById("hash-hex").value = c.hash_hex || "";
+            var field = document.getElementById("hash-hex");
+            field.value = c.hash_hex || "";
             box.querySelectorAll(".goldcard").forEach(function (node) { node.setAttribute("aria-pressed", "false"); });
             el.setAttribute("aria-pressed", "true");
             document.getElementById("garden-lead").textContent = (c.label || "Card") + " is in the stamp field.";
+            field.scrollIntoView({ block: "center" });
           });
           box.appendChild(el);
         });
