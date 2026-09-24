@@ -174,8 +174,12 @@ def _check_names() -> Check:
         return _fail("mesh names", "honesty surface overclaims mesh security")
     if surface.get("mesh_tld") != "aziel" or surface.get("cap_per_handle") != 7:
         return _fail("mesh names", "namespace constants drifted")
-    if surface.get("pow_bits_min") != 8 or surface.get("witness_k") != 3 or surface.get("witness_age_seconds") != 72 * 60 * 60:
+    if surface.get("pow_bits_min") != 8 or surface.get("witness_k") != 2 or surface.get("witness_age_seconds") != 72 * 60 * 60:
         return _fail("mesh names", "mesh security constants drifted")
+    if surface.get("user_slots") != 3 or surface.get("reserved_slots") != 4:
+        return _fail("mesh names", "slot split drifted")
+    if surface.get("blocklist_is_a_classifier") or surface.get("isolation_lifts_on_appeal") or surface.get("classifiers_in_this_library"):
+        return _fail("mesh names", "honesty surface overclaims the name policy")
     return _ok("mesh names", "AZN-NAME-1.0 RFC 8032 and FED-MESH #CPV0CWYPXP4; .aziel is not an ICANN registration")
 
 

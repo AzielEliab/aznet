@@ -7,7 +7,7 @@ from pathlib import Path
 
 from aznet.cli import main
 from aznet.errors import NameRefuse
-from aznet.names import honesty, resolve, sign_advisory, sign_record, sign_vouch, sign_witness
+from aznet.names import honesty, resolve, sign_advisory, sign_appeal, sign_isolation, sign_record, sign_vouch, sign_witness
 from aznet.names.codec import b64url_decode, canonicalize, handle_from_public, statement_hash
 from aznet.names.ed25519 import public_key, sign, verify
 from aznet.names.ledger import NameLedger
@@ -46,21 +46,19 @@ def _claim(seed: bytes, name: str, **fields: object) -> dict:
     return sign_record(seed, **body)
 
 
-def _witness(seed: bytes, claim: dict, *, seq: int = 1, prev: str = GENESIS_PREV, timeslate: str = OPENED) -> dict:
+def _witness(seed: bytes, claim: dict, *, seq: int = 1, prev: str = GENESIS_PREV) -> dict:
     return sign_witness(
         seed,
         seq=seq,
         prev=prev,
-        subject_handle=claim["handle"],
         subject_hash=claim["record_hash"],
-        timeslate=timeslate,
     )
 
 
 def _finalize(ledger: NameLedger, claim: dict, witnesses: list[bytes], *, opened: str = OPENED) -> None:
     assert ledger.accept(claim, now=opened).code in {"OK", "IDEMPOTENT"}
     for seed in witnesses:
-        assert ledger.accept(_witness(seed, claim, timeslate=opened), now=opened).code == "OK"
+        assert ledger.accept(_witness(seed, claim), now=opened).code == "OK"
 
 
 def test_rfc8032_and_fed_mesh_vectors() -> None:
@@ -96,12 +94,17 @@ def test_rfc8032_and_fed_mesh_vectors() -> None:
     record = sign_record(bytes.fromhex(local["seed_hex"]), **local["fields"])
     assert record["record_hash"] == local["record_hash"]
     assert record["sig"] == local["sig"]
-    assert record["pow_nonce"] == local["pow_nonce"]
+    assert record["pow"] == local["pow"]
     assert record["handle"] == local["handle"]
     assert "seed" not in record
-    assert record["pow_nonce"]
+    assert record["pow"]["bits"] >= 8
     again = prepare_statement(record)
     assert again["record_hash"] == local["record_hash"]
+    stamped = dict(name)
+    stamped["pow"] = pinned["fed_mesh"]["name_claim_pow"]
+    anchored = prepare_statement(stamped)
+    assert anchored["record_hash"] == pinned["fed_mesh"]["name_claim_statement_hash"]
+    assert anchored["pow"]["digest"] == pinned["fed_mesh"]["name_claim_pow"]["digest"]
 
 
 def test_self_certifying_name_needs_no_claim() -> None:
@@ -169,8 +172,8 @@ def test_pending_does_not_beat_final_and_earlier_final_wins() -> None:
     ledger = NameLedger()
     assert ledger.accept(early, now=OPENED).code == "OK"
     assert ledger.accept(late, now=LATER).code == "OK"
-    for seed in (_seed(6), _seed(7), _seed(8)):
-        assert ledger.accept(_witness(seed, late, timeslate=LATER), now=LATER).code == "OK"
+    for seed in (_seed(6), _seed(7)):
+        assert ledger.accept(_witness(seed, late), now=LATER).code == "OK"
     pending = resolve(ledger, "Garden.AZIEL", now=FINAL_AT)
     assert pending.ok is False
     assert pending.code == "PENDING"
@@ -180,11 +183,11 @@ def test_pending_does_not_beat_final_and_earlier_final_wins() -> None:
     assert served.ok
     assert served.code == "OK"
     assert served.finality == "FINAL"
-    assert served.witnesses == 3
+    assert served.witnesses == 2
     assert served.target == "22" * 32
     assert served.owner == late["handle"]
-    for seed, seq in ((_seed(9), 1), (_seed(10), 1), (_seed(11), 1)):
-        assert ledger.accept(_witness(seed, early, timeslate=OPENED), now=FINAL_LATER).code == "OK"
+    for seed in (_seed(9), _seed(10)):
+        assert ledger.accept(_witness(seed, early), now=FINAL_LATER).code == "OK"
     winner = resolve(ledger, "garden.aziel", now=FINAL_LATER)
     assert winner.ok
     assert winner.target == "11" * 32
@@ -207,12 +210,12 @@ def test_equal_anchor_time_is_a_fork() -> None:
         now=OPENED,
     )
     assert [row["code"] for row in report["results"]] == ["OK", "OK"]
-    witnesses = [_seed(14), _seed(15), _seed(16)]
+    witnesses = [_seed(14), _seed(15)]
     progress = {id(seed): GENESIS_PREV for seed in witnesses}
     seq = {id(seed): 1 for seed in witnesses}
     for claim in (left, right):
         for seed in witnesses:
-            witnessed = _witness(seed, claim, seq=seq[id(seed)], prev=progress[id(seed)], timeslate=OPENED)
+            witnessed = _witness(seed, claim, seq=seq[id(seed)], prev=progress[id(seed)])
             assert ledger.accept(witnessed, now=OPENED).code == "OK"
             progress[id(seed)] = witnessed["record_hash"]
             seq[id(seed)] += 1
@@ -222,60 +225,60 @@ def test_equal_anchor_time_is_a_fork() -> None:
     assert result.target is None
 
 
-def test_two_witnesses_and_short_age_stay_pending() -> None:
+def test_one_witness_and_short_age_stay_pending() -> None:
     claim = _claim(_seed(17), "wait.aziel")
     ledger = NameLedger()
     assert ledger.accept(claim, now=OPENED).code == "OK"
     assert ledger.accept(_witness(_seed(18), claim), now=OPENED).code == "OK"
+    one = resolve(ledger, "wait.aziel", now=FINAL_AT)
+    assert one.code == "PENDING"
+    assert one.witnesses == 1
     assert ledger.accept(_witness(_seed(19), claim), now=OPENED).code == "OK"
     early = resolve(ledger, "wait.aziel", now=BEFORE)
     assert early.code == "PENDING"
     assert early.witnesses == 2
-    assert ledger.accept(_witness(_seed(20), claim), now=OPENED).code == "OK"
-    still = resolve(ledger, "wait.aziel", now=BEFORE)
-    assert still.code == "PENDING"
-    assert still.witnesses == 3
-    assert still.target == OBJECT
+    assert early.target == OBJECT
     ready = resolve(ledger, "wait.aziel", now=FINAL_AT)
     assert ready.ok
-    assert ready.witnesses == 3
+    assert ready.witnesses == WITNESS_K
 
 
 def test_self_witness_and_weak_proof_of_work_refused() -> None:
-    claim = _claim(_seed(21), "sybil.aziel")
+    seed = _seed(21)
+    claim = _claim(seed, "sybil.aziel")
+    ledger = NameLedger()
+    assert ledger.accept(claim, now=OPENED).code == "OK"
+    witnessed = sign_witness(seed, seq=2, prev=claim["record_hash"], subject_hash=claim["record_hash"])
+    refused_self = ledger.accept(witnessed, now=OPENED)
+    assert refused_self.code == "EQUIVOCATION"
+    assert ledger.is_equivocating(claim["handle"]) is False
     try:
-        _witness(_seed(21), claim)
-        raise AssertionError("a handle cannot witness itself")
-    except NameRefuse as exc:
-        assert exc.code == "EQUIVOCATION"
-    try:
-        _claim(_seed(21), "sybil-weak.aziel", pow_bits=3)
+        _claim(seed, "sybil-weak.aziel", pow_bits=3)
         raise AssertionError("pow below the minimum must fail")
     except NameRefuse as exc:
         assert exc.code == "POW_WEAK"
     broken = dict(claim)
-    broken["pow_nonce"] = "0"
-    ledger = NameLedger()
-    refused = ledger.accept(broken, now=OPENED)
+    broken["pow"] = {"nonce": "0", "bits": 8, "digest": "0" * 64}
+    refused = NameLedger().accept(broken, now=OPENED)
     assert refused.ok is False
     assert refused.code == "POW_FAIL"
-    assert resolve(ledger, "sybil.aziel", now=FINAL_AT).code == "UNCLAIMED"
+    assert resolve(ledger, "sybil.aziel", now=FINAL_AT).code == "PENDING"
 
 
 def test_sybil_flood_cannot_pass_cap_or_skip_finality() -> None:
     owner = _seed(22)
     ledger = NameLedger()
     previous = GENESIS_PREV
-    for index in range(1, 8):
+    for index in range(1, 4):
         claim = _claim(owner, f"slot{index}.aziel", seq=index, prev=previous)
         assert ledger.accept(claim, now=OPENED).code == "OK"
         previous = claim["record_hash"]
-    eighth = _claim(owner, "slot8.aziel", seq=8, prev=previous)
-    assert ledger.accept(eighth, now=OPENED).code == "OVER_CAP"
+    fourth = _claim(owner, "slot4.aziel", seq=4, prev=previous)
+    assert ledger.accept(fourth, now=OPENED).code == "OVER_CAP"
     flood = _claim(_seed(23), "slot1.aziel")
     assert ledger.accept(flood, now=LATER).code == "OK"
     assert resolve(ledger, "slot1.aziel", now=FINAL_LATER).code == "PENDING"
-    _finalize(ledger, flood, [_seed(24), _seed(25), _seed(26)], opened=LATER)
+    _finalize(ledger, flood, [_seed(24), _seed(25)], opened=LATER)
     # The earlier pending claim still has no witnesses, so the later FINAL is served.
     served = resolve(ledger, "slot1.aziel", now=FINAL_LATER)
     assert served.ok
@@ -295,7 +298,7 @@ def test_equivocation_refuses_the_handle_only() -> None:
     hidden = resolve(ledger, "left.aziel", now=FINAL_AT)
     assert hidden.code == "EQUIVOCATION"
     assert hidden.target is None
-    _finalize(ledger, other, [_seed(32), _seed(33), _seed(34)], opened=LATER)
+    _finalize(ledger, other, [_seed(32), _seed(33)], opened=LATER)
     shown = resolve(ledger, "right.aziel", now=FINAL_LATER)
     assert shown.ok
     assert shown.owner == other["handle"]
@@ -378,7 +381,7 @@ def test_transfer_release_expiry_and_cap_slot() -> None:
     nxt = _seed(41)
     ledger = NameLedger()
     claim = _claim(owner, "booth.aziel", target="99" * 32, expires_at="2026-09-24T00:00:00Z")
-    _finalize(ledger, claim, [_seed(42), _seed(43), _seed(44)])
+    _finalize(ledger, claim, [_seed(42), _seed(43)])
     moved = sign_record(
         owner,
         name="booth.aziel",
@@ -406,7 +409,7 @@ def test_transfer_release_expiry_and_cap_slot() -> None:
     assert resolve(ledger, "booth.aziel", now=FINAL_LATER).code == "REVOKED"
 
     expiring = _claim(_seed(45), "short.aziel", expires_at="2026-09-25T12:00:00Z")
-    _finalize(ledger, expiring, [_seed(46), _seed(47), _seed(48)])
+    _finalize(ledger, expiring, [_seed(46), _seed(47)])
     assert resolve(ledger, "short.aziel", now=FINAL_AT).ok
     expired = resolve(ledger, "short.aziel", now="2026-09-25T12:00:00Z")
     assert expired.code == "EXPIRED"
@@ -421,7 +424,7 @@ def test_release_and_expiry_free_a_cap_slot() -> None:
     ledger = NameLedger()
     previous = GENESIS_PREV
     first = None
-    for index in range(1, 8):
+    for index in range(1, 4):
         kwargs = {"seq": index, "prev": previous}
         if index == 1:
             kwargs["expires_at"] = "2026-09-22T00:00:00Z"
@@ -430,28 +433,28 @@ def test_release_and_expiry_free_a_cap_slot() -> None:
         if first is None:
             first = claim
         previous = claim["record_hash"]
-    blocked = _claim(owner, "cap8.aziel", seq=8, prev=previous)
+    blocked = _claim(owner, "cap4.aziel", seq=4, prev=previous)
     assert ledger.accept(blocked, now=OPENED).code == "OVER_CAP"
     assert ledger.accept(blocked, now="2026-09-22T00:00:01Z").code == "OK"
     fresh = NameLedger()
     previous = GENESIS_PREV
-    for index in range(1, 8):
+    for index in range(1, 4):
         claim = _claim(_seed(51), f"rel{index}.aziel", seq=index, prev=previous)
         assert fresh.accept(claim, now=OPENED).code == "OK"
         previous = claim["record_hash"]
-    opening = _claim(_seed(51), "rel8.aziel", seq=8, prev=previous)
+    opening = _claim(_seed(51), "rel4.aziel", seq=4, prev=previous)
     assert fresh.accept(opening, now=OPENED).code == "OVER_CAP"
     rel1 = next(rec for rec in fresh.records if rec.get("name") == "rel1.aziel")
     release = sign_record(
         _seed(51),
         name="rel1.aziel",
         op="release",
-        seq=8,
+        seq=4,
         prev=previous,
         prev_record=rel1["record_hash"],
     )
     assert fresh.accept(release, now=LATER).code == "OK"
-    opening = _claim(_seed(51), "rel8.aziel", seq=9, prev=release["record_hash"])
+    opening = _claim(_seed(51), "rel4.aziel", seq=5, prev=release["record_hash"])
     assert fresh.accept(opening, now=LATER).code == "OK"
 
 
@@ -463,9 +466,8 @@ def test_vouch_does_not_change_finality_and_advisory_is_local() -> None:
     vouch = sign_vouch(
         friend,
         seq=1,
-        subject_handle=claim["handle"],
+        subject=claim["handle"],
         subject_public_key=claim["public_key"],
-        timeslate=OPENED,
     )
     assert ledger.accept(vouch, now=OPENED).code == "OK"
     view = ledger.trust_view(claim["handle"])
@@ -478,20 +480,19 @@ def test_vouch_does_not_change_finality_and_advisory_is_local() -> None:
             friend,
             seq=2,
             prev=vouch["record_hash"],
-            list_id="notes",
-            timeslate=OPENED,
-            entries=[{"name": "trust.aziel", "note": "look twice", "score": 9}],
+            subject=claim["handle"],
+            note="look twice",
+            score=9,
         )
-        raise AssertionError("advisory lists have no score")
+        raise AssertionError("advisory notes have no score")
     except NameRefuse as exc:
         assert exc.code == "MALFORMED"
     advisory = sign_advisory(
         friend,
         seq=2,
         prev=vouch["record_hash"],
-        list_id="notes",
-        timeslate=OPENED,
-        entries=[{"name": "trust.aziel", "note": "look twice", "subject_handle": ""}],
+        subject=claim["handle"],
+        note="look twice",
     )
     assert ledger.accept(advisory, now=OPENED).code == "OK"
     quiet = resolve(ledger, "trust.aziel", now=FINAL_AT)
@@ -516,7 +517,7 @@ def test_az_allowlist_and_dns_fallthrough() -> None:
     assert missing.name == "azgrid.aziel"
     assert missing.resolves_to_hub is False
     claim = _claim(_seed(70), "azgrid.aziel", target=_handle(_seed(70)), target_kind="handle")
-    _finalize(ledger, claim, [_seed(71), _seed(72), _seed(73)])
+    _finalize(ledger, claim, [_seed(71), _seed(72)])
     via_az = resolve(ledger, "AZGRID.AZ", now=FINAL_AT)
     via_aziel = resolve(ledger, "azgrid.aziel", now=FINAL_AT)
     assert via_az.ok and via_aziel.ok
@@ -599,8 +600,17 @@ def test_honesty_machine_surface() -> None:
     assert surface["hosts_payloads"] is False
     assert surface["keys_leave_nodes"] is False
     assert surface["cap_per_handle"] == 7
+    assert surface["user_slots"] == 3
+    assert surface["reserved_slots"] == 4
+    assert surface["reserved_names"] == ["ae.aziel", "corpus.aziel", "godlock.aziel", "hdj.aziel"]
+    assert surface["self_cert_uses_a_slot"] is False
+    assert surface["factory_cap7_separate_layer"] is True
     assert surface["pow_bits_min"] == POW_BITS_MIN == 8
-    assert surface["witness_k"] == 3
+    assert surface["witness_k"] == WITNESS_K == 2
+    assert surface["blocklist_is_a_classifier"] is False
+    assert surface["isolation_lifts_on_appeal"] is False
+    assert surface["classifiers_in_this_library"] is False
+    assert surface["reserved_slot_restore"] is False
     assert surface["first_valid_final_claim_wins"] is True
     assert surface["zero_knowledge"] is False
     assert surface["executes_peer_code"] is False
@@ -608,6 +618,130 @@ def test_honesty_machine_surface() -> None:
     assert surface["relay_gossip"] is False
     assert surface["products_merged"] is False
     assert "azgrid" in surface["factory_labels"]
+
+
+def test_reserved_slots_blocklist_and_self_cert_outside_the_cap() -> None:
+    owner = _seed(90)
+    ledger = NameLedger()
+    for label in ("ae", "corpus", "godlock", "hdj"):
+        try:
+            _claim(owner, f"{label}.aziel")
+            raise AssertionError(f"{label}.aziel is reserved")
+        except NameRefuse as exc:
+            assert exc.code == "RESERVED"
+    for blocked in ("porn.aziel", "my-porn-site.aziel", "csam.aziel", "xxx.aziel"):
+        try:
+            _claim(owner, blocked)
+            raise AssertionError(f"{blocked} matches the blocklist")
+        except NameRefuse as exc:
+            assert exc.code == "POLICY"
+            assert "porn" not in str(exc)
+            assert "csam" not in str(exc)
+    assert _claim(owner, "analysis.aziel")["name"] == "analysis.aziel"
+    assert _claim(owner, "garden.aziel")["name"] == "garden.aziel"
+    previous = GENESIS_PREV
+    for index, label in enumerate(("one", "two", "azgrid"), start=1):
+        claim = _claim(owner, f"{label}.aziel", seq=index, prev=previous)
+        assert ledger.accept(claim, now=OPENED).code == "OK"
+        previous = claim["record_hash"]
+    extra = _claim(owner, "four.aziel", seq=4, prev=previous)
+    assert ledger.accept(extra, now=OPENED).code == "OVER_CAP"
+    handle = _handle(owner)
+    update = sign_record(
+        owner,
+        name=handle[1:].lower() + ".aziel",
+        op="update",
+        target=OBJECT,
+        target_kind="hash",
+        seq=4,
+        prev=previous,
+    )
+    assert ledger.accept(update, now=OPENED).code == "OK"
+    served = resolve(ledger, handle[1:].lower() + ".aziel", now=OPENED)
+    assert served.ok
+    assert served.finality == "FINAL"
+    assert served.witnesses == 0
+
+
+def test_isolation_hides_names_and_appeal_does_not_lift_it(tmp_path: Path) -> None:
+    owner = _seed(91)
+    claim = _claim(owner, "kept.aziel")
+    ledger = NameLedger(path=tmp_path / "names.jsonl")
+    assert ledger.accept(claim, now=OPENED).code == "OK"
+    witness = _witness(_seed(92), claim)
+    assert ledger.accept(witness, now=OPENED).code == "OK"
+    evidence = "cd" * 32
+    try:
+        sign_isolation(
+            _seed(93),
+            seq=1,
+            subject=claim["handle"],
+            reason="csam-hash",
+            evidence_hash=evidence,
+            check="label-blocklist",
+        )
+        raise AssertionError("another handle cannot isolate this one")
+    except NameRefuse as exc:
+        assert exc.code == "NOT_OWNER"
+    try:
+        sign_isolation(owner, seq=2, prev=claim["record_hash"], reason="csam-hash", evidence_hash="zz", check="label")
+        raise AssertionError("evidence must be a hash")
+    except NameRefuse as exc:
+        assert exc.code == "MALFORMED"
+    try:
+        sign_isolation(
+            owner,
+            seq=2,
+            prev=claim["record_hash"],
+            reason="csam-hash",
+            evidence_hash=evidence,
+            check="label",
+            image=b"not-stored",
+        )
+        raise AssertionError("isolation must not carry image bytes")
+    except NameRefuse as exc:
+        assert exc.code == "LEAK"
+    isolation = sign_isolation(
+        owner,
+        seq=2,
+        prev=claim["record_hash"],
+        reason="csam-hash",
+        evidence_hash=evidence,
+        check="AZN-BLOCK-1.0",
+    )
+    assert "image" not in isolation
+    assert isolation["evidence_hash"] == evidence
+    assert ledger.accept(isolation, now=LATER).code == "OK"
+    assert ledger.is_isolated(claim["handle"])
+    hidden = resolve(ledger, "kept.aziel", now=FINAL_AT)
+    assert hidden.ok is False
+    assert hidden.code == "ISOLATED"
+    assert hidden.target is None
+    bare = resolve(ledger, claim["handle"], now=FINAL_AT)
+    assert bare.code == "ISOLATED"
+    assert bare.target is None
+    later_witness = sign_witness(_seed(94), seq=1, subject_hash=claim["record_hash"])
+    assert ledger.accept(later_witness, now=LATER).code == "ISOLATED"
+    appeal = sign_appeal(
+        owner,
+        seq=3,
+        prev=isolation["record_hash"],
+        isolation_hash=isolation["record_hash"],
+        check="operator re-check requested",
+    )
+    assert ledger.accept(appeal, now=FINAL_AT).code == "OK"
+    view = ledger.trust_view(claim["handle"])
+    assert view["isolated"] is True
+    assert view["appeal_requested"] is True
+    assert view["appeal_lifts_isolation"] is False
+    still = resolve(ledger, "kept.aziel", now=FINAL_AT)
+    assert still.code == "ISOLATED"
+    assert still.target is None
+    again = _claim(owner, "after.aziel", seq=4, prev=appeal["record_hash"])
+    assert ledger.accept(again, now=FINAL_AT).code == "ISOLATED"
+    reloaded = NameLedger.load(ledger.path)
+    assert reloaded.is_isolated(claim["handle"])
+    assert resolve(reloaded, "kept.aziel", now=FINAL_AT).code == "ISOLATED"
 
 
 def test_cli_resolve_fallthrough_and_names(capsys) -> None:

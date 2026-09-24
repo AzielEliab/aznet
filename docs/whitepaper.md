@@ -139,7 +139,11 @@ Marker: `Truth Is No Defense — .AZNet — AZ.`
 The naming library resolves `.aziel` names and the Cap-7 `.az` aliases
 from a local signed ledger. Handles and name statements follow
 FED-MESH-1.0. A friendly name is served only after an 8-bit proof-of-work,
-72 hours on this ledger, and 3 witness handles. It is a parallel
+72 hours on this ledger, and 2 witness handles. Four hub-mirror names are
+reserved and three slots are user claims. A label blocklist refuses names
+at claim time. A self-signed isolation record, evidence hash only, stops
+that handle's names from being served. An appeal does not lift isolation.
+It is a parallel
 namespace for callers of the resolver. Regular browsers do not see
 `.aziel`. Nothing in this software registers a TLD with ICANN.
 

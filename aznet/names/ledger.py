@@ -24,17 +24,20 @@ from aznet.names.wire import (
     ANCHOR_SPEC,
     BAD_CHAIN,
     BAD_SEQUENCE,
-    CAP_PER_HANDLE,
     EQUIVOCATION,
     EXPIRED,
     FINAL,
     FORK,
     GENESIS_PREV,
     IDEMPOTENT,
+    ISOLATED,
     KIND_ADVISORY,
+    KIND_APPEAL,
+    KIND_ISOLATION,
     KIND_NAME,
     KIND_VOUCH,
     KIND_WITNESS,
+    USER_SLOTS,
     LEAK,
     LEAK_KEYS,
     MALFORMED,
@@ -95,6 +98,7 @@ class NameLedger:
         self._anchored_at: dict[str, str] = {}
         self._equiv: set[str] = set()
         self._equiv_proofs: list[dict[str, Any]] = []
+        self._isolated: set[str] = set()
         self._subs: set[str] = set()
         self._tip = GENESIS_PREV
         self._batch: list[dict[str, Any]] = []
@@ -109,6 +113,9 @@ class NameLedger:
 
     def is_equivocating(self, handle: str) -> bool:
         return handle in self._equiv
+
+    def is_isolated(self, handle: str) -> bool:
+        return bool(handle) and handle in self._isolated
 
     def anchored_at(self, record_hash: str) -> str:
         return self._anchored_at.get(record_hash, "")
@@ -153,6 +160,7 @@ class NameLedger:
         else:
             self._records.append(prepared)
             self._by_hash[prepared["record_hash"]] = prepared
+            self._note_isolation(prepared)
         self._tip = str(row["anchor_hash"])
 
     def verify(self) -> dict[str, Any]:
@@ -291,13 +299,14 @@ class NameLedger:
         for rec in self._records:
             if rec.get("kind") != KIND_WITNESS:
                 continue
-            if rec.get("subject_hash") != claim["record_hash"]:
-                continue
-            if rec.get("subject_handle") != claim["handle"]:
+            if rec.get("subject_hash") != claim["record_hash"] or rec.get("subject_kind") != "name":
                 continue
             if rec["handle"] == claim["handle"] or self.is_equivocating(rec["handle"]):
                 continue
-            if rec["timeslate"] > now:
+            if self.is_isolated(rec["handle"]):
+                continue
+            opened = self._anchored_at.get(rec["record_hash"], "")
+            if opened and opened > now:
                 continue
             found[rec["handle"]] = rec
         return list(found.values())
@@ -306,23 +315,40 @@ class NameLedger:
         """Local signals only. Not a ranking and not a score."""
         acts = [rec for rec in self._records if rec.get("handle") == handle]
         vouches = [
-            {"by": rec["handle"], "timeslate": rec["timeslate"], "record_hash": rec["record_hash"]}
+            {"by": rec["handle"], "record_hash": rec["record_hash"]}
             for rec in self._records
-            if rec.get("kind") == KIND_VOUCH and rec.get("subject_handle") == handle
+            if rec.get("kind") == KIND_VOUCH and rec.get("subject") == handle
         ]
-        first = min((self._anchored_at.get(rec["record_hash"], "") or rec.get("timeslate", "") for rec in acts), default="")
+        appeals = [
+            {
+                "record_hash": rec["record_hash"],
+                "isolation_hash": rec.get("isolation_hash"),
+                "lifts_isolation": False,
+            }
+            for rec in self._records
+            if rec.get("kind") == KIND_APPEAL and rec.get("handle") == handle
+        ]
+        first = min((self._anchored_at.get(rec["record_hash"], "") for rec in acts), default="")
         return {
             "handle": handle,
             "equivocating": self.is_equivocating(handle),
+            "isolated": self.is_isolated(handle),
+            "appeal_requested": bool(appeals),
+            "appeal_lifts_isolation": False,
             "first_seen": first or None,
             "act_count": len(acts),
             "vouches": vouches,
+            "appeals": appeals,
             "vouches_change_finality": False,
-            "note": "Local trust signals only. Not a ranking. Vouches do not make a claim FINAL.",
+            "note": (
+                "Local trust signals only. Not a ranking. Vouches do not make a claim FINAL. "
+                "An appeal asks for a re-check and does not lift isolation."
+            ),
         }
 
     def matching_advisories(self, name: str | None, owner: str | None) -> list[dict[str, Any]]:
-        """Entries from advisory lists this node has subscribed to. Others are ignored."""
+        """Subscribed advisories whose subject handle is the name owner. Others are ignored."""
+        del name
         latest: dict[str, dict[str, Any]] = {}
         for rec in self._records:
             if rec.get("kind") != KIND_ADVISORY or rec["handle"] not in self._subs:
@@ -332,18 +358,16 @@ class NameLedger:
                 latest[rec["handle"]] = rec
         matches: list[dict[str, Any]] = []
         for rec in latest.values():
-            for entry in rec["entries"]:
-                if (name and entry["name"] == name) or (owner and entry["subject_handle"] == owner):
-                    matches.append(
-                        {
-                            "list_id": rec["list_id"],
-                            "by": rec["handle"],
-                            "name": entry["name"],
-                            "subject_handle": entry["subject_handle"],
-                            "note": entry["note"],
-                            "record_hash": rec["record_hash"],
-                        }
-                    )
+            subject = str(rec.get("subject") or "")
+            if owner and subject == owner:
+                matches.append(
+                    {
+                        "by": rec["handle"],
+                        "subject": subject,
+                        "note": rec.get("note") or "",
+                        "record_hash": rec["record_hash"],
+                    }
+                )
         return matches
 
     def _refuse_envelope(self, envelope: Mapping[str, Any]) -> None:
@@ -515,6 +539,8 @@ class NameLedger:
                 status = EQUIVOCATION
             elif tip.get("owner") and self.is_equivocating(str(tip["owner"])):
                 status = EQUIVOCATION
+            elif self._touches_isolated(root, tip):
+                status = ISOLATED
             elif not tip.get("owner") or tip.get("target") is None:
                 status = REVOKED
             elif now and tip.get("expires") is not None and int(tip["expires"]) <= timeslate_ms(now):
@@ -528,7 +554,7 @@ class NameLedger:
         root = self._establishing(tip)
         witnesses = self.valid_witnesses(root, now) if now else []
         target = tip.get("target")
-        hidden = status in {FORK, EQUIVOCATION, REVOKED}
+        hidden = status in {FORK, EQUIVOCATION, REVOKED, ISOLATED}
         return {
             "code": status,
             "owner": None if hidden else (str(tip.get("owner") or "") or None),
@@ -557,7 +583,7 @@ class NameLedger:
         pendings = [item for item in ranked if item[0] == PENDING]
         if pendings:
             return earliest(pendings)
-        for code in (EXPIRED, REVOKED, FORK, EQUIVOCATION):
+        for code in (EXPIRED, REVOKED, FORK, EQUIVOCATION, ISOLATED):
             matched = [item for item in ranked if item[0] == code]
             if matched:
                 if code in {EXPIRED, REVOKED}:
@@ -575,6 +601,12 @@ class NameLedger:
         conflict = self._equivocation(rec, now)
         if conflict is not None:
             return conflict
+        if self.is_isolated(handle) and rec.get("kind") != KIND_APPEAL:
+            return _result(False, ISOLATED, digest, f"{ISOLATED}: this handle's names are not served")
+        if rec.get("kind") == KIND_APPEAL:
+            appeal = self._appeal_rules(rec)
+            if appeal is not None:
+                return appeal
         parent = self._handle_parent(rec)
         if isinstance(parent, AdoptResult):
             return parent
@@ -672,11 +704,14 @@ class NameLedger:
         if new_claim or (rec["owner"] and rec["owner"] != rec["handle"]):
             owner = str(rec["owner"])
             active = self._active_names(owner, now)
-            if name not in active and len(active) >= CAP_PER_HANDLE:
-                return _result(False, OVER_CAP, digest, f"{OVER_CAP}: a handle holds {CAP_PER_HANDLE} friendly names")
+            if name not in active and len(active) >= USER_SLOTS:
+                return _result(False, OVER_CAP, digest, f"{OVER_CAP}: a handle holds {USER_SLOTS} user names")
+        if rec.get("owner") and self.is_isolated(str(rec["owner"])):
+            return _result(False, ISOLATED, digest, f"{ISOLATED}: an isolated handle cannot receive a name")
         return None
 
     def _witness_rules(self, rec: Mapping[str, Any], now: str | None) -> AdoptResult | None:
+        del now
         subject = self._by_hash.get(str(rec["subject_hash"]))
         if subject is None:
             if any(item["record_hash"] == rec["subject_hash"] for item in self._batch):
@@ -684,16 +719,38 @@ class NameLedger:
             return _result(False, BAD_CHAIN, rec["record_hash"], f"{BAD_CHAIN}: witnessed claim is not anchored")
         if subject.get("kind") != KIND_NAME or not subject.get("owner") or subject.get("target") is None:
             return _result(False, BAD_CHAIN, rec["record_hash"], f"{BAD_CHAIN}: a witness points at a live name record")
-        if subject.get("handle") != rec["subject_handle"]:
-            return _result(False, BAD_CHAIN, rec["record_hash"], f"{BAD_CHAIN}: subject handle does not match the claim")
-        if now and rec["timeslate"] > now:
-            return _result(False, BAD_CHAIN, rec["record_hash"], f"{BAD_CHAIN}: witness timeslate is after now")
+        if classify(str(subject.get("name") or "")).kind == "self_cert":
+            return _result(False, BAD_CHAIN, rec["record_hash"], f"{BAD_CHAIN}: a self-certifying name does not take witnesses")
+        if subject.get("handle") == rec["handle"]:
+            return _result(False, EQUIVOCATION, rec["record_hash"], f"{EQUIVOCATION}: a handle cannot witness its own claim")
+        if self.is_isolated(str(subject.get("handle") or "")) or self.is_isolated(str(subject.get("owner") or "")):
+            return _result(False, ISOLATED, rec["record_hash"], f"{ISOLATED}: an isolated handle is not witnessed")
         return None
+
+    def _appeal_rules(self, rec: Mapping[str, Any]) -> AdoptResult | None:
+        digest = str(rec["record_hash"])
+        if not self.is_isolated(str(rec["handle"])):
+            return _result(False, BAD_CHAIN, digest, f"{BAD_CHAIN}: an appeal follows an anchored isolation")
+        isolation = self._by_hash.get(str(rec.get("isolation_hash") or ""))
+        if isolation is None or isolation.get("kind") != KIND_ISOLATION:
+            return _result(False, BAD_CHAIN, digest, f"{BAD_CHAIN}: isolation record is not anchored")
+        if isolation.get("subject") != rec["handle"]:
+            return _result(False, NOT_OWNER, digest, f"{NOT_OWNER}: the appeal must name this handle's isolation")
+        return None
+
+    def _touches_isolated(self, root: Mapping[str, Any], tip: Mapping[str, Any]) -> bool:
+        owners = [str(root.get("handle") or ""), str(tip.get("handle") or ""), str(tip.get("owner") or "")]
+        return any(self.is_isolated(handle) for handle in owners)
+
+    def _note_isolation(self, rec: Mapping[str, Any]) -> None:
+        if rec.get("kind") == KIND_ISOLATION:
+            self._isolated.add(str(rec.get("subject") or rec.get("handle") or ""))
 
     def _adopt(self, rec: Mapping[str, Any], now: str | None) -> None:
         stored = dict(rec)
         self._records.append(stored)
         self._by_hash[stored["record_hash"]] = stored
+        self._note_isolation(stored)
         stamp = now or ""
         self._anchored_at[stored["record_hash"]] = stamp
         label = str(stored.get("name") or stored.get("subject_hash") or stored["handle"])

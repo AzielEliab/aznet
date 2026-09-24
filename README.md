@@ -176,8 +176,10 @@ AZNet resolves mesh names from a local signed ledger. The mesh TLD is
 `.aziel`. A node handle is `#` plus 11 Crockford characters of the
 Ed25519 public key (FED-MESH-1.0), and that handle already owns
 `<handle>.aziel`. Friendly names are first-valid-FINAL-claim-wins: an
-8-bit proof-of-work, then 72 hours and 3 witness handles, 7 names per
-handle. `.az` stays on normal DNS except the Cap-7 allowlist (`azgrid`,
+8-bit proof-of-work, then 72 hours and 2 witness handles. Each handle
+has 4 reserved hub-mirror names (`ae`, `corpus`, `godlock`, `hdj`) and
+3 user names, plus the automatic `<handle>.aziel`. Factory Cap-7 labels
+stay a separate layer. `.az` stays on normal DNS except the Cap-7 allowlist (`azgrid`,
 `azbooth`, `azcloak`, `azvault`, `azshift`, `azflag`, `azstandby`). The
 four AZ.* display names are hub cites, not name records.
 

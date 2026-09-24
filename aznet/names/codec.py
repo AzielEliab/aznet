@@ -75,8 +75,12 @@ def handle_from_public(raw: bytes) -> str:
     return "#" + "".join(out)
 
 
-def pow_digest(statement_hash_hex: str, nonce: str) -> str:
-    return hashlib.sha256(f"{statement_hash_hex}:{nonce}".encode("utf-8")).hexdigest()
+def pow_digest(statement_hash_hex: str, sig: str, nonce: str) -> str:
+    """SHA-256 of statement hash, signature, and nonce, separated by newlines.
+
+    Matches aziel-runtime ``namePowDigest``. The nonce is outside the signature.
+    """
+    return hashlib.sha256(f"{statement_hash_hex}\n{sig}\n{nonce}".encode("utf-8")).hexdigest()
 
 
 def leading_zero_bits(hex_hash: str) -> int:
@@ -86,11 +90,12 @@ def leading_zero_bits(hex_hash: str) -> int:
     return 256 - number.bit_length()
 
 
-def find_pow_nonce(statement_hash_hex: str, bits: int) -> str:
-    """Search a hashcash nonce. ``bits`` is small (the spec minimum is 8)."""
+def find_pow(statement_hash_hex: str, sig: str, bits: int) -> dict[str, Any]:
+    """Search a hashcash stamp. ``bits`` is small (the spec minimum is 8)."""
     limit = 1 << (bits + 12)
     for counter in range(limit):
         nonce = f"{counter:x}"
-        if leading_zero_bits(pow_digest(statement_hash_hex, nonce)) >= bits:
-            return nonce
+        digest = pow_digest(statement_hash_hex, sig, nonce)
+        if leading_zero_bits(digest) >= bits:
+            return {"bits": bits, "digest": digest, "nonce": nonce}
     raise RuntimeError("proof-of-work search exceeded its window")

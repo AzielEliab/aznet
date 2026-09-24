@@ -22,6 +22,11 @@
       "sig": "2PLK1U2papMuoD6Ux_SPuWwT_r_nxtKmcLmzAa3aCSLFMvGhp5T2-p2lNavR47MtnoxMmFPITL8yPS1LKu4gBA"
     },
     "name_claim_statement_hash": "6d38408d305afb2ae562d3c022c3421fc8819c81d61108d3a8b91e2b8dc7ca7c",
+    "name_claim_pow": {
+      "nonce": "7e",
+      "bits": 8,
+      "digest": "0091860bcaeed0c2dbc3520fb74656e8d40045d1c31954108fd7d30e7d9a1a20"
+    },
     "ref_update": {
       "v": "FED-MESH-1.0",
       "kind": "ref",
@@ -43,7 +48,11 @@
     "handle": "#CPV0CWYPXP4",
     "record_hash": "63963739e7928086ca220703624c37ac849e13ac34716ae6e7a281aecccb35fe",
     "sig": "BnC4WBTpyxo4GIGGJAGW6UxKt1j8b7hi0iFmZ9kayVUMJBf7bN8gY5yR3zOxgzDZ3kLRlj1yy3w_KqIB6PBKAg",
-    "pow_nonce": "d1",
+    "pow": {
+      "bits": 8,
+      "digest": "00e265acec9b954a91fbcb36048f13b80a2125547083a8ef82e29a516d095da2",
+      "nonce": "bd"
+    },
     "fields": {
       "name": "library.aziel",
       "op": "claim",

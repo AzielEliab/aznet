@@ -20,6 +20,7 @@ from aznet.names.wire import (
     EXPIRED,
     FINAL,
     FORK,
+    ISOLATED,
     MALFORMED,
     MESH_TLD,
     NOT_MESH,
@@ -136,7 +137,7 @@ def resolve(
 
     ``now`` is a UTC timestamp supplied by the caller. Friendly claims stay
     PENDING until this ledger has held the establishing claim for 72 hours
-    and at least three other handles have witnessed it. ``.az`` names that
+    and at least two other handles have witnessed it. ``.az`` names that
     are not on the allowlist return ``DNS_FALLTHROUGH``. This function does
     not open a socket and does not serve a PENDING or equivocating target
     as a success.
@@ -184,6 +185,15 @@ def resolve(
 
     ledger = source if isinstance(source, NameLedger) else _as_ledger(source)
     assert classified.name is not None
+    if classified.kind == "self_cert" and classified.owner_handle and ledger.is_isolated(classified.owner_handle):
+        return _finish(
+            ok=False,
+            code=ISOLATED,
+            query=classified.query,
+            name=classified.name,
+            expiry_checked=now is not None,
+            detail=f"{ISOLATED}: this handle's names are not served",
+        )
     if classified.kind == "self_cert" and not any(
         rec.get("name") == classified.name for rec in ledger.records
     ):
@@ -223,6 +233,7 @@ def resolve(
         EQUIVOCATION: f"{EQUIVOCATION}: the handle signed two statements at one seq",
         EXPIRED: f"{EXPIRED}: expires is not after now",
         REVOKED: f"{REVOKED}: owner released the name",
+        ISOLATED: f"{ISOLATED}: this handle's names are not served",
     }.get(code, code)
     return _finish(
         ok=served,

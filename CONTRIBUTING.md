@@ -31,7 +31,7 @@ pytest is the dev extra. No network.
 9. **I8 Memorial is non-actionable.** Genesis / final hash, timestamps, closed-set summary. No exploit details.
 10. **I9 Worker is a demo garden.** Do not claim the Worker is the silent node.
 11. **I10 No persuasion / engagement optimization.**
-12. **Mesh names.** `.aziel` resolves from the local name ledger. Friendly claims stay PENDING until the proof-of-work, 72-hour age, and 3 witness handles are met. Do not resolve the Azerbaijan `.az` ccTLD except the Cap-7 allowlist. Do not claim an ICANN registration. Cap-7 stays the mesh duplication layer. Name records stay hashes and handles. Do not add a score or a ranking. See [docs/AZN-NAME-1.0.md](docs/AZN-NAME-1.0.md).
+12. **Mesh names.** `.aziel` resolves from the local name ledger. Friendly claims stay PENDING until the proof-of-work, 72-hour age, and 2 witness handles are met. Users get 3 name slots; `ae`, `corpus`, `godlock`, and `hdj` are reserved. Check the versioned blocklist at claim time. An isolation record hides that handle's names, and an appeal does not lift it. Do not resolve the Azerbaijan `.az` ccTLD except the Cap-7 allowlist. Do not claim an ICANN registration. Cap-7 factory labels stay a separate layer. Name records stay hashes and handles. Do not add a score or a ranking. See [docs/AZN-NAME-1.0.md](docs/AZN-NAME-1.0.md).
 13. **Do not wire** Lumen, AZInterface, AZ-OS Hub, or Interface products.
 14. New behavior needs a test that fails without the change.
 

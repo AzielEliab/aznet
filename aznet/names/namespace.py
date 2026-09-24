@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from aznet.names.blocklist import BLOCKLIST_VERSION
 from aznet.names.wire import (
     AUTHOR,
     CAP_PER_HANDLE,
@@ -22,7 +23,10 @@ from aznet.names.wire import (
     MESH_TLD,
     NOT_MESH,
     POW_BITS_MIN,
+    RESERVED_LABELS,
+    RESERVED_SLOTS,
     SPEC,
+    USER_SLOTS,
     WITNESS_AGE_SECONDS,
     WITNESS_K,
 )
@@ -280,12 +284,41 @@ def alignment_points() -> list[dict[str, str]]:
         },
         {
             "id": "mesh-security-constants",
+            "status": "matched",
+            "note": (
+                "POW_BITS_MIN is 8 and WITNESS_K is 2, matching FED-MESH-1.0 section 11. "
+                "pow is {nonce, bits, digest} outside the signature. The digest is SHA-256 of "
+                "statement_hash, sig, and nonce separated by newlines. The 72-hour window is this "
+                "ledger's anchored_at, because a FED-MESH name statement has no timeslate."
+            ),
+        },
+        {
+            "id": "slot-split",
             "status": "open",
             "note": (
-                "POW_BITS_MIN is 8, WITNESS_K is 3, and the age window is 72 hours. "
-                "They live in aznet/names/wire.py. FED-MESH-1.0.md has no Mesh Security section yet. "
-                "pow_nonce sits outside the signature. The age window is this ledger's anchored_at, "
-                "because a FED-MESH name statement has no timeslate."
+                "FED-MESH NAME_CAP is still 7 with no reserved split. This library refuses "
+                "ae.aziel, corpus.aziel, godlock.aziel, and hdj.aziel, and allows 3 user claims. "
+                "The self-certifying name does not use a slot. MirageGrid factory labels stay a "
+                "separate layer and are not renamed. This library does not restore or host the mirrors."
+            ),
+        },
+        {
+            "id": "name-blocklist",
+            "status": "open",
+            "note": (
+                f"Friendly claims are checked against {BLOCKLIST_VERSION}. It is a label list, "
+                "not a classifier. Paraphrases, misspellings, and other languages are misses. "
+                "The runtime spec does not publish this list yet."
+            ),
+        },
+        {
+            "id": "isolation-record",
+            "status": "open",
+            "note": (
+                "An isolation record is signed by the subject handle. Evidence is a hash, never "
+                "the content. An appeal requests a re-check and does not lift isolation. A peer "
+                "cannot isolate a handle that never signs the record. Classifiers and publish "
+                "checks belong to qnm-node, not this library."
             ),
         },
         {
@@ -369,6 +402,16 @@ def honesty() -> dict:
         "pow_bits_min": POW_BITS_MIN,
         "witness_k": WITNESS_K,
         "witness_age_seconds": WITNESS_AGE_SECONDS,
+        "user_slots": USER_SLOTS,
+        "reserved_slots": RESERVED_SLOTS,
+        "reserved_names": [f"{label}.{MESH_TLD}" for label in RESERVED_LABELS],
+        "self_cert_uses_a_slot": False,
+        "factory_cap7_separate_layer": True,
+        "blocklist_version": BLOCKLIST_VERSION,
+        "blocklist_is_a_classifier": False,
+        "isolation_lifts_on_appeal": False,
+        "classifiers_in_this_library": False,
+        "reserved_slot_restore": False,
         "name_kind": "name",
         "finality": "PENDING until this ledger has held the claim for the age window and K distinct handles have witnessed it",
         "age_basis": "local anchored_at from the caller now; not a signed claim time",

@@ -1,7 +1,8 @@
-"""FED-MESH name statements plus witness, vouch, and advisory statements.
+"""FED-MESH name statements plus witness, vouch, advisory, and isolation.
 
 The seed is used to sign and then dropped. It is not a field on the result.
-``pow_nonce`` is outside the signature, over the statement hash.
+``pow`` is outside the signature: SHA-256 of the statement hash, the
+signature, and the nonce, separated by newlines.
 
 Author: Aziel Eliab only.
 """
@@ -12,11 +13,12 @@ from datetime import datetime, timezone
 from typing import Any, Mapping
 
 from aznet.errors import NameRefuse
+from aznet.names.blocklist import name_blocked
 from aznet.names.codec import (
     b64url,
     b64url_decode,
     canonicalize,
-    find_pow_nonce,
+    find_pow,
     handle_from_public,
     leading_zero_bits,
     pow_digest,
@@ -32,10 +34,16 @@ from aznet.names.wire import (
     EXEC_KEYS,
     FED_SPEC,
     GENESIS_PREV,
+    ISOLATION_REASONS,
     KIND_ADVISORY,
+    KIND_APPEAL,
+    KIND_ISOLATION,
     KIND_NAME,
     KIND_VOUCH,
     KIND_WITNESS,
+    POLICY,
+    RESERVED,
+    RESERVED_LABELS,
     LEAK,
     LEAK_KEYS,
     MALFORMED,
@@ -50,7 +58,6 @@ from aznet.names.wire import (
     SELF_CERT_FIXED,
     is_handle,
     is_hash,
-    is_list_id,
     is_nonce,
     is_timeslate,
 )
@@ -110,6 +117,11 @@ def _canonical_name(raw: str) -> tuple[str, str]:
         raise NameRefuse(NOT_MESH, "AZ.* display names are cites of hub HTTPS, not FED-MESH name records")
     if classified.kind not in {"friendly", "self_cert", "az_allow"}:
         raise NameRefuse(MALFORMED, "name is not a mesh ledger key")
+    label = classified.name.split(".", 1)[0]
+    if label in RESERVED_LABELS:
+        raise NameRefuse(RESERVED, "ae, corpus, godlock, and hdj are reserved hub-mirror slots")
+    if classified.kind != "self_cert" and name_blocked(classified.name):
+        raise NameRefuse(POLICY, "name matches the versioned blocklist")
     return classified.name, classified.kind
 
 
@@ -137,13 +149,23 @@ def _check_target_value(target_type: str, value: str) -> str:
 
 
 def pow_meets(record: Mapping[str, Any]) -> None:
-    """Require a hashcash nonce over the statement hash. Nonce is not signed."""
-    nonce = str(record.get("pow_nonce") or "")
+    """Require the FED-MESH ``pow`` stamp. It is outside the signature."""
+    stamp = record.get("pow")
     digest = str(record.get("record_hash") or "")
-    if not is_hash(digest) or not is_nonce(nonce):
-        raise NameRefuse(POW_FAIL, "a friendly claim needs a lowercase-hex pow_nonce")
-    if leading_zero_bits(pow_digest(digest, nonce)) < POW_BITS_MIN:
-        raise NameRefuse(POW_FAIL, f"proof-of-work does not meet {POW_BITS_MIN} leading zero bits")
+    sig = str(record.get("sig") or "")
+    if not isinstance(stamp, Mapping) or not is_hash(digest) or not sig:
+        raise NameRefuse(POW_FAIL, "a friendly claim needs a pow stamp")
+    nonce = str(stamp.get("nonce") or "")
+    bits = stamp.get("bits")
+    if not is_nonce(nonce):
+        raise NameRefuse(POW_FAIL, "pow.nonce must be 1 to 64 lowercase hex characters")
+    if isinstance(bits, bool) or not isinstance(bits, int) or bits < POW_BITS_MIN or bits > 256:
+        raise NameRefuse(POW_WEAK, f"pow.bits must be at least {POW_BITS_MIN}")
+    got = pow_digest(digest, sig, nonce)
+    if stamp.get("digest") not in (None, "", got):
+        raise NameRefuse(POW_FAIL, "pow.digest does not match the stamp")
+    if leading_zero_bits(got) < bits:
+        raise NameRefuse(POW_FAIL, f"proof-of-work does not meet {bits} leading zero bits")
 
 
 def sign_record(seed: bytes, **fields: Any) -> dict[str, Any]:
@@ -181,7 +203,8 @@ def sign_record(seed: bytes, **fields: Any) -> dict[str, Any]:
     }
     prepared = prepare_statement(statement, check_signature=False)
     signed = _sign(seed, prepared)
-    signed["pow_nonce"] = find_pow_nonce(signed["record_hash"], bits) if needs_pow else ""
+    if needs_pow:
+        signed["pow"] = find_pow(signed["record_hash"], signed["sig"], bits)
     return prepare_statement(signed)
 
 
@@ -233,14 +256,12 @@ def sign_witness(seed: bytes, **fields: Any) -> dict[str, Any]:
         "prev": fields.get("prev") or GENESIS_PREV,
         "public_key": public,
         "seq": fields.get("seq"),
-        "subject_handle": fields.get("subject_handle") or "",
         "subject_hash": fields.get("subject_hash") or "",
-        "timeslate": fields.get("timeslate") or "",
+        "subject_kind": fields.get("subject_kind") or "name",
         "v": FED_SPEC,
     }
     prepared = prepare_statement(statement, check_signature=False)
     signed = _sign(seed, prepared)
-    signed["pow_nonce"] = ""
     return prepare_statement(signed)
 
 
@@ -252,48 +273,70 @@ def sign_vouch(seed: bytes, **fields: Any) -> dict[str, Any]:
         "prev": fields.get("prev") or GENESIS_PREV,
         "public_key": public,
         "seq": fields.get("seq"),
-        "subject_handle": fields.get("subject_handle") or "",
+        "subject": fields.get("subject") or fields.get("subject_handle") or "",
         "subject_public_key": fields.get("subject_public_key") or "",
-        "timeslate": fields.get("timeslate") or "",
         "v": FED_SPEC,
     }
     prepared = prepare_statement(statement, check_signature=False)
     signed = _sign(seed, prepared)
-    signed["pow_nonce"] = ""
     return prepare_statement(signed)
 
 
 def sign_advisory(seed: bytes, **fields: Any) -> dict[str, Any]:
     handle, public, _raw = _identity(seed)
-    raw_entries = fields.get("entries") or []
-    _refuse_material({"entries": raw_entries})
-    entries = []
-    for row in raw_entries:
-        if not isinstance(row, Mapping):
-            raise NameRefuse(MALFORMED, "advisory entry must be an object")
-        if set(row) - {"name", "note", "subject_handle"}:
-            raise NameRefuse(MALFORMED, "advisory entry fields are name, note, and subject_handle")
-        entries.append(
-            {
-                "name": str(row.get("name") or ""),
-                "note": str(row.get("note") or ""),
-                "subject_handle": str(row.get("subject_handle") or ""),
-            }
-        )
+    _refuse_material(fields)
     statement = {
-        "entries": entries,
         "handle": handle,
         "kind": KIND_ADVISORY,
-        "list_id": fields.get("list_id") or "",
+        "note": fields.get("note") or "",
         "prev": fields.get("prev") or GENESIS_PREV,
         "public_key": public,
         "seq": fields.get("seq"),
-        "timeslate": fields.get("timeslate") or "",
+        "subject": fields.get("subject") or fields.get("subject_handle") or "",
         "v": FED_SPEC,
     }
     prepared = prepare_statement(statement, check_signature=False)
     signed = _sign(seed, prepared)
-    signed["pow_nonce"] = ""
+    return prepare_statement(signed)
+
+
+def sign_isolation(seed: bytes, **fields: Any) -> dict[str, Any]:
+    """The handle signs its own isolation. Evidence is a hash, never the bytes."""
+    _refuse_material(fields)
+    handle, public, _raw = _identity(seed)
+    statement = {
+        "check": fields.get("check") or "",
+        "evidence_hash": fields.get("evidence_hash") or "",
+        "handle": handle,
+        "kind": KIND_ISOLATION,
+        "prev": fields.get("prev") or GENESIS_PREV,
+        "public_key": public,
+        "reason": fields.get("reason") or "",
+        "seq": fields.get("seq"),
+        "subject": fields.get("subject") or handle,
+        "v": FED_SPEC,
+    }
+    prepared = prepare_statement(statement, check_signature=False)
+    signed = _sign(seed, prepared)
+    return prepare_statement(signed)
+
+
+def sign_appeal(seed: bytes, **fields: Any) -> dict[str, Any]:
+    """Ask for a re-check. This does not clear isolation."""
+    _refuse_material(fields)
+    handle, public, _raw = _identity(seed)
+    statement = {
+        "check": fields.get("check") or "",
+        "handle": handle,
+        "isolation_hash": fields.get("isolation_hash") or "",
+        "kind": KIND_APPEAL,
+        "prev": fields.get("prev") or GENESIS_PREV,
+        "public_key": public,
+        "seq": fields.get("seq"),
+        "v": FED_SPEC,
+    }
+    prepared = prepare_statement(statement, check_signature=False)
+    signed = _sign(seed, prepared)
     return prepare_statement(signed)
 
 
@@ -314,9 +357,8 @@ def prepare_statement(data: Mapping[str, Any], *, check_signature: bool = True) 
         "public_key",
         "seq",
         "prev",
-        "timeslate",
         "sig",
-        "pow_nonce",
+        "pow",
         "record_hash",
         "name",
         "owner",
@@ -324,10 +366,14 @@ def prepare_statement(data: Mapping[str, Any], *, check_signature: bool = True) 
         "expires",
         "prev_record",
         "subject_hash",
-        "subject_handle",
+        "subject_kind",
+        "subject",
         "subject_public_key",
-        "list_id",
-        "entries",
+        "note",
+        "reason",
+        "check",
+        "evidence_hash",
+        "isolation_hash",
     }
     unknown = set(data) - allowed
     if unknown:
@@ -359,16 +405,18 @@ def prepare_statement(data: Mapping[str, Any], *, check_signature: bool = True) 
         body = _vouch_body(data, handle, public_b64, seq, prev)
     elif kind == KIND_ADVISORY:
         body = _advisory_body(data, handle, public_b64, seq, prev)
+    elif kind == KIND_ISOLATION:
+        body = _isolation_body(data, handle, public_b64, seq, prev)
+    elif kind == KIND_APPEAL:
+        body = _appeal_body(data, handle, public_b64, seq, prev)
     else:
         raise NameRefuse(MALFORMED, "kind is not a name security statement")
 
     digest = statement_hash(body)
-    nonce = str(data.get("pow_nonce") or "")
-    if nonce and kind == KIND_NAME:
-        if not is_nonce(nonce) or leading_zero_bits(pow_digest(digest, nonce)) < POW_BITS_MIN:
-            raise NameRefuse(POW_FAIL, "proof-of-work does not meet the minimum")
-    elif nonce:
-        raise NameRefuse(MALFORMED, "pow_nonce is only present on a name claim")
+    if "pow" in data:
+        if kind != KIND_NAME:
+            raise NameRefuse(MALFORMED, "pow is only present on a friendly name claim")
+        _check_pow(data.get("pow"), digest, str(data.get("sig") or ""), False)
     if not check_signature:
         return body
     signature = b64url_decode(str(data.get("sig") or ""))
@@ -380,9 +428,36 @@ def prepare_statement(data: Mapping[str, Any], *, check_signature: bool = True) 
         raise NameRefuse(BAD_SIGNATURE, "signature did not verify")
     out = dict(body)
     out["sig"] = b64url(signature)
-    out["pow_nonce"] = nonce
+    if "pow" in data:
+        _check_pow(data.get("pow"), digest, out["sig"], True)
+        out["pow"] = {
+            "bits": int(data["pow"]["bits"]),
+            "digest": pow_digest(digest, out["sig"], str(data["pow"]["nonce"])),
+            "nonce": str(data["pow"]["nonce"]),
+        }
     out["record_hash"] = digest
     return out
+
+
+def _check_pow(stamp: Any, digest: str, sig: str, require_sig: bool) -> None:
+    if not isinstance(stamp, Mapping):
+        raise NameRefuse(POW_FAIL, "pow is { nonce, bits, digest }")
+    extra = set(stamp) - {"nonce", "bits", "digest"}
+    if extra:
+        raise NameRefuse(MALFORMED, "pow fields are nonce, bits, and digest")
+    nonce = str(stamp.get("nonce") or "")
+    bits = stamp.get("bits")
+    if not is_nonce(nonce):
+        raise NameRefuse(POW_FAIL, "pow.nonce must be 1 to 64 lowercase hex characters")
+    if isinstance(bits, bool) or not isinstance(bits, int) or bits < POW_BITS_MIN or bits > 256:
+        raise NameRefuse(POW_WEAK, f"pow.bits must be at least {POW_BITS_MIN}")
+    if not require_sig:
+        return
+    got = pow_digest(digest, sig, nonce)
+    if stamp.get("digest") not in (None, "", got):
+        raise NameRefuse(POW_FAIL, "pow.digest does not match the stamp")
+    if leading_zero_bits(got) < bits:
+        raise NameRefuse(POW_FAIL, "proof-of-work does not meet pow.bits")
 
 
 def _name_body(data: Mapping[str, Any], handle: str, public_b64: str, seq: int, prev: str) -> dict[str, Any]:
@@ -452,23 +527,17 @@ def _witness_body(
     prev: str,
 ) -> dict[str, Any]:
     subject_hash = str(data.get("subject_hash") or "")
-    subject_handle = str(data.get("subject_handle") or "")
-    timeslate = str(data.get("timeslate") or "")
-    if not is_hash(subject_hash) or not is_handle(subject_handle):
-        raise NameRefuse(MALFORMED, "a witness names a subject hash and a subject handle")
-    if not is_timeslate(timeslate):
-        raise NameRefuse(MALFORMED, "timeslate must be YYYY-MM-DDTHH:MM:SSZ")
-    if subject_handle == handle:
-        raise NameRefuse(EQUIVOCATION, "a handle cannot witness its own claim")
+    subject_kind = str(data.get("subject_kind") or "")
+    if not is_hash(subject_hash) or subject_kind != "name":
+        raise NameRefuse(MALFORMED, "a witness names subject_kind name and a 64-hex subject_hash")
     return {
         "handle": handle,
         "kind": KIND_WITNESS,
         "prev": prev,
         "public_key": public_b64,
         "seq": seq,
-        "subject_handle": subject_handle,
         "subject_hash": subject_hash,
-        "timeslate": timeslate,
+        "subject_kind": "name",
         "v": FED_SPEC,
     }
 
@@ -480,17 +549,14 @@ def _vouch_body(
     seq: int,
     prev: str,
 ) -> dict[str, Any]:
-    subject_handle = str(data.get("subject_handle") or "")
+    subject = str(data.get("subject") or "")
     subject_key = str(data.get("subject_public_key") or "")
-    timeslate = str(data.get("timeslate") or "")
     raw = b64url_decode(subject_key)
-    if not is_timeslate(timeslate):
-        raise NameRefuse(MALFORMED, "timeslate must be YYYY-MM-DDTHH:MM:SSZ")
-    if not is_handle(subject_handle) or raw is None or len(raw) != 32:
+    if not is_handle(subject) or raw is None or len(raw) != 32:
         raise NameRefuse(MALFORMED, "a vouch names a subject handle and its public key")
-    if handle_from_public(raw) != subject_handle:
+    if handle_from_public(raw) != subject:
         raise NameRefuse(NOT_OWNER, "vouched public key does not match the subject handle")
-    if subject_handle == handle:
+    if subject == handle:
         raise NameRefuse(MALFORMED, "a handle does not vouch for itself")
     return {
         "handle": handle,
@@ -498,9 +564,8 @@ def _vouch_body(
         "prev": prev,
         "public_key": public_b64,
         "seq": seq,
-        "subject_handle": subject_handle,
+        "subject": subject,
         "subject_public_key": subject_key,
-        "timeslate": timeslate,
         "v": FED_SPEC,
     }
 
@@ -512,40 +577,80 @@ def _advisory_body(
     seq: int,
     prev: str,
 ) -> dict[str, Any]:
-    list_id = str(data.get("list_id") or "")
-    timeslate = str(data.get("timeslate") or "")
-    if not is_timeslate(timeslate):
-        raise NameRefuse(MALFORMED, "timeslate must be YYYY-MM-DDTHH:MM:SSZ")
-    if not is_list_id(list_id):
-        raise NameRefuse(MALFORMED, "list_id must be a short lowercase token")
-    raw_entries = data.get("entries")
-    if not isinstance(raw_entries, list) or not raw_entries:
-        raise NameRefuse(MALFORMED, "an advisory list has one or more entries")
-    entries = []
-    for row in raw_entries:
-        if not isinstance(row, Mapping):
-            raise NameRefuse(MALFORMED, "advisory entry must be an object")
-        extra = set(row) - {"name", "note", "subject_handle"}
-        if extra:
-            raise NameRefuse(MALFORMED, "advisory entry fields are name, note, and subject_handle")
-        note = str(row.get("note") or "")
-        subject = str(row.get("subject_handle") or "")
-        name = str(row.get("name") or "")
-        if len(note) > ADVISORY_NOTE_MAX:
-            raise NameRefuse(MALFORMED, f"advisory note must be ≤{ADVISORY_NOTE_MAX} characters")
-        if subject and not is_handle(subject):
-            raise NameRefuse(MALFORMED, "advisory subject_handle is a handle or empty")
-        if not subject and not name:
-            raise NameRefuse(MALFORMED, "an advisory entry names a handle or a mesh name")
-        entries.append({"name": name, "note": note, "subject_handle": subject})
+    subject = str(data.get("subject") or "")
+    note = str(data.get("note") or "")
+    if not is_handle(subject):
+        raise NameRefuse(MALFORMED, "an advisory names a subject handle")
+    if not note or len(note) > ADVISORY_NOTE_MAX:
+        raise NameRefuse(MALFORMED, f"note is 1 to {ADVISORY_NOTE_MAX} characters")
     return {
-        "entries": entries,
         "handle": handle,
         "kind": KIND_ADVISORY,
-        "list_id": list_id,
+        "note": note,
         "prev": prev,
         "public_key": public_b64,
         "seq": seq,
-        "timeslate": timeslate,
+        "subject": subject,
+        "v": FED_SPEC,
+    }
+
+
+def _check_label(value: str, *, limit: int = 80) -> str:
+    text = str(value or "")
+    if not text or len(text) > limit or any(ch in text for ch in "\n\r"):
+        raise NameRefuse(MALFORMED, "check names the verifier and stays on one short line")
+    return text
+
+
+def _isolation_body(
+    data: Mapping[str, Any],
+    handle: str,
+    public_b64: str,
+    seq: int,
+    prev: str,
+) -> dict[str, Any]:
+    subject = str(data.get("subject") or "")
+    reason = str(data.get("reason") or "")
+    evidence = str(data.get("evidence_hash") or "")
+    if not is_handle(subject):
+        raise NameRefuse(MALFORMED, "isolation names a subject handle")
+    if subject != handle:
+        raise NameRefuse(NOT_OWNER, "the isolated handle signs its own isolation record")
+    if reason not in ISOLATION_REASONS:
+        raise NameRefuse(MALFORMED, "reason is name-policy, content-policy, or csam-hash")
+    if not is_hash(evidence):
+        raise NameRefuse(MALFORMED, "evidence_hash is 64 hex characters and not the content")
+    return {
+        "check": _check_label(str(data.get("check") or "")),
+        "evidence_hash": evidence,
+        "handle": handle,
+        "kind": KIND_ISOLATION,
+        "prev": prev,
+        "public_key": public_b64,
+        "reason": reason,
+        "seq": seq,
+        "subject": subject,
+        "v": FED_SPEC,
+    }
+
+
+def _appeal_body(
+    data: Mapping[str, Any],
+    handle: str,
+    public_b64: str,
+    seq: int,
+    prev: str,
+) -> dict[str, Any]:
+    isolation_hash = str(data.get("isolation_hash") or "")
+    if not is_hash(isolation_hash):
+        raise NameRefuse(MALFORMED, "an appeal names the isolation statement hash")
+    return {
+        "check": _check_label(str(data.get("check") or "")),
+        "handle": handle,
+        "isolation_hash": isolation_hash,
+        "kind": KIND_APPEAL,
+        "prev": prev,
+        "public_key": public_b64,
+        "seq": seq,
         "v": FED_SPEC,
     }

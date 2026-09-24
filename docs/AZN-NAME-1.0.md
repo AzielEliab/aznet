@@ -12,10 +12,10 @@ token only. This resolver does not merge them.
 Name statements use the FED-MESH-1.0 `kind: name` fields in
 [`aznet/names/wire.py`](../aznet/names/wire.py). That spec is on
 `AzielEliab/aziel-runtime` branch `cursor/fed-mesh-e546`
-(`docs/designs/FED-MESH-1.0.md`). It is not on main yet, and it has no
-Mesh Security section. The proof-of-work, witness, vouch, and advisory
-rules below are this repo's copy of the operator brief until that section
-lands.
+(`docs/designs/FED-MESH-1.0.md`). It is not on main yet. Section 11 of
+that branch is the proof-of-work and witness wire this library matches.
+The 4 reserved plus 3 user slot split, the name blocklist, and the
+isolation record are operator rules that section does not publish yet.
 
 ## What this is
 
@@ -71,14 +71,15 @@ is the self-certifying name, not a friendly claim.
 
 Friendly claims are **first-valid-FINAL-claim-wins**:
 
-- A new friendly claim carries a hashcash proof-of-work. The nonce is
-  outside the signature. The input is UTF-8 `statement_hash:nonce`.
-  SHA-256 of that string must have at least `POW_BITS_MIN` (8) leading
+- A new friendly claim carries a hashcash proof-of-work. `pow` is
+  `{nonce, bits, digest}` beside `sig` and is not inside the signature.
+  `digest` is SHA-256 of UTF-8 `statement_hash`, `sig`, and `nonce`,
+  separated by newlines. It must have at least `POW_BITS_MIN` (8) leading
   zero bits. Updates, transfers, releases, and self-cert records do not
-  carry a nonce.
+  carry a stamp.
 - The claim stays `PENDING` until this ledger has held it for 72 hours
-  **and** at least `WITNESS_K` (3) other handles have signed a
-  `name-witness` for that claim. Resolve returns `PENDING` with the
+  **and** at least `WITNESS_K` (2) other handles have signed a
+  `witness` for that claim. Resolve returns `PENDING` with the
   target filled in so a caller can show it, and `ok` false.
 - Only a `FINAL` claim is served (`code: OK`, `finality: FINAL`).
 - Competing claims are both anchored. The earliest `anchored_at` among
@@ -102,10 +103,23 @@ A witness is a distinct handle. The signer cannot witness their own
 claim. This library does not check that the witness is a registered
 relay.
 
-Each handle may hold **7** friendly names (Cap-7). Pending claims count,
-so a flood cannot anchor an 8th name while the others are still pending.
-The self-certifying name does not use a slot. A released name frees its
-slot. An expired name frees its slot. An 8th live name returns `OVER_CAP`.
+Each handle has **7** slots. **4** are reserved hub-mirror names users
+cannot claim: `ae.aziel`, `corpus.aziel`, `godlock.aziel`, `hdj.aziel`
+(the mesh names for AZ.AzielEliab.AZ, AZ.AzielCorpusLibrary.AZ,
+AZ.Godlock.AZ, and AZ.HeDidntJump.AZ). **3** are user claims. Pending
+user claims count, so a fourth user name returns `OVER_CAP` while the
+others are still pending. The self-certifying `<handle>.aziel` does not
+use a slot. A released name frees its slot. An expired name frees its
+slot. This library refuses the reserved names. It does not host or
+restore the hub mirrors.
+
+MirageGrid factory labels (`azgrid`, `azcloak`, `azvault`, `azshift`,
+and the decoys `azbooth`, `azflag`, `azstandby`) are a separate global
+layer. This wave does not rename them. A factory label claimed as a
+friendly name uses one of the 3 user slots.
+
+FED-MESH still publishes one undifferentiated `NAME_CAP` of 7. The split
+above is this library's rule until that spec section lands.
 
 A relay that follows FED-MESH section 5.1 still keeps one row per name
 and answers `FED-MESH-NAME-TAKEN` for a second claim. This library keeps
@@ -135,18 +149,61 @@ own proof-of-work and witnesses. Witnesses bind to the establishing
 claim, not to each update. Handle `prev` / `seq` is one chain per handle
 across name, witness, vouch, and advisory statements.
 
-## Vouch and advisory lists
+## Vouch and advisory notes
 
-A `vouch` is an existing handle co-signing another handle and that
-handle's public key. Vouches show up in `trust_view`. They do not make a
-claim FINAL. There is no score and no ranking on that view.
+A `vouch` names `subject` (a handle) and `subject_public_key`. Vouches
+show up in `trust_view`. They do not make a claim FINAL. There is no
+score and no ranking on that view.
 
-An `advisory` is a signed list (`list_id`, entries of `name`, `note`,
-`subject_handle`). Notes are at most 80 characters. A `score` or
-`ranking` field is refused. Advisories affect only a node that has
-called `subscribe` for that signer. Subscriptions are local anchor lines.
-They are not included in sync. A subscribed note is attached to the
-resolve result and does not change `FINAL`.
+An `advisory` names one `subject` handle and a `note` of 1 to 160
+characters. A `score` or `ranking` field is refused. Advisories affect
+only a node that has called `subscribe` for that signer. Subscriptions
+are local anchor lines. They are not included in sync. A subscribed note
+is attached to the resolve result and does not change `FINAL`.
+
+## Name blocklist
+
+A friendly claim is refused with `POLICY` when the label matches
+`AZN-BLOCK-1.0` (`aznet/names/blocklist.py`). The policy is no
+pornography, no sexual content involving children, and no hate names.
+The check folds the label to letters and digits. Tokens of length 4 or
+more match inside the label. Short ambiguous tokens (`sex`, `xxx`,
+`nude`, `nudes`, `milf`, `anal`) match the whole label only, so
+`analysis` and ordinary words are not caught by a fragment.
+
+This is a label list. It misses paraphrases, misspellings, leetspeak,
+and words from other languages. It is not an image classifier and it
+does not see page content. The refusal detail does not echo the matched
+token. Self-certifying names are not checked against the list.
+
+## Isolation
+
+A handle may sign an `isolation` statement for itself. Fields are
+`subject` (the same handle), `reason` (`name-policy`, `content-policy`,
+or `csam-hash`), `check` (a short one-line name of the check), and
+`evidence_hash` (64 hex characters). The content, the image, and the
+bytes are not fields. A statement that offers them returns `LEAK`.
+
+Once that record is anchored, resolve returns `ISOLATED` and no target
+for that handle's names, including the self-certifying name. New acts
+from the handle are refused, except an `appeal`. Witnesses from an
+isolated handle do not count. A witness of an isolated handle's name is
+refused. Another handle cannot sign the isolation record (`NOT_OWNER`).
+A node that never emits the record is not isolated by this library. The
+blocklist still refuses blocked names at claim time.
+
+An `appeal` names the isolation statement hash and a check line. It is
+stored. `trust_view` shows `appeal_requested`. `appeal_lifts_isolation`
+stays false. Isolation is not cleared here.
+
+Classifiers, publish checks, and fail-closed hosting belong to qnm-node.
+This library does not run them. If a model is absent, that is not a pass
+in this process, because this process does not publish sites.
+
+Child sexual abuse material: operators follow the law in their
+jurisdiction (in the United States, that includes reporting to NCMEC).
+Do not store or forward that content for evidence. The ledger keeps the
+hash only.
 
 ## `.az` allowlist
 
@@ -204,17 +261,18 @@ Name statement (`kind: name`):
 | `prev` | handle-chain tip, or 64 zero hex |
 | `prev_record` | previous name statement, or 64 zero hex |
 
-`pow_nonce` sits beside `sig` on a friendly claim. It is not signed.
-Witness (`kind: name-witness`), vouch (`kind: vouch`), and advisory
-(`kind: advisory`) use the same handle chain and the same signature
-rule. Their fields are in `aznet/names/record.py`.
+`pow` sits beside `sig` on a friendly claim. It is not signed. Witness
+(`kind: witness`), vouch (`kind: vouch`), advisory (`kind: advisory`),
+isolation (`kind: isolation`), and appeal (`kind: appeal`) use the same
+handle chain and the same signature rule. Their fields are in
+`aznet/names/record.py`.
 
 Published FED-MESH vectors (name claim hash
 `6d38408d305afb2ae562d3c022c3421fc8819c81d61108d3a8b91e2b8dc7ca7c`, ref
 hash `06805b89889f62b379ae1dee9a7108f9ad37e23124c3ea111145d27438ceb708`)
-verify here. That name claim has no `pow_nonce`, so this ledger will not
-anchor it until a nonce is attached. Pinned bytes are in
-`tests/vectors/azn-name-1.0.json`.
+verify here. The published name claim has no `pow` inside the signature.
+Anchoring it as a friendly claim needs the section 11 stamp
+(`nonce` `7e`). Pinned bytes are in `tests/vectors/azn-name-1.0.json`.
 
 Local anchor line (`AZN-NAME-ANCHOR-1.0`), append-only, not inside the
 signature: `spec`, `kind` (`record`, `equivocation`, or `subscribe`),
@@ -242,11 +300,14 @@ the envelope. This library does not open a socket.
 | `NOT_MESH` | Not `.aziel` and not an allowlisted `.az` name. |
 | `BAD_SIGNATURE` | Signature, public key, or `record_hash` failed. |
 | `FORK` | Two claims share an anchor time. Not merged. |
-| `POW_FAIL` | Friendly claim nonce misses 8 leading zero bits. |
-| `POW_WEAK` | `pow_bits` is below 8. |
-| `EQUIVOCATION` | This handle signed two statements at one `seq`. Not served. |
+| `POW_FAIL` | Friendly claim stamp misses `pow.bits` leading zero bits. |
+| `POW_WEAK` | `pow.bits` is below 8. |
+| `EQUIVOCATION` | This handle signed two statements at one `seq`. Not served. A self-witness is also refused with this code and does not mark the handle. |
 | `ROLLBACK` | `seq` or `prev` does not extend the handle tip. |
-| `OVER_CAP` | This handle already has 7 friendly names. |
+| `OVER_CAP` | This handle already has 3 user names. |
+| `RESERVED` | The name is a hub-mirror slot (`ae`, `corpus`, `godlock`, `hdj`). |
+| `POLICY` | The friendly name matches the versioned blocklist. |
+| `ISOLATED` | An anchored isolation record covers this handle. No target is served. |
 | `EXPIRED` | `expires` is at or before the caller's `now`. |
 | `REVOKED` | The tip is a release. |
 | `NOT_OWNER` | Signer is not the current owner, or the key does not match the handle. |
@@ -282,8 +343,13 @@ seed.
 
 These belong to other repos. This library does not claim them.
 
-- No Mesh Security section is published in FED-MESH-1.0.md yet. Constants
-  here are local: 8-bit proof-of-work, 3 witnesses, 72 hours.
+- Proof-of-work (8 bits) and `WITNESS_K` (2) match FED-MESH-1.0 section 11.
+  The 72-hour window is local `anchored_at`, not a relay `accepted_at`.
+- The runtime `NAME_CAP` is still 7 with no reserved split. Reserved names
+  and the 3-user cap are this library's rule. Factory Cap-7 labels are not
+  renamed. Hub-mirror restore is not implemented here.
+- The blocklist does not catch every violating name. Classifiers are not
+  in this library. An appeal does not lift isolation.
 - Witnesses are distinct handles. They are not checked to be relays.
 - No relay gossip, no socket, no end-to-end transport, no Tor bearer, no
   two-hop routing.
@@ -298,12 +364,14 @@ These belong to other repos. This library does not claim them.
 `aznet names` prints the same list.
 
 1. **FED-MESH-1.0** — name fields match section 5.1 on the runtime branch. The file is not on main.
-2. **Mesh security constants** — 8 bits, K=3, 72h. Not in the runtime spec yet. Age is local `anchored_at`.
-3. **First FINAL versus first anchored** — a relay may refuse the second claim. This library keeps both.
-4. **TemporalLock** — `now` is caller-supplied. No clock proof.
-5. **ChainLock** — local `AZN-NAME-ANCHOR-1.0` log. Not suite ChainLock CL-WP-0.4.
-6. **Cap-7 spelling** — runtime `mesh_name` is `{label}.az`. Claims live at `{label}.aziel`.
-7. **AZ.* cites** — display names are not name records here. The relay does not resolve them either.
-8. **Relay transport** — sync is an in-process envelope. No socket.
-9. **Self-cert default** — no record yet still returns the handle, with `key_checked` false.
-10. **qnm node id** — suite `mesh_join` ids are not this handle.
+2. **Mesh security constants** — 8-bit `pow` and K=2 match section 11. Age is local `anchored_at`. The runtime still uses relay `accepted_at`.
+3. **Slot split** — runtime `NAME_CAP` is 7 undifferentiated. This library reserves 4 names and allows 3 user claims. Factory Cap-7 is a separate layer.
+4. **First FINAL versus first anchored** — a relay may refuse the second claim. This library keeps both.
+5. **TemporalLock** — `now` is caller-supplied. No clock proof.
+6. **ChainLock** — local `AZN-NAME-ANCHOR-1.0` log. Not suite ChainLock CL-WP-0.4.
+7. **Cap-7 spelling** — runtime `mesh_name` is `{label}.az`. Claims live at `{label}.aziel`.
+8. **AZ.* cites** — display names are not name records here. The relay does not resolve them either.
+9. **Relay transport** — sync is an in-process envelope. No socket.
+10. **Self-cert default** — no record yet still returns the handle, with `key_checked` false.
+11. **qnm node id** — suite `mesh_join` ids are not this handle.
+12. **Blocklist and isolation** — `AZN-BLOCK-1.0` is a label list, not a classifier. Isolation is signed by the subject. An appeal does not lift it. The runtime spec does not publish these records yet.

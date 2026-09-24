@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from aznet.names.ledger import NameLedger, default_names_path
 from aznet.names.namespace import honesty
-from aznet.names.record import sign_advisory, sign_record, sign_vouch, sign_witness
+from aznet.names.record import sign_advisory, sign_appeal, sign_isolation, sign_record, sign_vouch, sign_witness
 from aznet.names.resolver import ResolveResult, resolve
 
 __all__ = [
@@ -21,6 +21,8 @@ __all__ = [
     "honesty",
     "resolve",
     "sign_advisory",
+    "sign_appeal",
+    "sign_isolation",
     "sign_record",
     "sign_vouch",
     "sign_witness",
