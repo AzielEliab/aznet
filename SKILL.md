@@ -114,6 +114,10 @@ aznet doctor
 
 Then open http://127.0.0.1:8771 (this computer only).
 
+## Mesh names (AZN-NAME-1.0)
+
+Local resolver for `.aziel` plus an allowlist of Cap-7 / AZ.* names. Friendly claims are first-timeslate-wins, 7 per handle. `.az` outside that allowlist is normal DNS (`DNS_FALLTHROUGH`). Regular browsers do not see `.aziel`. This skill does not register a TLD with ICANN. Cap-7 is the mesh duplication layer; hub HTTPS links are how the internet reaches the AZ.* domains. AZNet does not host name payloads. Private keys are not a ledger field. `aznet names` prints the machine honesty surface. Spec: `docs/AZN-NAME-1.0.md`.
+
 ## Honest banner
 
 THIS IS: a silent verification SIDE-NET (hash continuity, Custodian Garden, Memorial ledger). THIS IS NOT: an alt internet, a host, a payload store, a VPN, or a key store. The Worker is a control-plane / demo garden. Device-local silent node is the real posture. AZNet + AZBrowser are both required. Author Aziel Eliab.

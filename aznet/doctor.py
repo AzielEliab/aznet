@@ -149,6 +149,28 @@ def _check_no_payload() -> Check:
         return _ok("no payload leakage", "I1")
 
 
+def _check_names() -> Check:
+    from aznet.names import honesty
+    from aznet.names.ed25519 import public_key, verify
+
+    seed = bytes.fromhex("9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60")
+    public = public_key(seed)
+    signature = bytes.fromhex(
+        "e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e06522490155"
+        "5fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b"
+    )
+    if public.hex() != "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a":
+        return _fail("mesh names", "Ed25519 public key drifted")
+    if not verify(public, b"", signature):
+        return _fail("mesh names", "RFC 8032 vector did not verify")
+    surface = honesty()
+    if surface.get("icann_registration") or surface.get("hosts_payloads") or surface.get("keys_leave_nodes"):
+        return _fail("mesh names", "honesty surface overclaims")
+    if surface.get("mesh_tld") != "aziel" or surface.get("cap_per_handle") != 7:
+        return _fail("mesh names", "namespace constants drifted")
+    return _ok("mesh names", "AZN-NAME-1.0 RFC 8032 vector; .aziel is not an ICANN registration")
+
+
 def _check_witness() -> Check:
     from aznet.chain import Ledger
     from aznet.errors import WitnessError
@@ -176,6 +198,7 @@ CHECKS: tuple[Callable[[], Check], ...] = (
     _check_pair_required,
     _check_lattice,
     _check_no_payload,
+    _check_names,
     _check_witness,
 )
 

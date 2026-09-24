@@ -170,6 +170,31 @@ node posture is the real product.
 
 Runtime is stdlib only (`hashlib`, `json`). No extra crypto packages.
 
+## Mesh names (AZN-NAME-1.0)
+
+AZNet resolves mesh names from a local signed ledger. The mesh TLD is
+`.aziel`. A node handle is `#` plus the 64-hex Ed25519 public key, and
+that handle already owns `<hex>.aziel`. Friendly names are
+first-claim-wins, 7 per handle. `.az` stays on normal DNS except the
+Cap-7 allowlist (`azgrid`, `azbooth`, `azcloak`, `azvault`, `azshift`,
+`azflag`, `azstandby`) and the four drop-in names
+(`AZ.AzielEliab.AZ`, `AZ.AzielCorpusLibrary.AZ`, `AZ.Godlock.AZ`,
+`AZ.HeDidntJump.AZ`).
+
+Regular browsers do not see `.aziel`. This repo does not register
+anything with ICANN. Internet reach of those AZ.* domains is the hub
+site. Cap-7 is the mesh duplication layer and does not resolve to the
+hub. AZNet and AZBrowser stay separate software. Name records are hashes
+and handles only.
+
+```bash
+aznet names
+aznet resolve baku.az          # DNS_FALLTHROUGH — not on the allowlist
+aznet resolve <64hex>.aziel    # SELF_CERT — the handle itself
+```
+
+Spec and open alignment points: [docs/AZN-NAME-1.0.md](docs/AZN-NAME-1.0.md).
+
 ## Invariants (enforced)
 
 - **I1** Hashes only — `payload`, `keys`, `user_content` are always `ABSENT`

@@ -31,3 +31,9 @@ Machine-oriented companion to [whitepaper.md](whitepaper.md).
 SHA-256 of canonical UTF-8 JSON (sorted keys, no extra whitespace).
 `receipt_hash` is excluded from the encoding. Genesis `prev_hash` is
 64 zero hex characters.
+
+## Mesh names
+
+[AZN-NAME-1.0](AZN-NAME-1.0.md) is a separate ledger (`aznet_names.jsonl`).
+It does not add fields to the AZN-WP-0.1 receipt. Garden stamps stay
+hashes only. Name records are hashes and handles only.

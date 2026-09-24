@@ -31,8 +31,9 @@ pytest is the dev extra. No network.
 9. **I8 Memorial is non-actionable.** Genesis / final hash, timestamps, closed-set summary. No exploit details.
 10. **I9 Worker is a demo garden.** Do not claim the Worker is the silent node.
 11. **I10 No persuasion / engagement optimization.**
-12. **Do not wire** Lumen, AZInterface, AZ-OS Hub, or Interface products.
-13. New behavior needs a test that fails without the change.
+12. **Mesh names.** `.aziel` resolves from the local name ledger. Do not resolve the Azerbaijan `.az` ccTLD except the Cap-7 allowlist. Do not claim an ICANN registration. Cap-7 stays the mesh duplication layer. Name records stay hashes and handles. See [docs/AZN-NAME-1.0.md](docs/AZN-NAME-1.0.md).
+13. **Do not wire** Lumen, AZInterface, AZ-OS Hub, or Interface products.
+14. New behavior needs a test that fails without the change.
 
 ## Where to change things
 
@@ -43,6 +44,7 @@ pytest is the dev extra. No network.
 - Pairing / witness: `aznet/chain.py`, `aznet/witness.py`
 - CLI: `aznet/cli.py`
 - Errors: `aznet/errors.py`
+- Mesh names: `aznet/names/` (wire format in `aznet/names/wire.py`)
 - Suite mesh / QNM Live Nodes: `workers/download-tracker/src/mesh.js` (`/v1/mesh/*` PROXY to aziel-runtime). Local ops are `/v1/{op}` only. Never treat `fraggate/call` or `mesh/status` as a local op name. Suite mesh default OFF; QNM rollup live|locked|isolated; no Node Gate; no auto-heal; not anonymity.
 
 ## License of contributions

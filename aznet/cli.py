@@ -113,6 +113,13 @@ def _build_parser() -> argparse.ArgumentParser:
     p_doc = sub.add_parser("doctor", help="Self-check. No network, no telemetry.")
     p_doc.add_argument("--json", action="store_true", dest="as_json")
 
+    sub.add_parser("names", help="Print AZN-NAME-1.0 honesty JSON. No network.")
+
+    p_res = sub.add_parser("resolve", help="Resolve one mesh name from the local name ledger.")
+    p_res.add_argument("name")
+    p_res.add_argument("--names", default=None, help="Name ledger path (default AZNET_NAMES or ./aznet_names.jsonl).")
+    p_res.add_argument("--now", default=None, help="TemporalLock timeslate used to evaluate expiry.")
+
     p_imp = sub.add_parser("import", help="Import a JSON / JSONL document.")
     p_imp.add_argument("path")
 
@@ -267,6 +274,21 @@ def main(argv: Sequence[str] | None = None) -> int:
             from aznet.doctor import run_doctor
 
             return run_doctor(as_json=getattr(args, "as_json", False))
+
+        if args.cmd == "names":
+            from aznet.names import honesty
+
+            sys.stdout.write(json.dumps(honesty(), indent=2) + "\n")
+            return 0
+
+        if args.cmd == "resolve":
+            from aznet.names import resolve
+            from aznet.names.ledger import default_names_path
+
+            path = Path(args.names) if args.names else default_names_path()
+            result = resolve(path, args.name, now=args.now)
+            sys.stdout.write(json.dumps(result.to_dict(), indent=2) + "\n")
+            return 0 if result.ok else 1
 
         if args.cmd == "import":
             from aznet.jsonio import import_json

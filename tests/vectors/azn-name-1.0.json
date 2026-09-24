@@ -1,0 +1,22 @@
+{
+  "spec": "AZN-NAME-1.0",
+  "note": "Pinned signed name record. Seed is an RFC 8032 test vector, published here only as a test fixture.",
+  "seed_hex": "9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60",
+  "owner": "#d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
+  "fields": {
+    "name": "vector.aziel",
+    "op": "claim",
+    "owner": "#d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
+    "target": "abababababababababababababababababababababababababababababababab",
+    "target_kind": "object",
+    "sequence": 1,
+    "prev": "0000000000000000000000000000000000000000000000000000000000000000",
+    "handle_prev": "0000000000000000000000000000000000000000000000000000000000000000",
+    "timeslate": "2026-09-24T00:00:00Z",
+    "expires_at": "",
+    "renewal": "until-release",
+    "successor": ""
+  },
+  "record_hash": "9a0ad219f5398799e1ec1b0306bae25548d9a8d93aaf7da0793384d75a853328",
+  "signature_hex": "c70df6e04338af4f07a97251d8980bfc74845144048d3effb29034f5673d2e50ed90480cb67cd59bbd33def97e58292121bcf4b92e4c02b689e081040687c609"
+}
