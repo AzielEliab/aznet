@@ -37,3 +37,14 @@ class LatticeError(AZNetError):
 
 class IntegrityRefuse(AZNetError):
     """Integrity refusal / isolation. Withdraw rather than coerce."""
+
+
+class NameRefuse(AZNetError):
+    """A mesh name record or lookup was refused.
+
+    ``code`` is a stable AZN-NAME-1.0 refusal. The ledger is not rewritten.
+    """
+
+    def __init__(self, code: str, detail: str) -> None:
+        self.code = code
+        super().__init__(f"{code}: {detail}")

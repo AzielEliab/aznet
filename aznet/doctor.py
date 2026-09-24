@@ -149,6 +149,40 @@ def _check_no_payload() -> Check:
         return _ok("no payload leakage", "I1")
 
 
+def _check_names() -> Check:
+    from aznet.names import honesty
+    from aznet.names.codec import handle_from_public
+    from aznet.names.ed25519 import public_key, verify
+
+    seed = bytes.fromhex("9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60")
+    public = public_key(seed)
+    signature = bytes.fromhex(
+        "e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e06522490155"
+        "5fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b"
+    )
+    if public.hex() != "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a":
+        return _fail("mesh names", "Ed25519 public key drifted")
+    if not verify(public, b"", signature):
+        return _fail("mesh names", "RFC 8032 vector did not verify")
+    fed_seed = bytes.fromhex("0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20")
+    if handle_from_public(public_key(fed_seed)) != "#CPV0CWYPXP4":
+        return _fail("mesh names", "FED-MESH handle vector drifted")
+    surface = honesty()
+    if surface.get("icann_registration") or surface.get("hosts_payloads") or surface.get("keys_leave_nodes"):
+        return _fail("mesh names", "honesty surface overclaims")
+    if surface.get("zero_knowledge") or surface.get("executes_peer_code") or surface.get("relay_gossip"):
+        return _fail("mesh names", "honesty surface overclaims mesh security")
+    if surface.get("mesh_tld") != "aziel" or surface.get("cap_per_handle") != 7:
+        return _fail("mesh names", "namespace constants drifted")
+    if surface.get("pow_bits_min") != 8 or surface.get("witness_k") != 2 or surface.get("witness_age_seconds") != 72 * 60 * 60:
+        return _fail("mesh names", "mesh security constants drifted")
+    if surface.get("user_slots") != 3 or surface.get("reserved_slots") != 4:
+        return _fail("mesh names", "slot split drifted")
+    if surface.get("blocklist_is_a_classifier") or surface.get("isolation_lifts_on_appeal") or surface.get("classifiers_in_this_library"):
+        return _fail("mesh names", "honesty surface overclaims the name policy")
+    return _ok("mesh names", "AZN-NAME-1.0 RFC 8032 and FED-MESH #CPV0CWYPXP4; .aziel is not an ICANN registration")
+
+
 def _check_witness() -> Check:
     from aznet.chain import Ledger
     from aznet.errors import WitnessError
@@ -176,6 +210,7 @@ CHECKS: tuple[Callable[[], Check], ...] = (
     _check_pair_required,
     _check_lattice,
     _check_no_payload,
+    _check_names,
     _check_witness,
 )
 

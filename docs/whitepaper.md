@@ -134,7 +134,29 @@ Marker: `Truth Is No Defense — .AZNet — AZ.`
 
 ---
 
-## 8. Honest banner
+## 8. Mesh names (AZN-NAME-1.0)
+
+The naming library resolves `.aziel` names and the Cap-7 `.az` aliases
+from a local signed ledger. Handles and name statements follow
+FED-MESH-1.0. A friendly name is served only after an 8-bit proof-of-work,
+72 hours on this ledger, and 2 witness handles. Four hub-mirror names are
+reserved and three slots are user claims. A label blocklist refuses names
+at claim time. A self-signed isolation record, evidence hash only, stops
+that handle's names from being served. An appeal does not lift isolation.
+It is a parallel
+namespace for callers of the resolver. Regular browsers do not see
+`.aziel`. Nothing in this software registers a TLD with ICANN.
+
+`.az` remains Azerbaijan's ccTLD. Names outside the Cap-7 allowlist fall
+through to normal DNS. Cap-7 is the mesh duplication layer: standard
+internet does not reach it, and those mesh names do not resolve to the
+hubs. The internet reaches `AZ.AzielEliab.AZ`, `AZ.AzielCorpusLibrary.AZ`,
+`AZ.Godlock.AZ`, and `AZ.HeDidntJump.AZ` through the hub HTTPS sites.
+AZNet still does not host payloads. Private keys stay on the node.
+
+See [AZN-NAME-1.0.md](AZN-NAME-1.0.md).
+
+## 9. Honest banner
 
 THIS IS: a silent verification SIDE-NET.
 THIS IS NOT: an alt internet, a host, a payload store, a VPN, or a key store.

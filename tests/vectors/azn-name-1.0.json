@@ -1,0 +1,66 @@
+{
+  "spec": "AZN-NAME-1.0",
+  "fed_mesh": {
+    "seed_hex": "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20",
+    "handle": "#CPV0CWYPXP4",
+    "public_key": "ebVWLo_mVPlAeLES6KmLp5AfhTrmlb7X4OORC60ElmQ",
+    "name_claim": {
+      "v": "FED-MESH-1.0",
+      "kind": "name",
+      "handle": "#CPV0CWYPXP4",
+      "public_key": "ebVWLo_mVPlAeLES6KmLp5AfhTrmlb7X4OORC60ElmQ",
+      "name": "library.aziel",
+      "owner": "#CPV0CWYPXP4",
+      "target": {
+        "type": "hash",
+        "value": "f56487a629550848508cbd6305d814f6008a1705ab4e215d926f6fda5e9c94dc"
+      },
+      "expires": null,
+      "seq": 2,
+      "prev": "11a622e89de2b80c48ffee9a6f9efe13e857e6643e539617c9dd481c0b36904d",
+      "prev_record": "0000000000000000000000000000000000000000000000000000000000000000",
+      "sig": "2PLK1U2papMuoD6Ux_SPuWwT_r_nxtKmcLmzAa3aCSLFMvGhp5T2-p2lNavR47MtnoxMmFPITL8yPS1LKu4gBA"
+    },
+    "name_claim_statement_hash": "6d38408d305afb2ae562d3c022c3421fc8819c81d61108d3a8b91e2b8dc7ca7c",
+    "name_claim_pow": {
+      "nonce": "7e",
+      "bits": 8,
+      "digest": "0091860bcaeed0c2dbc3520fb74656e8d40045d1c31954108fd7d30e7d9a1a20"
+    },
+    "ref_update": {
+      "v": "FED-MESH-1.0",
+      "kind": "ref",
+      "handle": "#CPV0CWYPXP4",
+      "public_key": "ebVWLo_mVPlAeLES6KmLp5AfhTrmlb7X4OORC60ElmQ",
+      "ref": "heads/main",
+      "object_hash": "f56487a629550848508cbd6305d814f6008a1705ab4e215d926f6fda5e9c94dc",
+      "prev_ref": "0000000000000000000000000000000000000000000000000000000000000000",
+      "seq": 2,
+      "prev": "1111111111111111111111111111111111111111111111111111111111111111",
+      "sig": "EzHgvUyXbK8lMlwzC_e1DJ-pucqeKC2CQEBCvAhM_Igc2xgD8x32dta2EwmpG5Z2QZFHOsVEd3e-P1ZhlULSCg"
+    },
+    "ref_statement_hash": "06805b89889f62b379ae1dee9a7108f9ad37e23124c3ea111145d27438ceb708",
+    "object_utf8": "local-first",
+    "object_hash": "f56487a629550848508cbd6305d814f6008a1705ab4e215d926f6fda5e9c94dc"
+  },
+  "friendly_claim": {
+    "seed_hex": "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20",
+    "handle": "#CPV0CWYPXP4",
+    "record_hash": "63963739e7928086ca220703624c37ac849e13ac34716ae6e7a281aecccb35fe",
+    "sig": "BnC4WBTpyxo4GIGGJAGW6UxKt1j8b7hi0iFmZ9kayVUMJBf7bN8gY5yR3zOxgzDZ3kLRlj1yy3w_KqIB6PBKAg",
+    "pow": {
+      "bits": 8,
+      "digest": "00e265acec9b954a91fbcb36048f13b80a2125547083a8ef82e29a516d095da2",
+      "nonce": "bd"
+    },
+    "fields": {
+      "name": "library.aziel",
+      "op": "claim",
+      "target": "f56487a629550848508cbd6305d814f6008a1705ab4e215d926f6fda5e9c94dc",
+      "target_kind": "hash",
+      "seq": 1,
+      "prev": "0000000000000000000000000000000000000000000000000000000000000000",
+      "prev_record": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  }
+}
