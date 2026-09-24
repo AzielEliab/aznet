@@ -116,7 +116,7 @@ Then open http://127.0.0.1:8771 (this computer only).
 
 ## Mesh names (AZN-NAME-1.0)
 
-Local resolver for `.aziel` plus an allowlist of Cap-7 / AZ.* names. Friendly claims are first-timeslate-wins, 7 per handle. `.az` outside that allowlist is normal DNS (`DNS_FALLTHROUGH`). Regular browsers do not see `.aziel`. This skill does not register a TLD with ICANN. Cap-7 is the mesh duplication layer; hub HTTPS links are how the internet reaches the AZ.* domains. AZNet does not host name payloads. Private keys are not a ledger field. `aznet names` prints the machine honesty surface. Spec: `docs/AZN-NAME-1.0.md`.
+Local resolver for `.aziel` plus the Cap-7 `.az` aliases. Handles are FED-MESH `#` plus 11 Crockford characters. Friendly claims are first-valid-FINAL-claim-wins: 8-bit proof-of-work, 72 hours, and 3 witness handles, with a cap of 7 names. `.az` outside that allowlist is normal DNS (`DNS_FALLTHROUGH`). AZ.* display names are hub cites, not records. Regular browsers do not see `.aziel`. This skill does not register a TLD with ICANN. Cap-7 is the mesh duplication layer; hub HTTPS links are how the internet reaches the AZ.* domains. AZNet does not host name payloads, does not gossip, and does not run peer code. Private keys are not a ledger field. `aznet names` prints the machine honesty surface. Spec: `docs/AZN-NAME-1.0.md`.
 
 ## Honest banner
 

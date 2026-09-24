@@ -173,24 +173,25 @@ Runtime is stdlib only (`hashlib`, `json`). No extra crypto packages.
 ## Mesh names (AZN-NAME-1.0)
 
 AZNet resolves mesh names from a local signed ledger. The mesh TLD is
-`.aziel`. A node handle is `#` plus the 64-hex Ed25519 public key, and
-that handle already owns `<hex>.aziel`. Friendly names are
-first-claim-wins, 7 per handle. `.az` stays on normal DNS except the
-Cap-7 allowlist (`azgrid`, `azbooth`, `azcloak`, `azvault`, `azshift`,
-`azflag`, `azstandby`) and the four drop-in names
-(`AZ.AzielEliab.AZ`, `AZ.AzielCorpusLibrary.AZ`, `AZ.Godlock.AZ`,
-`AZ.HeDidntJump.AZ`).
+`.aziel`. A node handle is `#` plus 11 Crockford characters of the
+Ed25519 public key (FED-MESH-1.0), and that handle already owns
+`<handle>.aziel`. Friendly names are first-valid-FINAL-claim-wins: an
+8-bit proof-of-work, then 72 hours and 3 witness handles, 7 names per
+handle. `.az` stays on normal DNS except the Cap-7 allowlist (`azgrid`,
+`azbooth`, `azcloak`, `azvault`, `azshift`, `azflag`, `azstandby`). The
+four AZ.* display names are hub cites, not name records.
 
 Regular browsers do not see `.aziel`. This repo does not register
 anything with ICANN. Internet reach of those AZ.* domains is the hub
 site. Cap-7 is the mesh duplication layer and does not resolve to the
 hub. AZNet and AZBrowser stay separate software. Name records are hashes
-and handles only.
+and handles only. This library does not gossip, does not open a socket,
+and does not run peer code.
 
 ```bash
 aznet names
-aznet resolve baku.az          # DNS_FALLTHROUGH — not on the allowlist
-aznet resolve <64hex>.aziel    # SELF_CERT — the handle itself
+aznet resolve baku.az                 # DNS_FALLTHROUGH — not on the allowlist
+aznet resolve cpv0cwypxp4.aziel       # SELF_CERT — the handle itself
 ```
 
 Spec and open alignment points: [docs/AZN-NAME-1.0.md](docs/AZN-NAME-1.0.md).

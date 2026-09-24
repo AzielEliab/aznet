@@ -16,13 +16,18 @@ from aznet.names.ledger import NameLedger
 from aznet.names.namespace import classify
 from aznet.names.wire import (
     DNS_FALLTHROUGH,
+    EQUIVOCATION,
     EXPIRED,
+    FINAL,
     FORK,
     MALFORMED,
+    MESH_TLD,
     NOT_MESH,
     OK,
+    PENDING,
     REVOKED,
     SELF_CERT,
+    SYNC_SPEC,
     UNCLAIMED,
     is_timeslate,
 )
@@ -45,6 +50,10 @@ class ResolveResult:
     false_site: bool
     dns: str
     detail: str
+    finality: str | None = None
+    witnesses: int = 0
+    advisories: tuple[dict[str, Any], ...] = ()
+    key_checked: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -63,6 +72,10 @@ class ResolveResult:
             "false_site": self.false_site,
             "dns": self.dns,
             "detail": self.detail,
+            "finality": self.finality,
+            "witnesses": self.witnesses,
+            "advisories": list(self.advisories),
+            "key_checked": self.key_checked,
             "hosts_payloads": False,
             "icann_registration": False,
         }
@@ -80,6 +93,10 @@ def _finish(**fields: Any) -> ResolveResult:
     fields.setdefault("resolves_to_hub", False)
     fields.setdefault("false_site", False)
     fields.setdefault("dns", "not_applicable")
+    fields.setdefault("finality", None)
+    fields.setdefault("witnesses", 0)
+    fields.setdefault("advisories", ())
+    fields.setdefault("key_checked", False)
     return ResolveResult(**fields)
 
 
@@ -95,7 +112,7 @@ def _as_ledger(source: NameLedger | Mapping[str, Any] | list[Any] | Path | str |
     ledger = NameLedger()
     if isinstance(source, list):
         envelope = {
-            "spec": "AZN-NAME-SYNC-1.0",
+            "spec": SYNC_SPEC,
             "payload": "ABSENT",
             "keys": "ABSENT",
             "user_content": "ABSENT",
@@ -109,20 +126,6 @@ def _as_ledger(source: NameLedger | Mapping[str, Any] | list[Any] | Path | str |
     raise TypeError("resolve source must be a NameLedger, path, record list, or sync envelope")
 
 
-def _tip(ledger: NameLedger, name: str) -> dict[str, Any] | None:
-    found = None
-    for rec in ledger.records:
-        if rec["name"] == name:
-            found = rec
-    return found
-
-
-def _expired(rec: Mapping[str, Any], now: str | None) -> bool:
-    if not now or not rec.get("expires_at"):
-        return False
-    return str(rec["expires_at"]) <= now
-
-
 def resolve(
     source: NameLedger | Mapping[str, Any] | list[Any] | Path | str | None,
     query: str,
@@ -131,10 +134,12 @@ def resolve(
 ) -> ResolveResult:
     """Resolve ``query`` from the local ledger copy.
 
-    ``now`` is a TemporalLock timeslate supplied by the caller. When it is
-    omitted, expiry is not evaluated and ``expiry_checked`` is false.
-    ``.az`` names that are not on the allowlist return ``DNS_FALLTHROUGH``
-    and no mesh target. This function does not open a socket.
+    ``now`` is a UTC timestamp supplied by the caller. Friendly claims stay
+    PENDING until this ledger has held the establishing claim for 72 hours
+    and at least three other handles have witnessed it. ``.az`` names that
+    are not on the allowlist return ``DNS_FALLTHROUGH``. This function does
+    not open a socket and does not serve a PENDING or equivocating target
+    as a success.
     """
     if now is not None and not is_timeslate(now):
         return _finish(
@@ -165,34 +170,40 @@ def resolve(
             dns="not_mesh",
             detail=f"{NOT_MESH}: not an .aziel name and not an allowlisted .az name",
         )
+    if classified.name and not classified.name.endswith("." + MESH_TLD):
+        return _finish(
+            ok=False,
+            code=UNCLAIMED,
+            query=classified.query,
+            name=classified.name,
+            dns="cite",
+            detail=(
+                f"{UNCLAIMED}: {classified.query} is a cite of a hub HTTPS site, not a FED-MESH name record"
+            ),
+        )
 
     ledger = source if isinstance(source, NameLedger) else _as_ledger(source)
     assert classified.name is not None
-    if ledger.is_frozen(classified.name):
-        return _finish(
-            ok=False,
-            code=FORK,
-            query=classified.query,
-            name=classified.name,
-            false_site=classified.false_site,
-            expiry_checked=now is not None,
-            detail=f"{FORK}: conflicting records share a history and were not merged",
-        )
-
-    tip = _tip(ledger, classified.name)
-    if classified.kind == "self_cert" and tip is None:
+    if classified.kind == "self_cert" and not any(
+        rec.get("name") == classified.name for rec in ledger.records
+    ):
         return _finish(
             ok=True,
             code=SELF_CERT,
             query=classified.query,
             name=classified.name,
             owner=classified.owner_handle,
-            target_kind="node",
+            target_kind="handle",
             target=classified.owner_handle,
             expiry_checked=now is not None,
+            finality=FINAL,
+            key_checked=False,
             detail=f"{SELF_CERT}: handle owns this name with no claim record",
         )
-    if tip is None:
+
+    decision = ledger.resolve_name(classified.name, now)
+    advisories = tuple(ledger.matching_advisories(classified.name, decision.get("owner")))
+    if decision["code"] == "ABSENT":
         return _finish(
             ok=False,
             code=UNCLAIMED,
@@ -200,51 +211,35 @@ def resolve(
             name=classified.name,
             false_site=classified.false_site,
             expiry_checked=now is not None,
+            advisories=advisories,
             detail=f"{UNCLAIMED}: no anchored claim",
         )
-    if tip["op"] == "release":
-        return _finish(
-            ok=False,
-            code=REVOKED,
-            query=classified.query,
-            name=classified.name,
-            owner=None,
-            record_hash=tip["record_hash"],
-            sequence=tip["sequence"],
-            timeslate=tip["timeslate"],
-            false_site=classified.false_site,
-            expiry_checked=now is not None,
-            detail=f"{REVOKED}: owner released the name",
-        )
-    owner = tip["successor"] if tip["op"] == "transfer" else tip["owner"]
-    if _expired(tip, now):
-        return _finish(
-            ok=False,
-            code=EXPIRED,
-            query=classified.query,
-            name=classified.name,
-            owner=owner,
-            target_kind=tip["target_kind"],
-            target=tip["target"],
-            record_hash=tip["record_hash"],
-            sequence=tip["sequence"],
-            timeslate=tip["timeslate"],
-            expiry_checked=True,
-            false_site=classified.false_site,
-            detail=f"{EXPIRED}: expires_at {tip['expires_at']} is not after now",
-        )
+    code = str(decision["code"])
+    served = code == OK
+    detail = {
+        OK: f"{OK}: earliest FINAL name record",
+        PENDING: f"{PENDING}: claim is anchored and is not FINAL yet",
+        FORK: f"{FORK}: two claims share an anchor time and were not merged",
+        EQUIVOCATION: f"{EQUIVOCATION}: the handle signed two statements at one seq",
+        EXPIRED: f"{EXPIRED}: expires is not after now",
+        REVOKED: f"{REVOKED}: owner released the name",
+    }.get(code, code)
     return _finish(
-        ok=True,
-        code=OK,
+        ok=served,
+        code=code,
         query=classified.query,
         name=classified.name,
-        owner=owner,
-        target_kind=tip["target_kind"],
-        target=tip["target"],
-        record_hash=tip["record_hash"],
-        sequence=tip["sequence"],
-        timeslate=tip["timeslate"],
+        owner=decision.get("owner"),
+        target_kind=decision.get("target_kind"),
+        target=decision.get("target"),
+        record_hash=decision.get("record_hash"),
+        sequence=decision.get("seq"),
+        timeslate=decision.get("anchored_at") or None,
         expiry_checked=now is not None,
         false_site=classified.false_site,
-        detail=f"{OK}: anchored name record",
+        finality=decision.get("finality"),
+        witnesses=int(decision.get("witnesses") or 0),
+        advisories=advisories,
+        key_checked=bool(decision.get("key_checked")),
+        detail=detail,
     )

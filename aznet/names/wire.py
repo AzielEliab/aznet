@@ -1,6 +1,10 @@
-"""AZN-NAME-1.0 wire format. One module so a merged FED-MESH can be aligned here.
+"""AZN-NAME-1.0 statements in FED-MESH-1.0 canonical form.
 
-Nothing in this file opens a socket, stores a private key, or carries a payload.
+Handle, signature, and statement hash match aziel-runtime FED-MESH-1.0.
+The Mesh Security constants below are this repo's copy. FED-MESH-1.0.md
+on the runtime branch does not yet publish a Mesh Security section.
+Change the numbers here if that section lands with different values.
+
 Author: Aziel Eliab only.
 """
 
@@ -11,55 +15,50 @@ import json
 import re
 from typing import Any, Mapping
 
+FED_SPEC = "FED-MESH-1.0"
 SPEC = "AZN-NAME-1.0"
 ANCHOR_SPEC = "AZN-NAME-ANCHOR-1.0"
 SYNC_SPEC = "AZN-NAME-SYNC-1.0"
 AUTHOR = "Aziel Eliab"
 
-# Empty today would cross-protocol-replay more easily. The prefix is a local
-# choice until FED-MESH specifies the signed bytes. Change it here only.
-SIGNATURE_PREFIX = b"AZN-NAME-1.0\x00"
-
 MESH_TLD = "aziel"
 DNS_CCTLD_AZ = "az"
 CAP_PER_HANDLE = 7
-HANDLE_PREFIX = "#"
-HANDLE_HEX_LEN = 64
 GENESIS_PREV = "0" * 64
+
+# Mesh Security. Small on purpose so a claim is costly to flood and cheap to test.
+POW_BITS_MIN = 8
+WITNESS_K = 3
+WITNESS_AGE_SECONDS = 72 * 60 * 60
+
+# FED-MESH section 5.1. Security statements are extra kinds. The runtime
+# spec has no Mesh Security section yet.
+KIND_NAME = "name"
+KIND_CLAIM = KIND_NAME
+KIND_WITNESS = "name-witness"
+KIND_VOUCH = "vouch"
+KIND_ADVISORY = "advisory"
+NAME_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.aziel$")
+REF_NAME_RE = re.compile(r"^[a-z0-9][a-z0-9_./-]{0,63}$")
 
 OPS = ("claim", "update", "transfer", "release", "renew")
 TARGET_KINDS = ("object", "ref", "node", "none")
 RENEWALS = ("until-release", "expiring")
+ADVISORY_NOTE_MAX = 80
 
-# Signed body. ``signature`` and ``record_hash`` are outside this set.
-SIGNED_FIELDS = (
-    "expires_at",
-    "handle_prev",
-    "keys",
-    "name",
-    "op",
-    "owner",
-    "payload",
-    "prev",
-    "renewal",
-    "sequence",
-    "spec",
-    "successor",
-    "target",
-    "target_kind",
-    "timeslate",
-    "user_content",
-)
+HANDLE_RE = re.compile(r"^#[0-9A-HJKMNP-TV-Z]{11}$")
+HANDLE_BODY_RE = re.compile(r"^[0-9a-hjkmnp-tv-z]{11}$")
+_ISO = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
+_HASH = re.compile(r"^[0-9a-f]{64}$")
+_NONCE = re.compile(r"^[0-9a-f]{1,16}$")
+_LIST_ID = re.compile(r"^[a-z0-9][a-z0-9-]{0,31}$")
 
-RECORD_FIELDS = SIGNED_FIELDS + ("record_hash", "signature")
-
-ABSENT = "ABSENT"
-
-# Refusal / result codes. Stable for AZBrowser and qnm-node.
 OK = "OK"
 SELF_CERT = "SELF_CERT"
 IDEMPOTENT = "IDEMPOTENT"
 UNCLAIMED = "UNCLAIMED"
+PENDING = "PENDING"
+FINAL = "FINAL"
 BAD_SIGNATURE = "BAD_SIGNATURE"
 FORK = "FORK"
 EXPIRED = "EXPIRED"
@@ -69,16 +68,19 @@ LOST_RACE = "LOST_RACE"
 NOT_OWNER = "NOT_OWNER"
 BAD_CHAIN = "BAD_CHAIN"
 BAD_SEQUENCE = "BAD_SEQUENCE"
+ROLLBACK = "ROLLBACK"
 DNS_FALLTHROUGH = "DNS_FALLTHROUGH"
 NOT_MESH = "NOT_MESH"
 MALFORMED = "MALFORMED"
 SELF_CERT_FIXED = "SELF_CERT_FIXED"
 LEAK = "LEAK"
+NO_EXEC = "NO_EXEC"
+POW_FAIL = "POW_FAIL"
+POW_WEAK = "POW_WEAK"
+EQUIVOCATION = "EQUIVOCATION"
 WAIT = "WAIT"
 
-_ISO = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
-_HASH = re.compile(r"^[0-9a-f]{64}$")
-_HANDLE = re.compile(r"^#[0-9a-f]{64}$")
+ABSENT = "ABSENT"
 
 LEAK_KEYS = frozenset(
     {
@@ -98,36 +100,22 @@ LEAK_KEYS = frozenset(
         "bytes",
         "video",
         "mp4",
+        "pkcs8",
+        "enc_private_key",
     }
 )
 
-
-def canonical_bytes(fields: Mapping[str, Any]) -> bytes:
-    """UTF-8 JSON, sorted keys, no extra whitespace, signed fields only."""
-    payload = {key: fields[key] for key in SIGNED_FIELDS}
-    raw = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
-    return raw.encode("utf-8")
-
-
-def signature_message(fields: Mapping[str, Any]) -> bytes:
-    return SIGNATURE_PREFIX + canonical_bytes(fields)
-
-
-def record_hash(fields: Mapping[str, Any]) -> str:
-    return hashlib.sha256(canonical_bytes(fields)).hexdigest()
-
-
-def anchor_hash(fields: Mapping[str, Any]) -> str:
-    body = {
-        "kind": fields["kind"],
-        "name": fields["name"],
-        "prev_hash": fields["prev_hash"],
-        "record_hash": fields["record_hash"],
-        "spec": ANCHOR_SPEC,
-        "timeslate": fields["timeslate"],
+EXEC_KEYS = frozenset(
+    {
+        "code",
+        "wasm",
+        "script",
+        "contract",
+        "smart_contract",
+        "bytecode",
+        "source",
     }
-    raw = json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
-    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+)
 
 
 def is_hash(value: str) -> bool:
@@ -135,8 +123,31 @@ def is_hash(value: str) -> bool:
 
 
 def is_handle(value: str) -> bool:
-    return bool(_HANDLE.match(value))
+    return bool(HANDLE_RE.match(value))
 
 
 def is_timeslate(value: str) -> bool:
     return bool(_ISO.match(value))
+
+
+def is_nonce(value: str) -> bool:
+    return bool(_NONCE.match(value))
+
+
+def is_list_id(value: str) -> bool:
+    return bool(_LIST_ID.match(value))
+
+
+def anchor_hash(fields: Mapping[str, Any]) -> str:
+    body = {
+        "anchored_at": fields.get("anchored_at") or "",
+        "kind": fields["kind"],
+        "name": fields["name"],
+        "prev_hash": fields["prev_hash"],
+        "prior_hash": fields.get("prior_hash") or "",
+        "record_hash": fields["record_hash"],
+        "spec": ANCHOR_SPEC,
+        "timeslate": fields["timeslate"],
+    }
+    raw = json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()

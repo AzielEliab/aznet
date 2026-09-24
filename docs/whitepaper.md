@@ -136,8 +136,10 @@ Marker: `Truth Is No Defense — .AZNet — AZ.`
 
 ## 8. Mesh names (AZN-NAME-1.0)
 
-The naming library resolves `.aziel` names, self-certifying handles, and
-an explicit `.az` allowlist from a local signed ledger. It is a parallel
+The naming library resolves `.aziel` names and the Cap-7 `.az` aliases
+from a local signed ledger. Handles and name statements follow
+FED-MESH-1.0. A friendly name is served only after an 8-bit proof-of-work,
+72 hours on this ledger, and 3 witness handles. It is a parallel
 namespace for callers of the resolver. Regular browsers do not see
 `.aziel`. Nothing in this software registers a TLD with ICANN.
 

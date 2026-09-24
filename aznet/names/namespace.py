@@ -16,10 +16,15 @@ from aznet.names.wire import (
     CAP_PER_HANDLE,
     DNS_CCTLD_AZ,
     DNS_FALLTHROUGH,
+    FED_SPEC,
+    HANDLE_BODY_RE,
     MALFORMED,
     MESH_TLD,
     NOT_MESH,
+    POW_BITS_MIN,
     SPEC,
+    WITNESS_AGE_SECONDS,
+    WITNESS_K,
 )
 
 # Factory SoT labels from aziel-runtime src/cap7-shuffle.js (CAP7_FACTORY_LABELS).
@@ -102,10 +107,27 @@ class ClassifiedName:
 
 
 def _clean(raw: str) -> str:
-    text = str(raw or "").strip().lower().rstrip(".")
+    text = str(raw or "").strip().rstrip(".")
+    if text.startswith("#"):
+        body = text[1:]
+        suffix = ""
+        lower_body = body.lower()
+        if lower_body.endswith("." + MESH_TLD):
+            suffix = "." + MESH_TLD
+            body = body[: -(len(MESH_TLD) + 1)]
+        if any(ch.isspace() for ch in body) or "://" in body or "@" in body:
+            return ""
+        return "#" + body.upper() + suffix
+    text = text.lower()
     if any(ch.isspace() for ch in text) or "://" in text or "@" in text:
         return ""
     return text
+
+
+def _self_cert(body: str) -> str | None:
+    if HANDLE_BODY_RE.match(body):
+        return "#" + body.upper()
+    return None
 
 
 def classify(raw: str) -> ClassifiedName:
@@ -118,10 +140,10 @@ def classify(raw: str) -> ClassifiedName:
         handle = query[1:]
         if handle.endswith("." + MESH_TLD):
             handle = handle[: -(len(MESH_TLD) + 1)]
-        if not _is_hex64(handle):
+        owner = _self_cert(handle.lower())
+        if owner is None:
             return ClassifiedName(query, None, "malformed", None, False, MALFORMED)
-        owner = "#" + handle
-        return ClassifiedName(query, f"{handle}.{MESH_TLD}", "self_cert", owner, False, None)
+        return ClassifiedName(query, owner[1:].lower() + "." + MESH_TLD, "self_cert", owner, False, None)
 
     if query in _DROP_IN_BY_KEY:
         return ClassifiedName(query, query, "az_allow", None, False, None)
@@ -140,10 +162,9 @@ def classify(raw: str) -> ClassifiedName:
 
     if len(labels) == 2 and labels[1] == MESH_TLD:
         label = labels[0]
-        # 64 hex is the raw public key. It is longer than a DNS label on purpose:
-        # regular DNS and regular browsers do not carry this name.
-        if _is_hex64(label):
-            return ClassifiedName(query, query, "self_cert", "#" + label, False, None)
+        owner = _self_cert(label)
+        if owner is not None:
+            return ClassifiedName(query, query, "self_cert", owner, False, None)
         if not _label_ok(label):
             return ClassifiedName(query, None, "malformed", None, False, MALFORMED)
         false_site = label in CAP7_FALSE_SITE_LABELS
@@ -234,26 +255,37 @@ def alignment_points() -> list[dict[str, str]]:
     return [
         {
             "id": "FED-MESH-1.0",
-            "status": "open",
+            "status": "matched",
             "note": (
-                "docs/designs/FED-MESH-1.0.md was not on AzielEliab/aziel-runtime main "
-                "when this format was written. Wire bytes live in aznet/names/wire.py."
+                "Name statements use FED-MESH-1.0 kind=name fields from section 5.1 "
+                "(handle, prev, prev_record, owner, target, expires). "
+                "docs/designs/FED-MESH-1.0.md is on aziel-runtime branch cursor/fed-mesh-e546, not yet on main."
             ),
         },
         {
             "id": "handle-encoding",
-            "status": "open",
+            "status": "matched",
             "note": (
-                "Handle is '#' plus 64 lowercase hex characters of the raw 32-byte Ed25519 "
-                "public key. A merged spec may require base32 or a hash of the key."
+                "Handle is '#' plus 11 uppercase Crockford characters from the first 55 bits "
+                "of SHA-256 of the raw Ed25519 public key, matching FED-MESH-1.0."
             ),
         },
         {
             "id": "signature-message",
+            "status": "matched",
+            "note": (
+                "Signed bytes are FED-MESH canonicalize(statement) with sig excluded. "
+                "No AZN-NAME prefix. sig is unpadded base64url."
+            ),
+        },
+        {
+            "id": "mesh-security-constants",
             "status": "open",
             "note": (
-                "Signed bytes are the prefix AZN-NAME-1.0 NUL plus canonical JSON of SIGNED_FIELDS. "
-                "FED-MESH may use CBOR or an empty prefix."
+                "POW_BITS_MIN is 8, WITNESS_K is 3, and the age window is 72 hours. "
+                "They live in aznet/names/wire.py. FED-MESH-1.0.md has no Mesh Security section yet. "
+                "pow_nonce sits outside the signature. The age window is this ledger's anchored_at, "
+                "because a FED-MESH name statement has no timeslate."
             ),
         },
         {
@@ -269,8 +301,8 @@ def alignment_points() -> list[dict[str, str]]:
             "status": "open",
             "note": (
                 "Anchors are a local append-only hash log (AZN-NAME-ANCHOR-1.0) in the name ledger. "
-                "They are not a write to suite ChainLock CL-WP-0.4. Per-name prev and per-handle "
-                "handle_prev sit inside the signed record."
+                "They are not a write to suite ChainLock CL-WP-0.4. Handle prev and per-name "
+                "name_prev sit inside the signed statement."
             ),
         },
         {
@@ -282,12 +314,12 @@ def alignment_points() -> list[dict[str, str]]:
             ),
         },
         {
-            "id": "late-earlier-claim",
+            "id": "first-valid-final",
             "status": "open",
             "note": (
-                "Earliest timeslate wins among unanchored rivals in one ingest. A later-anchored "
-                "claim that is contradicted by an earlier one freezes the name as FORK. "
-                "History is not rewritten (NO-REWRITE)."
+                "This library anchors competing claims and serves the earliest FINAL one. "
+                "A relay that implements section 5.1 still answers FED-MESH-NAME-TAKEN for a second "
+                "claim and does not store it. Equal anchored_at values are FORK. The ledger is append-only."
             ),
         },
         {
@@ -332,6 +364,18 @@ def honesty() -> dict:
         "az_cctld": "Azerbaijan",
         "az_default": "normal DNS",
         "az_allowlist_only": True,
+        "fed_mesh": FED_SPEC,
+        "handle": "# + 11 Crockford of SHA-256(public key)",
+        "pow_bits_min": POW_BITS_MIN,
+        "witness_k": WITNESS_K,
+        "witness_age_seconds": WITNESS_AGE_SECONDS,
+        "name_kind": "name",
+        "finality": "PENDING until this ledger has held the claim for the age window and K distinct handles have witnessed it",
+        "age_basis": "local anchored_at from the caller now; not a signed claim time",
+        "first_valid_final_claim_wins": True,
+        "expired_frees_cap_slot": True,
+        "release_frees_cap_slot": True,
+        "pending_counts_toward_cap": True,
         "cap_per_handle": CAP_PER_HANDLE,
         "cap7_is_mesh_duplication": True,
         "standard_internet_reaches_cap7": False,
@@ -340,6 +384,11 @@ def honesty() -> dict:
         "hosts_payloads": False,
         "keys_leave_nodes": False,
         "relay_socket": False,
+        "relay_gossip": False,
+        "executes_peer_code": False,
+        "vouches_change_finality": False,
+        "advisories_affect_non_subscribers": False,
+        "zero_knowledge": False,
         "lamb_lens": ["Service", "Clarity", "Peace"],
         "factory_labels": list(CAP7_FACTORY_LABELS),
         "false_sites": list(CAP7_FALSE_SITE_LABELS),

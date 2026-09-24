@@ -1,22 +1,57 @@
 {
   "spec": "AZN-NAME-1.0",
-  "note": "Pinned signed name record. Seed is an RFC 8032 test vector, published here only as a test fixture.",
-  "seed_hex": "9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60",
-  "owner": "#d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
-  "fields": {
-    "name": "vector.aziel",
-    "op": "claim",
-    "owner": "#d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
-    "target": "abababababababababababababababababababababababababababababababab",
-    "target_kind": "object",
-    "sequence": 1,
-    "prev": "0000000000000000000000000000000000000000000000000000000000000000",
-    "handle_prev": "0000000000000000000000000000000000000000000000000000000000000000",
-    "timeslate": "2026-09-24T00:00:00Z",
-    "expires_at": "",
-    "renewal": "until-release",
-    "successor": ""
+  "fed_mesh": {
+    "seed_hex": "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20",
+    "handle": "#CPV0CWYPXP4",
+    "public_key": "ebVWLo_mVPlAeLES6KmLp5AfhTrmlb7X4OORC60ElmQ",
+    "name_claim": {
+      "v": "FED-MESH-1.0",
+      "kind": "name",
+      "handle": "#CPV0CWYPXP4",
+      "public_key": "ebVWLo_mVPlAeLES6KmLp5AfhTrmlb7X4OORC60ElmQ",
+      "name": "library.aziel",
+      "owner": "#CPV0CWYPXP4",
+      "target": {
+        "type": "hash",
+        "value": "f56487a629550848508cbd6305d814f6008a1705ab4e215d926f6fda5e9c94dc"
+      },
+      "expires": null,
+      "seq": 2,
+      "prev": "11a622e89de2b80c48ffee9a6f9efe13e857e6643e539617c9dd481c0b36904d",
+      "prev_record": "0000000000000000000000000000000000000000000000000000000000000000",
+      "sig": "2PLK1U2papMuoD6Ux_SPuWwT_r_nxtKmcLmzAa3aCSLFMvGhp5T2-p2lNavR47MtnoxMmFPITL8yPS1LKu4gBA"
+    },
+    "name_claim_statement_hash": "6d38408d305afb2ae562d3c022c3421fc8819c81d61108d3a8b91e2b8dc7ca7c",
+    "ref_update": {
+      "v": "FED-MESH-1.0",
+      "kind": "ref",
+      "handle": "#CPV0CWYPXP4",
+      "public_key": "ebVWLo_mVPlAeLES6KmLp5AfhTrmlb7X4OORC60ElmQ",
+      "ref": "heads/main",
+      "object_hash": "f56487a629550848508cbd6305d814f6008a1705ab4e215d926f6fda5e9c94dc",
+      "prev_ref": "0000000000000000000000000000000000000000000000000000000000000000",
+      "seq": 2,
+      "prev": "1111111111111111111111111111111111111111111111111111111111111111",
+      "sig": "EzHgvUyXbK8lMlwzC_e1DJ-pucqeKC2CQEBCvAhM_Igc2xgD8x32dta2EwmpG5Z2QZFHOsVEd3e-P1ZhlULSCg"
+    },
+    "ref_statement_hash": "06805b89889f62b379ae1dee9a7108f9ad37e23124c3ea111145d27438ceb708",
+    "object_utf8": "local-first",
+    "object_hash": "f56487a629550848508cbd6305d814f6008a1705ab4e215d926f6fda5e9c94dc"
   },
-  "record_hash": "9a0ad219f5398799e1ec1b0306bae25548d9a8d93aaf7da0793384d75a853328",
-  "signature_hex": "c70df6e04338af4f07a97251d8980bfc74845144048d3effb29034f5673d2e50ed90480cb67cd59bbd33def97e58292121bcf4b92e4c02b689e081040687c609"
+  "friendly_claim": {
+    "seed_hex": "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20",
+    "handle": "#CPV0CWYPXP4",
+    "record_hash": "63963739e7928086ca220703624c37ac849e13ac34716ae6e7a281aecccb35fe",
+    "sig": "BnC4WBTpyxo4GIGGJAGW6UxKt1j8b7hi0iFmZ9kayVUMJBf7bN8gY5yR3zOxgzDZ3kLRlj1yy3w_KqIB6PBKAg",
+    "pow_nonce": "d1",
+    "fields": {
+      "name": "library.aziel",
+      "op": "claim",
+      "target": "f56487a629550848508cbd6305d814f6008a1705ab4e215d926f6fda5e9c94dc",
+      "target_kind": "hash",
+      "seq": 1,
+      "prev": "0000000000000000000000000000000000000000000000000000000000000000",
+      "prev_record": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  }
 }
