@@ -166,16 +166,17 @@ A friendly claim is refused with `POLICY` when the label matches
 `FED-MESH-BLOCKLIST-1` (`aznet/names/blocklist.py`). That list is the
 runtime token list plus the tokens this library already refused,
 including `csam`. The policy is no pornography, no sexual content
-involving children, and no hate names. A token matches the whole label
-or one hyphen-separated part. A token of length 4 or more also matches
-inside the label, except `milf` and `anal`, which stay part-only so
-`analysis` is not refused. `sex`, `xxx`, and `kkk` are shorter than 4,
-so they do not match inside a longer word.
+involving children, and no hate names. Separators are removed the same
+way as runtime `nameBlockHit`, then digit lookalikes `0 1 3 4 5 7` are
+read as `o i e a s t`. `child.porn`, `child-porn`, and `ch1ldp0rn`
+match. A substring token of length 4 or more matches inside that fold,
+longest first. `sex`, `xxx`, `milf`, `anal`, and `kkk` match the whole
+label or one hyphen part only, so `sussex` and `analysis` are not refused.
 
-This is a label list. It misses paraphrases, misspellings, leetspeak,
-and words from other languages. It is not an image classifier and it
-does not see page content. The refusal detail does not echo the matched
-token. Self-certifying names are not checked against the list.
+This is a label list. It misses paraphrases, other spellings, and words
+from other languages. It is not an image classifier and it does not see
+page content. The refusal detail does not echo the matched token.
+Self-certifying names are not checked against the list.
 
 ## Isolation
 
