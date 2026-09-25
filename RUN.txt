@@ -1,0 +1,9 @@
+AZNet — Aziel Eliab
+
+1. python -m venv .venv && source .venv/bin/activate && pip install -e .
+2. aznet ui
+3. Open http://127.0.0.1:8771/. The page shows Paired when the ledger token is already there.
+
+aznet doctor checks the install.
+aznet --help lists commands.
+Add --json for machine-readable output.

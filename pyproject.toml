@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "aznet"
 version = "0.1.0"
-description = "Silent verification side-net (AZNet AZN-WP-0.1, Aziel Eliab). Hashes only. Not an alt internet. AZNet + AZBrowser required."
+description = "Device-local hash record (AZNet AZN-WP-0.1, Aziel Eliab). Hashes only. Pair with AZBrowser before a stamp is written."
 readme = "README.md"
 license = {file = "LICENSE"}
 authors = [{name = "Aziel Eliab"}]

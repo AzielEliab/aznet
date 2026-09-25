@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import html
 import json
+import socket
+import sys
+import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
 
@@ -13,104 +17,247 @@ from aznet.garden import garden_view
 from aznet.witness import expected_witness
 
 AUTHOR = "Aziel Eliab"
+AZBROWSER_PROBE = ("127.0.0.1", 8878)
+_PAIR_LOCK = threading.Lock()
 PAGE = """<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AZNet — Aziel Eliab</title>
+<script>
+try {
+  var savedTheme = localStorage.getItem("aznet-theme");
+  if (savedTheme === "light" || savedTheme === "dark") document.documentElement.setAttribute("data-theme", savedTheme);
+} catch (e) {}
+</script>
 <style>
-  :root { color-scheme: dark; --bg:#000; --ink:#fff; --gold:#c9a227; --muted:#b8b8b8; --panel:#0d0d0d; --line:#3a2f12; }
-  html, body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui,sans-serif; }
-  a { color:var(--gold); }
-  .wrap { max-width:58rem; margin:0 auto; padding:1.4rem 1.2rem 4rem; }
-  h1 { margin:0 0 .2rem; }
-  .motto { color:var(--gold); font-style:italic; }
-  .marker { color:var(--gold); letter-spacing:.04em; }
-  .card { border:1px solid var(--gold); background:var(--panel); border-radius:12px; padding:1rem 1.1rem; margin:0 0 1rem; }
-  .kicker { display:block; color:var(--gold); font:650 .68rem/1 ui-monospace,monospace; letter-spacing:.12em; text-transform:uppercase; }
-  button { background:var(--gold); color:#000; border:0; padding:.7rem .9rem; border-radius:8px; font:700 .88rem/1 ui-monospace,monospace; cursor:pointer; }
-  button.ghost { background:transparent; color:var(--ink); border:1px solid var(--line); }
-  .actions { display:flex; flex-wrap:wrap; gap:.5rem; margin:.8rem 0; }
-  .status { border:1px solid var(--line); padding:.7rem; border-radius:8px; color:var(--muted); }
-  .hash { font:12px/1.4 ui-monospace,monospace; word-break:break-all; color:var(--muted); }
-  .rolodex { display:grid; grid-template-columns:repeat(auto-fill,minmax(9rem,1fr)); gap:.6rem; }
-  .goldcard { border:1px solid var(--gold); min-height:6.5rem; padding:.7rem; border-radius:10px; background:#111; }
-  .goldcard .full { display:none; font:11px/1.3 ui-monospace,monospace; word-break:break-all; }
-  .goldcard:hover .full { display:block; }
-  .goldcard:hover .hint { display:none; }
-  input, select { width:100%; background:#000; color:#fff; border:1px solid var(--line); padding:.5rem; border-radius:8px; }
-  label { display:block; margin:.6rem 0 .25rem; }
+  :root {
+    color-scheme: light dark;
+    --bg: #f7f4ec;
+    --ink: #1c1914;
+    --muted: #5e584c;
+    --gold: #c9a227;
+    --gold-ink: #6d5610;
+    --panel: #fffdf8;
+    --line: #e6dcc4;
+    --shadow: 0 1px 2px rgba(28, 25, 20, 0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0c0c0c;
+      --ink: #f3efe4;
+      --muted: #c9c2b3;
+      --gold: #c9a227;
+      --gold-ink: #e4c56a;
+      --panel: #141414;
+      --line: #3a3218;
+      --shadow: none;
+    }
+  }
+  html[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0c0c0c;
+    --ink: #f3efe4;
+    --muted: #c9c2b3;
+    --gold: #c9a227;
+    --gold-ink: #e4c56a;
+    --panel: #141414;
+    --line: #3a3218;
+    --shadow: none;
+  }
+  html[data-theme="light"] {
+    color-scheme: light;
+    --bg: #f7f4ec;
+    --ink: #1c1914;
+    --muted: #5e584c;
+    --gold: #c9a227;
+    --gold-ink: #6d5610;
+    --panel: #fffdf8;
+    --line: #e6dcc4;
+    --shadow: 0 1px 2px rgba(28, 25, 20, 0.06);
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; max-width: 100%; overflow-x: clip; background: var(--bg); color: var(--ink); }
+  body { font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  a { color: var(--gold-ink); }
+  :focus { outline: none; }
+  :focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+  .skip {
+    position: absolute; left: 0.75rem; top: -3rem;
+    background: var(--gold); color: #1a1404; padding: 0.4rem 0.7rem; border-radius: 8px; z-index: 2;
+  }
+  .skip:focus { top: 0.75rem; }
+  .bar {
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;
+    padding: 0.85rem 1rem; border-bottom: 1px solid var(--line); background: var(--panel);
+  }
+  .brand { font-weight: 700; }
+  .who { color: var(--muted); margin-left: 0.55rem; }
+  .wrap { max-width: 40rem; margin: 0 auto; padding: 1.25rem 1.1rem 3rem; }
+  h1 { margin: 0.1rem 0 0.45rem; font-size: 1.85rem; line-height: 1.15; font-weight: 650; }
+  h2 { margin: 0 0 0.45rem; font-size: 1.15rem; }
+  p { margin: 0.4rem 0; }
+  .lead { color: var(--muted); }
+  .card {
+    border: 1px solid var(--line); background: var(--panel); border-radius: 14px;
+    padding: 1.15rem 1.2rem; margin: 0 0 1rem; box-shadow: var(--shadow);
+  }
+  .hero { border-color: var(--gold); }
+  .kicker { display: block; color: var(--gold-ink); font-size: 0.75rem; font-weight: 650; letter-spacing: 0.04em; text-transform: uppercase; }
+  button, input, select, summary { font: inherit; }
+  button {
+    background: transparent; color: var(--ink); border: 1px solid var(--line);
+    border-radius: 10px; padding: 0.6rem 0.9rem; min-height: 44px; cursor: pointer;
+  }
+  button.primary {
+    background: var(--gold); color: #1a1404; border: 0; font-weight: 700; font-size: 1rem;
+    padding: 0.85rem 1.3rem; min-height: 48px;
+  }
+  button.theme { min-height: 40px; padding: 0.35rem 0.75rem; }
+  button:disabled { opacity: 0.6; cursor: wait; }
+  .actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 0.9rem 0 0.2rem; }
+  .status {
+    margin: 0.85rem 0 0; padding: 0.75rem 0.9rem; border-radius: 10px;
+    background: var(--bg); color: var(--ink); font-weight: 650;
+  }
+  .notice { color: var(--muted); min-height: 1.4rem; }
+  .next { color: var(--muted); font-size: 0.95rem; }
+  .time-row { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); gap: 0.25rem 0.75rem; margin: 0.35rem 0; }
+  .time-k { color: var(--muted); }
+  .time-v { overflow-wrap: anywhere; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.85rem; }
+  .time-note { margin-top: 0.7rem; }
+  .fold {
+    border: 1px solid var(--line); border-radius: 14px; background: var(--panel);
+    padding: 0.2rem 1.1rem 0.4rem; margin: 0 0 1rem;
+  }
+  summary { cursor: pointer; font-weight: 650; min-height: 48px; display: flex; align-items: center; }
+  .section { border-top: 1px solid var(--line); padding: 0.9rem 0 0.4rem; }
+  .hash { font: 0.75rem/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-wrap: anywhere; white-space: pre-wrap; color: var(--muted); margin: 0.4rem 0 0.8rem; }
+  .rolodex { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr)); gap: 0.75rem; }
+  .goldcard {
+    text-align: left; width: 100%; background: var(--bg); color: var(--ink);
+    border: 1px solid var(--gold); border-radius: 12px; padding: 0.85rem;
+  }
+  .goldcard[aria-pressed="true"] { box-shadow: inset 0 0 0 1px var(--gold); }
+  .full { display: block; margin-top: 0.45rem; font: 0.75rem/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-wrap: anywhere; color: var(--muted); }
+  input, select {
+    width: 100%; background: var(--bg); color: var(--ink); border: 1px solid var(--line);
+    padding: 0.55rem 0.7rem; border-radius: 8px;
+  }
+  label { display: block; margin: 0.7rem 0 0.3rem; }
+  .marker { color: var(--gold-ink); }
+  .foot { color: var(--muted); font-size: 0.9rem; margin: 0.4rem 0 0; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.92em; }
+  @media (max-width: 480px) {
+    .wrap { padding: 1rem 0.9rem 2.5rem; }
+    button.primary { width: 100%; }
+    h1 { font-size: 1.6rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <p class="kicker">Device-local silent node</p>
-    <h1>AZNet</h1>
-    <p class="motto">Verification without hosting. Presence without authority.</p>
-    <p class="marker" id="marker">__MARKER__</p>
-    <p>Author: Aziel Eliab only. AZNet + AZBrowser both required. FragGate unlocks access. StaticClock stamps time.</p>
-    <p>__HONEST__</p>
-
-    <section class="card" id="pair">
-      <h2><span class="kicker">pair</span>Pair status</h2>
-      <p id="pair-status">UNPAIRED · LOCKED</p>
+  <a class="skip" href="#pair">Skip to AZNet</a>
+  <header class="bar">
+    <div><span class="brand">AZNet</span><span class="who">Aziel Eliab</span></div>
+    <button type="button" class="theme" id="theme">Theme</button>
+  </header>
+  <main class="wrap">
+    <section class="card hero" id="pair">
+      <span class="kicker">On this machine</span>
+      <h1>AZNet</h1>
+      <p class="lead">This machine keeps a local hash record. The pair token is a ledger record.</p>
+      <p id="pair-status" class="status">__STATUS__</p>
+      <p id="peer-line" class="next">__PEER__</p>
       <div class="actions">
-        <button type="button" id="btn-pair">Pair AZBrowser</button>
-        <button type="button" class="ghost" id="btn-unlock">FragGate unlock</button>
+        <button type="button" class="primary" id="btn-open"__OPEN_HIDDEN__>Open Advanced</button>
+        <button type="button" class="primary" id="btn-pair-now"__PAIR_HIDDEN__>__PAIR_LABEL__</button>
       </div>
-    </section>
-
-    <section class="card" id="unlock">
-      <h2><span class="kicker">unlock</span>FragGate</h2>
-      <p>Kernel: <a href="https://github.com/AzielEliab/fraggate">fraggate</a>. Catalog: aziel-runtime slug <code>aznet</code>.</p>
+      <p id="notice" class="notice" role="status"></p>
+      <p class="next">Then <code>aznet doctor</code> checks this install.</p>
     </section>
 
     <section class="card" id="staticclock">
-      <h2><span class="kicker">staticclock</span>Time</h2>
-      <pre id="clock" class="hash"></pre>
+      <h2>Time</h2>
+      <div id="clock" class="time"></div>
     </section>
 
-    <section class="card" id="garden">
-      <h2><span class="kicker">garden</span>Custodian Garden / Gold Pages</h2>
-      <p>Shifting, non-ranked. Hover to reveal. Manual intent only. No favorites.</p>
-      <div class="rolodex" id="rolodex"></div>
-    </section>
+    <details class="fold" id="more">
+      <summary>Advanced</summary>
 
-    <section class="card" id="stamps">
-      <h2><span class="kicker">stamps</span>Stamping ledger</h2>
-      <label for="hash-hex">Hash (64 hex). Never a payload.</label>
-      <input id="hash-hex" maxlength="64" placeholder="sha256 hex">
-      <div class="actions">
-        <button type="button" id="btn-stamp">Stamp</button>
-        <button type="button" class="ghost" id="btn-verify">Verify</button>
+      <div class="section">
+        <h2>Pair token</h2>
+        <p>Re-pair appends another local pair token to this ledger.</p>
+        <div class="actions">
+          <button type="button" id="btn-pair">Re-pair</button>
+        </div>
       </div>
-    </section>
 
-    <section class="card" id="memorial">
-      <h2><span class="kicker">memorial</span>Memorial ledger</h2>
-      <p>Terminal compromise: genesis / final hash, timestamps, non-actionable summary. No exploit details.</p>
-      <select id="reason">
-        <option>isolation</option>
-        <option>ui_altered</option>
-        <option>integrity_refuse</option>
-        <option>node_withdraw</option>
-        <option>pair_broken</option>
-        <option>witness_fail</option>
-      </select>
-      <div class="actions">
-        <button type="button" class="ghost" id="btn-memorial">Memorial</button>
-        <button type="button" class="ghost" id="btn-withdraw">Withdraw</button>
-        <button type="button" class="ghost" id="btn-witness">Witness</button>
-      </div>
-    </section>
+      <section class="section" id="unlock">
+        <h2>FragGate unlock</h2>
+        <p>Unlock sets the pair flag for a stamp, memorial, or other write.</p>
+        <p>Kernel: <a href="https://github.com/AzielEliab/fraggate">fraggate</a>. Catalog slug <code>aznet</code>.</p>
+        <div class="actions">
+          <button type="button" id="btn-unlock">FragGate unlock</button>
+        </div>
+      </section>
 
-    <section class="card" id="receipts">
-      <h2><span class="kicker">receipts</span>Lattice</h2>
-      <div class="status" id="ws-status">Pair AZBrowser, then FragGate unlock. Garden stays hash-only.</div>
-      <pre class="hash" id="receipt-list"></pre>
-    </section>
-  </div>
+      <section class="section" id="garden">
+        <h2>Gold Pages</h2>
+        <p id="garden-lead">Select a card to fill the stamp field. Cards are hashes, and they are not ranked.</p>
+        <div class="rolodex" id="rolodex"></div>
+      </section>
+
+      <section class="section" id="stamps">
+        <h2>Stamp</h2>
+        <p>Stores one hash. Unlock first when a write needs the pair flag.</p>
+        <label for="hash-hex">Hash (64 hex characters)</label>
+        <input id="hash-hex" maxlength="64" autocomplete="off" spellcheck="false" placeholder="64 hex characters">
+        <div class="actions">
+          <button type="button" id="btn-stamp">Stamp</button>
+          <button type="button" id="btn-verify">Check ledger</button>
+        </div>
+      </section>
+
+      <section class="section" id="memorial">
+        <h2>Memorial</h2>
+        <p>Writes a terminal record: genesis hash, final hash, time, and a short summary.</p>
+        <label for="reason">Reason</label>
+        <select id="reason">
+          <option>isolation</option>
+          <option>ui_altered</option>
+          <option>integrity_refuse</option>
+          <option>node_withdraw</option>
+          <option>pair_broken</option>
+          <option>witness_fail</option>
+        </select>
+        <div class="actions">
+          <button type="button" id="btn-memorial">Memorial</button>
+          <button type="button" id="btn-withdraw">Withdraw</button>
+          <button type="button" id="btn-witness">Witness</button>
+        </div>
+      </section>
+
+      <section class="section" id="receipts">
+        <h2>Ledger</h2>
+        <p id="lattice-summary">No receipts yet.</p>
+        <details>
+          <summary>Receipt record</summary>
+          <pre class="hash" id="receipt-list"></pre>
+        </details>
+      </section>
+    </details>
+
+    <details class="fold" id="notes">
+      <summary>Notes</summary>
+      <p>__HONEST__</p>
+      <p class="marker">__MARKER__</p>
+    </details>
+    <p class="foot">Aziel Eliab · AZN-WP-0.1 · v__VERSION__ · this machine only</p>
+  </main>
   <script>
     var WITNESS = "__WITNESS__";
     var SECTIONS = __SECTIONS__;
@@ -121,38 +268,172 @@ PAGE = """<!doctype html>
       document.body.innerHTML = "<p>UI witness failed. Terminated. Memorial required.</p>";
       throw new Error("ui_altered");
     }
-    async function api(path, body) {
-      var res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}) });
-      var data = await res.json();
-      if (!res.ok) throw new Error(data.error || ("HTTP " + res.status));
-      return data;
+    function statusWords(pair, unlock) {
+      if (pair === "PAIRED" && unlock === "UNLOCKED") return "Paired and unlocked.";
+      if (pair === "PAIRED") return "Paired. Ready.";
+      if (pair === "BROKEN") return "Pair is broken. Re-pair to continue.";
+      if (!pair || pair === "UNPAIRED") return "Not paired. The ledger write did not finish.";
+      return "Pair status: " + pair + ".";
+    }
+    function paintHero(pair, unlock) {
+      document.getElementById("pair-status").textContent = statusWords(pair, unlock);
+      var needs = pair !== "PAIRED";
+      var openBtn = document.getElementById("btn-open");
+      var pairBtn = document.getElementById("btn-pair-now");
+      if (openBtn) openBtn.hidden = needs;
+      if (pairBtn) {
+        pairBtn.hidden = !needs;
+        pairBtn.textContent = pair === "BROKEN" ? "Re-pair" : "Pair";
+      }
+    }
+    function fail(err) {
+      var msg = (err && err.message) ? String(err.message) : "That did not work.";
+      var next = "";
+      if (msg.indexOf("pair_flag required") !== -1) next = " Next: open Advanced and choose FragGate unlock.";
+      else if (msg.indexOf("pair_token") !== -1) next = " Next: open Advanced and choose Re-pair.";
+      else if (msg.indexOf("64-char") !== -1) next = " Next: choose a Gold Pages card, then Stamp.";
+      else next = " Next: aznet doctor";
+      document.getElementById("notice").textContent = msg + next;
+    }
+    async function api(path, body, button) {
+      if (button) button.disabled = true;
+      try {
+        var res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}) });
+        var data = await res.json();
+        if (!res.ok) throw new Error(data.error || ("HTTP " + res.status));
+        return data;
+      } finally {
+        if (button) button.disabled = false;
+      }
     }
     function show(data) {
-      document.getElementById("ws-status").textContent = data.message || data.action || "ok";
-      document.getElementById("receipt-list").textContent = JSON.stringify(data.ledger || data, null, 2);
-      if (data.pair_status) document.getElementById("pair-status").textContent = data.pair_status + " · " + (data.unlock_status || "");
+      if (data.pair_status) paintHero(data.pair_status, data.unlock_status || "");
+      var line = "";
+      if (data.action === "paired") line = "Paired. Ready.";
+      else if (data.action === "unlocked") line = "Paired and unlocked.";
+      else if (data.action === "stamped") line = "Stamp written.";
+      else if (data.action === "verify") line = data.ok ? "Ledger intact." : "Ledger check failed.";
+      else if (data.action === "memorial") line = "Memorial written.";
+      else if (data.action === "withdrawn") line = "This node is withdrawn.";
+      else if (data.action === "witness") line = "Witness recorded.";
+      else if (data.message) line = data.message;
+      if (line) document.getElementById("notice").textContent = line;
+      var rows = data.ledger;
+      if (Array.isArray(rows)) {
+        var summary = document.getElementById("lattice-summary");
+        summary.textContent = rows.length === 1 ? "1 receipt in the ledger." : rows.length + " receipts in the ledger.";
+        document.getElementById("receipt-list").textContent = JSON.stringify(rows, null, 2);
+      }
+    }
+    function paintTime(t) {
+      var root = document.getElementById("clock");
+      root.textContent = "";
+      [["Zone", t.zone], ["Local", t.local], ["Window", t.window], ["Stamp", t.stamp]].forEach(function (row) {
+        var line = document.createElement("div");
+        line.className = "time-row";
+        var k = document.createElement("div");
+        k.className = "time-k";
+        k.textContent = row[0];
+        var v = document.createElement("div");
+        v.className = "time-v";
+        v.textContent = row[1] == null ? "" : String(row[1]);
+        line.appendChild(k);
+        line.appendChild(v);
+        root.appendChild(line);
+      });
+      var note = document.createElement("p");
+      note.className = "time-note";
+      note.textContent = t.note || "StaticClock stamps time.";
+      root.appendChild(note);
     }
     async function refresh() {
-      var g = await fetch("/local/garden").then(function (r) { return r.json(); });
-      var box = document.getElementById("rolodex");
-      box.textContent = "";
-      (g.cards || []).forEach(function (c) {
-        var el = document.createElement("div");
-        el.className = "goldcard";
-        el.innerHTML = "<div class='kicker'>" + c.label + "</div><div class='hint'>hover reveal</div><div class='full'>" + c.hash_hex + "</div>";
-        el.onclick = function () { document.getElementById("hash-hex").value = c.hash_hex; };
-        box.appendChild(el);
-      });
-      var t = await fetch("/local/time").then(function (r) { return r.json(); });
-      document.getElementById("clock").textContent = JSON.stringify(t, null, 2);
+      try {
+        var g = await fetch("/local/garden").then(function (r) { return r.json(); });
+        var cards = g.cards || [];
+        var lead = document.getElementById("garden-lead");
+        lead.textContent = cards.length + (cards.length === 1 ? " hash card." : " hash cards.") + " They shift together and are not ranked. Select one to fill the stamp field.";
+        var box = document.getElementById("rolodex");
+        box.textContent = "";
+        cards.forEach(function (c) {
+          var el = document.createElement("button");
+          el.type = "button";
+          el.className = "goldcard";
+          el.setAttribute("aria-pressed", "false");
+          var kicker = document.createElement("span");
+          kicker.className = "kicker";
+          kicker.textContent = c.label || "card";
+          var full = document.createElement("span");
+          full.className = "full";
+          full.textContent = c.hash_hex || "";
+          el.appendChild(kicker);
+          el.appendChild(full);
+          el.addEventListener("click", function () {
+            var field = document.getElementById("hash-hex");
+            field.value = c.hash_hex || "";
+            box.querySelectorAll(".goldcard").forEach(function (node) { node.setAttribute("aria-pressed", "false"); });
+            el.setAttribute("aria-pressed", "true");
+            document.getElementById("garden-lead").textContent = (c.label || "Card") + " is in the stamp field.";
+            field.scrollIntoView({ block: "center" });
+          });
+          box.appendChild(el);
+        });
+      } catch (err) {
+        document.getElementById("garden-lead").textContent = "Gold Pages did not load. Next: reload this page.";
+      }
+      try {
+        var t = await fetch("/local/time").then(function (r) { return r.json(); });
+        paintTime(t);
+      } catch (err) {
+        document.getElementById("clock").textContent = "Time is not available yet. Next: reload this page.";
+      }
     }
-    document.getElementById("btn-pair").onclick = function () { api("/local/pair", {}).then(show).catch(function (e) { document.getElementById("ws-status").textContent = String(e.message || e); }); };
-    document.getElementById("btn-unlock").onclick = function () { api("/local/unlock", {}).then(show).catch(function (e) { document.getElementById("ws-status").textContent = String(e.message || e); }); };
-    document.getElementById("btn-stamp").onclick = function () { api("/local/stamp", { hash_hex: document.getElementById("hash-hex").value }).then(show).catch(function (e) { document.getElementById("ws-status").textContent = String(e.message || e); }); };
-    document.getElementById("btn-verify").onclick = function () { api("/local/verify", {}).then(show).catch(function (e) { document.getElementById("ws-status").textContent = String(e.message || e); }); };
-    document.getElementById("btn-memorial").onclick = function () { api("/local/memorial", { reason: document.getElementById("reason").value }).then(show).catch(function (e) { document.getElementById("ws-status").textContent = String(e.message || e); }); };
-    document.getElementById("btn-withdraw").onclick = function () { api("/local/withdraw", {}).then(show).catch(function (e) { document.getElementById("ws-status").textContent = String(e.message || e); }); };
-    document.getElementById("btn-witness").onclick = function () { api("/local/witness", { witness_hash: WITNESS }).then(show).catch(function (e) { document.getElementById("ws-status").textContent = String(e.message || e); }); };
+    var themeMode = "system";
+    try { themeMode = localStorage.getItem("aznet-theme") || "system"; } catch (e) {}
+    function applyTheme(mode) {
+      var root = document.documentElement;
+      if (mode === "light" || mode === "dark") root.setAttribute("data-theme", mode);
+      else root.removeAttribute("data-theme");
+      var btn = document.getElementById("theme");
+      var label = mode === "light" ? "Light" : mode === "dark" ? "Dark" : "System";
+      btn.textContent = label;
+      btn.setAttribute("aria-label", "Color theme: " + label);
+      btn.setAttribute("aria-pressed", mode === "dark" ? "true" : "false");
+    }
+    applyTheme(themeMode);
+    document.getElementById("theme").addEventListener("click", function () {
+      themeMode = themeMode === "system" ? "light" : themeMode === "light" ? "dark" : "system";
+      try { localStorage.setItem("aznet-theme", themeMode); } catch (e) {}
+      applyTheme(themeMode);
+    });
+    document.getElementById("btn-open").addEventListener("click", function () {
+      var more = document.getElementById("more");
+      more.open = true;
+      var garden = document.getElementById("garden");
+      if (garden) garden.scrollIntoView({ block: "start" });
+    });
+    function repair(ev) {
+      api("/local/pair", {}, ev.currentTarget).then(show).catch(fail);
+    }
+    document.getElementById("btn-pair").addEventListener("click", repair);
+    document.getElementById("btn-pair-now").addEventListener("click", repair);
+    document.getElementById("btn-unlock").addEventListener("click", function (ev) {
+      api("/local/unlock", {}, ev.currentTarget).then(show).catch(fail);
+    });
+    document.getElementById("btn-stamp").addEventListener("click", function (ev) {
+      api("/local/stamp", { hash_hex: document.getElementById("hash-hex").value }, ev.currentTarget).then(show).catch(fail);
+    });
+    document.getElementById("btn-verify").addEventListener("click", function (ev) {
+      api("/local/verify", {}, ev.currentTarget).then(show).catch(fail);
+    });
+    document.getElementById("btn-memorial").addEventListener("click", function (ev) {
+      api("/local/memorial", { reason: document.getElementById("reason").value }, ev.currentTarget).then(show).catch(fail);
+    });
+    document.getElementById("btn-withdraw").addEventListener("click", function (ev) {
+      api("/local/withdraw", {}, ev.currentTarget).then(show).catch(fail);
+    });
+    document.getElementById("btn-witness").addEventListener("click", function (ev) {
+      api("/local/witness", { witness_hash: WITNESS }, ev.currentTarget).then(show).catch(fail);
+    });
     refresh();
   </script>
 </body>
@@ -160,12 +441,69 @@ PAGE = """<!doctype html>
 """
 
 
+def pair_words(pair: str, unlock: str) -> str:
+    if pair == "PAIRED" and unlock == "UNLOCKED":
+        return "Paired and unlocked."
+    if pair == "PAIRED":
+        return "Paired. Ready."
+    if pair == "BROKEN":
+        return "Pair is broken. Re-pair to continue."
+    if not pair or pair == "UNPAIRED":
+        return "Not paired. The ledger write did not finish."
+    return f"Pair status: {pair}."
+
+
+def azbrowser_seen(host: str = AZBROWSER_PROBE[0], port: int = AZBROWSER_PROBE[1], timeout: float = 0.3) -> bool:
+    """True when a TCP connection to the AZBrowser loopback port is accepted."""
+    try:
+        with socket.create_connection((host, port), timeout):
+            return True
+    except OSError:
+        return False
+
+
+def ensure_local_pair(ledger: Ledger | None = None) -> Ledger:
+    """Write one PAIR receipt when the ledger is UNPAIRED. Leave BROKEN alone."""
+    current = ledger if ledger is not None else Ledger.load(default_ledger_path())
+    if current.pair_status() != "UNPAIRED":
+        return current
+    with _PAIR_LOCK:
+        path = current.path if current.path is not None else default_ledger_path()
+        fresh = Ledger.load(path)
+        if fresh.pair_status() != "UNPAIRED":
+            return fresh
+        try:
+            fresh.pair()
+        except Exception:
+            return fresh
+        return fresh
+
+
 def render_page() -> str:
+    peer = azbrowser_seen()
+    try:
+        ledger = ensure_local_pair()
+        pair = ledger.pair_status()
+        unlock = ledger.unlock_status()
+    except Exception:
+        pair, unlock = "UNPAIRED", "LOCKED"
+    needs = pair != "PAIRED"
+    peer_line = (
+        "127.0.0.1:8878 accepted a connection."
+        if peer
+        else "AZBrowser was not seen on 127.0.0.1:8878."
+    )
     return (
-        PAGE.replace("__MARKER__", MARKER)
-        .replace("__HONEST__", HONEST)
+        PAGE.replace("__MARKER__", html.escape(MARKER))
+        .replace("__HONEST__", html.escape(HONEST))
         .replace("__WITNESS__", witness_digest())
         .replace("__SECTIONS__", json.dumps(list(WITNESS_SECTIONS)))
+        .replace("__STATUS__", html.escape(pair_words(pair, unlock)))
+        .replace("__PEER__", html.escape(peer_line))
+        .replace("__VERSION__", html.escape(VERSION))
+        .replace("__OPEN_HIDDEN__", " hidden" if needs else "")
+        .replace("__PAIR_HIDDEN__", "" if needs else " hidden")
+        .replace("__PAIR_LABEL__", "Re-pair" if pair == "BROKEN" else "Pair")
     )
 
 
@@ -246,10 +584,30 @@ class Handler(BaseHTTPRequestHandler):
             self._json({"error": str(exc), "ok": False}, 400)
 
 
-def serve(host: str = "127.0.0.1", port: int = 8771) -> None:
+def serve(host: str = "127.0.0.1", port: int = 8771) -> int:
     if host not in {"127.0.0.1", "localhost"}:
+        print(f"{host} is not a loopback address. Binding 127.0.0.1.", file=sys.stderr, flush=True)
         host = "127.0.0.1"
-    httpd = ThreadingHTTPServer((host, port), Handler)
-    print(f"AZNet UI  http://{host}:{port}  (loopback only)  v{VERSION}  {AUTHOR}")
-    print(MARKER)
-    httpd.serve_forever()
+    try:
+        httpd = ThreadingHTTPServer((host, port), Handler)
+    except OSError as exc:
+        print(
+            f"Could not open port {port} on {host}. {exc}\nNext: aznet ui --port {port + 1}",
+            file=sys.stderr,
+        )
+        return 1
+    try:
+        ensure_local_pair()
+    except Exception as exc:
+        print(
+            f"Could not write a pair token. {exc}\nNext: open the page, or run aznet pair",
+            file=sys.stderr,
+            flush=True,
+        )
+    print(f"Open http://{host}:{port}/", flush=True)
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        print("\nStopped.")
+        return 0
+    return 0
