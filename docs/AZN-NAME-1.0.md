@@ -6,7 +6,7 @@ socket, does not host a payload, and does not take a private key into the
 ledger.
 
 **Author:** Aziel Eliab only.
-**Pair:** AZNet and AZBrowser stay separate software. Pairing is order and
+**Pair:** AZnet and AZ Browser stay separate software. Pairing is order and
 token only. This resolver does not merge them.
 
 Name statements use the FED-MESH-1.0 `kind: name` fields in
@@ -19,7 +19,7 @@ isolation record are operator rules that section does not publish yet.
 
 ## What this is
 
-A parallel namespace. AZBrowser, qnm-node, and any other caller of
+A parallel namespace. AZ Browser, qnm-node, and any other caller of
 `aznet.names.resolve` can use it.
 
 - The mesh TLD is `.aziel`.

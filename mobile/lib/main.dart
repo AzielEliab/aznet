@@ -20,7 +20,7 @@ class AZNetApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'AZNet',
+      title: 'AZnet',
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
       home: const GardenPage(),
@@ -51,7 +51,7 @@ class _GardenPageState extends State<GardenPage> {
   String _pair = 'UNPAIRED';
   String _unlock = 'LOCKED';
   final _ledger = <Receipt>[];
-  String _status = 'Pair AZBrowser, then FragGate unlock.';
+  String _status = 'Pair AZ Browser, then FragGate unlock.';
 
   String _now() => DateTime.now().toUtc().toIso8601String().split('.').first + 'Z';
 
@@ -101,7 +101,7 @@ class _GardenPageState extends State<GardenPage> {
 
   void _unlockNow() {
     if (_pair != 'PAIRED') {
-      setState(() => _status = 'AZNet + AZBrowser both required.');
+      setState(() => _status = 'AZnet + AZ Browser both required.');
       return;
     }
     _unlock = 'UNLOCKED';
@@ -120,7 +120,7 @@ class _GardenPageState extends State<GardenPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('AZNet')),
+      appBar: AppBar(title: const Text('AZnet')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -132,7 +132,7 @@ class _GardenPageState extends State<GardenPage> {
           const Text(marker, style: TextStyle(color: kGold)),
           const SizedBox(height: 8),
           const Text(
-            'On-device silent node. Hashes only. AZNet + AZBrowser both required. '
+            'On-device silent node. Hashes only. AZnet + AZ Browser both required. '
             'Not an alt internet. Author Aziel Eliab.',
           ),
           const SizedBox(height: 16),
@@ -142,7 +142,7 @@ class _GardenPageState extends State<GardenPage> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              FilledButton(onPressed: _pairNow, child: const Text('Pair AZBrowser')),
+              FilledButton(onPressed: _pairNow, child: const Text('Pair AZ Browser')),
               OutlinedButton(onPressed: _unlockNow, child: const Text('FragGate unlock')),
               OutlinedButton(onPressed: _stamp, child: const Text('Stamp')),
             ],

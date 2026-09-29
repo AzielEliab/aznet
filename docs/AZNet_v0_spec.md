@@ -2,13 +2,13 @@
 
 Machine-oriented companion to [whitepaper.md](whitepaper.md).
 
-- Product: AZNet
+- Product: AZnet
 - Version: 0.1.0
 - Spec: AZN-WP-0.1
 - Author: Aziel Eliab only
 - License: Apache-2.0
 - Marker: `Truth Is No Defense — .AZNet — AZ.`
-- Pair: AZNet + AZBrowser both required
+- Pair: AZnet + AZ Browser both required
 - Unlock: FragGate
 - Time: StaticClock (advisory; not a scheduler)
 - Worker: control-plane / demo garden

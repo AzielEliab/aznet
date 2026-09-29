@@ -1,6 +1,6 @@
 """AZNet mesh naming library (AZN-NAME-1.0).
 
-Usable by AZBrowser and qnm-node. AZNet and AZBrowser stay separate
+Usable by AZ Browser and qnm-node. AZnet and AZ Browser stay separate
 software; this package only resolves names. It does not host payloads
 and it does not accept private keys into the ledger.
 

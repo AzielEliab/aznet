@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pair AZBrowser, FragGate unlock, stamp a public demo hash.
+"""Pair AZ Browser, FragGate unlock, stamp a public demo hash.
 
 Author: Aziel Eliab only.
 """

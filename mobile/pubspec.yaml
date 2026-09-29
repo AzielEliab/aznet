@@ -1,5 +1,5 @@
 name: aznet
-description: On-device silent verification side-net. Hashes only. AZNet + AZBrowser required.
+description: On-device silent verification side-net. Hashes only. AZnet + AZ Browser required.
 publish_to: "none"
 version: 0.1.0+1
 

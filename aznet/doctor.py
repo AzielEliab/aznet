@@ -118,7 +118,7 @@ def _check_pair_required() -> Check:
             return _fail("pair", "stamp accepted without pair")
         except PairError:
             pass
-        return _ok("pair required", "stamp refused until AZBrowser pair + FragGate unlock")
+        return _ok("pair required", "stamp refused until AZ Browser pair + FragGate unlock")
 
 
 def _check_lattice() -> Check:
@@ -206,7 +206,11 @@ def _check_sidenet() -> Check:
         return _fail("sidenet", "multi-survival marked complete")
     if doc.get("cap7", {}).get("count") != 7 or doc.get("cap7", {}).get("public_icann"):
         return _fail("sidenet", "Cap-7 pair map drifted")
-    return _ok("sidenet", "AZN-SIDENET-1.0 AZNet lock; L0 unchanged; qnm SLOT; no public ICANN")
+    if doc.get("naming_lock", {}).get("client_surface") != "AZ Browser" or doc.get("pairing", {}).get("peer_name") != "AZ Browser":
+        return _fail("sidenet", "client surface spelling drifted")
+    if doc.get("pairing", {}).get("peer") != "azbrowser" or doc.get("product") != "AZnet":
+        return _fail("sidenet", "pair slug or AZnet display drifted")
+    return _ok("sidenet", "AZN-SIDENET-1.0 AZnet lock; client surface AZ Browser; L0 unchanged; qnm SLOT; no public ICANN")
 
 
 def _check_witness() -> Check:

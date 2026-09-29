@@ -27,7 +27,7 @@ pytest is the dev extra. No network.
 5. **I4 Silence as security.** No analytics, personalization, or engagement.
 6. **I5 Hash continuity.** Append-only SHA-256 lattice.
 7. **I6 UI is a mandatory witness.** If the UI is altered, terminate and memorial.
-8. **I7 Pairing required.** AZNet + AZBrowser both required to run.
+8. **I7 Pairing required.** AZnet + AZ Browser both required to run.
 9. **I8 Memorial is non-actionable.** Genesis / final hash, timestamps, closed-set summary. No exploit details.
 10. **I9 Worker is a demo garden.** Do not claim the Worker is the silent node.
 11. **I10 No persuasion / engagement optimization.**

@@ -1,9 +1,9 @@
 ---
-name: AZNet
-description: Use when verifying hashes on the AZNet silent verification side-net (AZN-WP-0.1). Hashes only — never payloads, keys, or user content. AZNet + AZBrowser both required. FragGate unlocks access. StaticClock stamps time. Hosted /v1 via this Worker or aziel-runtime slug aznet. Author Aziel Eliab.
+name: AZnet
+description: Use when verifying hashes on the AZNet silent verification side-net (AZN-WP-0.1). Hashes only — never payloads, keys, or user content. AZnet + AZ Browser both required. FragGate unlocks access. StaticClock stamps time. Hosted /v1 via this Worker or aziel-runtime slug aznet. Author Aziel Eliab.
 ---
 
-# AZNet
+# AZnet
 
 Silent verification SIDE-NET. Not an alt internet.
 
@@ -11,7 +11,7 @@ Author: **Aziel Eliab**.
 
 Use when mirroring a cryptographic hash, shifting the Custodian Garden / Gold Pages, stamping a hash, or writing a Memorial. Never host payloads. Never store keys or user content. UI is a mandatory witness — if altered, terminate and memorial.
 
-AZNet, AZBrowser, and FragGate are **separate software**. Do not embed AZNet chrome in AZBrowser or FragGate. Functional order only: `pair_token` then FragGate `pair_flag` before garden / stamp / memorial writes. StaticClock stamps time. Suite mesh is presence + QNM live|locked|isolated (default OFF) — not an anonymity network and not AZMail's product-local ring. QNS-CD-1.0 (photon QNS1 packet transfer) is a hub cite / Worker mesh cross-map only: local `qnsd` in [qnm-node](https://github.com/AzielEliab/qnm-node), runtime cites + catalog field in [aziel-runtime](https://github.com/AzielEliab/aziel-runtime), pair custody [AZInterface](https://github.com/AzielEliab/azinterface). Not a Softwares-tab product. No public qnsd proxy.
+AZnet, AZ Browser, and FragGate are **separate software**. Do not embed AZnet chrome in AZ Browser or FragGate. Functional order only: `pair_token` then FragGate `pair_flag` before garden / stamp / memorial writes. StaticClock stamps time. Suite mesh is presence + QNM live|locked|isolated (default OFF) — not an anonymity network and not AZMail's product-local ring. QNS-CD-1.0 (photon QNS1 packet transfer) is a hub cite / Worker mesh cross-map only: local `qnsd` in [qnm-node](https://github.com/AzielEliab/qnm-node), runtime cites + catalog field in [aziel-runtime](https://github.com/AzielEliab/aziel-runtime), pair custody [AZInterface](https://github.com/AzielEliab/azinterface). Not a Softwares-tab product. No public qnsd proxy.
 
 Always send `User-Agent: Mozilla/5.0`. Cloudflare Workers may 403 an empty agent.
 
@@ -51,7 +51,7 @@ Host: `https://aznet-download-tracker.vibelock.workers.dev`
 | GET | `/v1/skill` | This markdown. Does not increment downloads. |
 | GET | `/v1/example` | Sample pair + stamp payload. Does not increment downloads. |
 | GET | `/v1/sidenet` | AZN-SIDENET-1.0 map. Not a catalog live op. Not a second door. |
-| GET/POST | `/v1/pair_status` | Catalog name: pair + report AZBrowser token/flag. Leftover alias: `/v1/pair`. |
+| GET/POST | `/v1/pair_status` | Catalog name: pair + report AZ Browser token/flag. Leftover alias: `/v1/pair`. |
 | GET | `/v1/garden_list` | Catalog name: demo Gold Pages. Leftover alias: `/v1/garden`. |
 | GET | `/v1/time` | StaticClock advisory display. Not a scheduler. Human chrome. |
 | GET | `/v1/witness` | Mandatory UI witness hash. Human chrome. |
@@ -75,7 +75,7 @@ This Worker MCP pointer: `GET|POST https://aznet-download-tracker.vibelock.worke
 
 Catalog aliases under `/p/aznet/…` when listed. FragGate slug: `aznet`.
 
-AZBrowser (required pair): `https://github.com/AzielEliab/azbrowser`
+AZ Browser (required pair): `https://github.com/AzielEliab/azbrowser`
 
 StaticClock: `https://staticclock-download-tracker.vibelock.workers.dev/`
 
@@ -117,7 +117,7 @@ Then open http://127.0.0.1:8771 (this computer only).
 
 ## Sidenet (AZN-SIDENET-1.0)
 
-AZNet is the sidenet. The layer is additive. L0 stays the public FragGate path, and `sidenet` is not a catalog live op. Softwares stays frozen. Cap-7 mesh DNS pairing is local (`.aziel` plus the seven `.az` aliases). Public DNS for those names is SLOT. There is no public ICANN registration. The qnm peer bearer is SLOT: this process does not open it. Survival planes are LIVE only for the path contract, the local hash ledger, the local resolver, and the Cap-7 pair map. Shuffle land, the cold shelf, and hub HTTPS copies stay SLOT. `GET /v1/sidenet` and `aznet sidenet` print that map. AZBrowser stays a separate product; pairing is order and token. Spec: `docs/AZN-SIDENET-1.0.md`.
+AZnet is the sidenet. The layer is additive. L0 stays the public FragGate path, and `sidenet` is not a catalog live op. Softwares stays frozen. Cap-7 mesh DNS pairing is local (`.aziel` plus the seven `.az` aliases). Public DNS for those names is SLOT. There is no public ICANN registration. The qnm peer bearer is SLOT: this process does not open it. Survival planes are LIVE only for the path contract, the local hash ledger, the local resolver, and the Cap-7 pair map. Shuffle land, the cold shelf, and hub HTTPS copies stay SLOT. `GET /v1/sidenet` and `aznet sidenet` print that map. AZ Browser stays a separate product; pairing is order and token. Spec: `docs/AZN-SIDENET-1.0.md`.
 
 ## Mesh names (AZN-NAME-1.0)
 
@@ -125,7 +125,7 @@ Local resolver for `.aziel` plus the Cap-7 `.az` aliases. Handles are FED-MESH `
 
 ## Honest banner
 
-THIS IS: a silent verification SIDE-NET (hash continuity, Custodian Garden, Memorial ledger). THIS IS NOT: an alt internet, a host, a payload store, a VPN, or a key store. The Worker is a control-plane / demo garden. Device-local silent node is the real posture. AZNet + AZBrowser are both required. Author Aziel Eliab.
+THIS IS: a silent verification SIDE-NET (hash continuity, Custodian Garden, Memorial ledger). THIS IS NOT: an alt internet, a host, a payload store, a VPN, or a key store. The Worker is a control-plane / demo garden. Device-local silent node is the real posture. AZnet + AZ Browser are both required. Author Aziel Eliab.
 
 Cite the GitHub repository and this Worker. No Zenodo DOI is invented here; a software deposit is still needed.
 

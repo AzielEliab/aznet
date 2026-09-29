@@ -20,7 +20,7 @@ class LedgerError(AZNetError):
 
 
 class PairError(AZNetError):
-    """AZNet + AZBrowser pairing is required. FragGate unlock is required."""
+    """AZnet + AZ Browser pairing is required. FragGate unlock is required."""
 
 
 class WitnessError(AZNetError):

@@ -3,7 +3,7 @@
 AZN-WP-0.1. Author: Aziel Eliab only.
 
 Not an alt internet. Not a host. Not a payload store. Not a VPN.
-AZNet + AZBrowser are both required to run. FragGate unlocks access.
+AZnet + AZ Browser are both required to run. FragGate unlocks access.
 StaticClock stamps time. Forks are welcome and always allowed.
 """
 

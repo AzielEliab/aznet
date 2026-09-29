@@ -19,7 +19,11 @@ def test_naming_lock_and_l0_unbroken() -> None:
     assert doc["spec"] == "AZN-SIDENET-1.0"
     assert doc["author"] == "Aziel Eliab"
     assert doc["naming_lock"]["sidenet"] == "aznet"
+    assert doc["naming_lock"]["display"] == "AZnet"
+    assert doc["naming_lock"]["client_surface"] == "AZ Browser"
+    assert doc["product"] == "AZnet"
     assert doc["naming_lock"]["second_sidenet"] is False
+    assert "AZBrowser" not in json.dumps(doc)
     assert doc["softwares_frozen"] is True
     assert doc["new_software_slug"] is False
     assert doc["second_door"] is False
@@ -67,6 +71,8 @@ def test_cap7_mesh_dns_pairing_is_local_and_not_icann() -> None:
     assert doc["icann_registration"] is False
     assert doc["pairing"]["products_merged"] is False
     assert doc["pairing"]["peer"] == "azbrowser"
+    assert doc["pairing"]["peer_name"] == "AZ Browser"
+    assert doc["pairing"]["product_name"] == "AZnet"
     assert doc["pairing"]["tunnel"] is False
 
 

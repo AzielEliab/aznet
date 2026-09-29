@@ -1,4 +1,4 @@
-"""AZN-SIDENET-1.0 — AZNet is the sidenet.
+"""AZN-SIDENET-1.0 — AZnet is the sidenet.
 
 Additive mesh layer beside the public FragGate path. L0 stays the
 existing catalog ops and the ``/v1/fraggate`` proxy. This module does
@@ -23,7 +23,8 @@ from aznet.names.namespace import (
 
 SPEC = "AZN-SIDENET-1.0"
 AUTHOR = "Aziel Eliab"
-PRODUCT = "AZNet"
+PRODUCT = "AZnet"
+CLIENT_SURFACE = "AZ Browser"
 SLUG = "aznet"
 QNM_NODE = "https://github.com/AzielEliab/qnm-node"
 AZBROWSER = "https://github.com/AzielEliab/azbrowser"
@@ -200,7 +201,7 @@ def _planes() -> list[dict[str, Any]]:
         {
             "id": "hub-https",
             "status": "SLOT",
-            "means": "not an AZNet survival copy",
+            "means": "not an AZnet survival copy",
             "probed": False,
             "public_icann": False,
             "icann_registration_by_this_code": False,
@@ -208,7 +209,7 @@ def _planes() -> list[dict[str, Any]]:
             "note": (
                 "The four AZ domain hubs are public HTTPS cites. This process does not "
                 "serve them, does not register them, and does not treat them as Cap-7 "
-                "answers. SLOT means they are not an AZNet survival copy. It does not "
+                "answers. SLOT means they are not an AZnet survival copy. It does not "
                 "mean those sites were probed."
             ),
         },
@@ -257,7 +258,13 @@ def _guard(doc: dict[str, Any]) -> None:
     if doc["lie_to_survive"] or doc["rewrite_key"] or doc["hosts_payloads"] or doc["socket"]:
         raise SidenetRefuse("AZN-LIE", "sidenet claimed a payload, a socket, a rewrite key, or a lie")
     if doc["naming_lock"]["sidenet"] != "aznet" or doc["naming_lock"]["second_sidenet"]:
-        raise SidenetRefuse("AZN-NAME-LOCK", "sidenet naming lock is AZNet only")
+        raise SidenetRefuse("AZN-NAME-LOCK", "sidenet naming lock is AZnet only")
+    if doc["naming_lock"].get("client_surface") != CLIENT_SURFACE or doc["pairing"]["peer_name"] != CLIENT_SURFACE:
+        raise SidenetRefuse("AZN-NAME-LOCK", "client surface spelling is AZ Browser")
+    if doc["pairing"]["peer"] != "azbrowser" or doc["product"] != PRODUCT:
+        raise SidenetRefuse("AZN-NAME-LOCK", "pair slug or AZnet display drifted")
+    if "AZBrowser" in str(doc):
+        raise SidenetRefuse("AZN-NAME-LOCK", "old client spelling is still on the sidenet map")
 
 
 def surface() -> dict[str, Any]:
@@ -271,8 +278,10 @@ def surface() -> dict[str, Any]:
         "slug": SLUG,
         "naming_lock": {
             "sidenet": SLUG,
+            "display": PRODUCT,
+            "client_surface": CLIENT_SURFACE,
             "second_sidenet": False,
-            "phrase": "AZNet is the sidenet",
+            "phrase": "AZnet is the sidenet",
         },
         "softwares_frozen": True,
         "new_software_slug": False,
@@ -293,7 +302,8 @@ def surface() -> dict[str, Any]:
         "layers_replace_l0": False,
         "pairing": {
             "peer": "azbrowser",
-            "peer_name": "AZBrowser",
+            "peer_name": CLIENT_SURFACE,
+            "product_name": PRODUCT,
             "url": AZBROWSER,
             "kind": "order and token",
             "products_merged": False,
@@ -338,7 +348,7 @@ def surface() -> dict[str, Any]:
             "socket_opened_here": False,
         },
         "note": (
-            "AZNet is the sidenet. The layer is additive: L0 is the public FragGate "
+            "AZnet is the sidenet. The client surface is AZ Browser. The layer is additive: L0 is the public FragGate "
             "path and stays unbroken. Softwares stays frozen. Cap-7 mesh DNS pairing "
             "is a local map. The qnm peer bearer is SLOT because this process does "
             "not open it. Survival planes are LIVE only where this code runs, and "

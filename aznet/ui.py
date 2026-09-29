@@ -24,7 +24,7 @@ PAGE = """<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AZNet — Aziel Eliab</title>
+<title>AZnet — Aziel Eliab</title>
 <script>
 try {
   var savedTheme = localStorage.getItem("aznet-theme");
@@ -160,16 +160,16 @@ try {
 </style>
 </head>
 <body>
-  <a class="skip" href="#pair">Skip to AZNet</a>
+  <a class="skip" href="#pair">Skip to AZnet</a>
   <header class="bar">
-    <div><span class="brand">AZNet</span><span class="who">Aziel Eliab</span></div>
+    <div><span class="brand">AZnet</span><span class="who">Aziel Eliab</span></div>
     <button type="button" class="theme" id="theme">Theme</button>
   </header>
   <main class="wrap">
     <section class="card hero" id="pair">
       <span class="kicker">On this machine</span>
-      <h1>AZNet</h1>
-      <p class="lead">This machine keeps a local hash record. The pair token is a ledger record.</p>
+      <h1>AZnet</h1>
+      <p class="lead">AZnet keeps the hash record on this machine. AZ Browser is the client surface. The pair token is a ledger record.</p>
       <p id="pair-status" class="status">__STATUS__</p>
       <p id="peer-line" class="next">__PEER__</p>
       <div class="actions">
@@ -454,7 +454,7 @@ def pair_words(pair: str, unlock: str) -> str:
 
 
 def azbrowser_seen(host: str = AZBROWSER_PROBE[0], port: int = AZBROWSER_PROBE[1], timeout: float = 0.3) -> bool:
-    """True when a TCP connection to the AZBrowser loopback port is accepted."""
+    """True when a TCP connection to the AZ Browser loopback port is accepted."""
     try:
         with socket.create_connection((host, port), timeout):
             return True
@@ -491,7 +491,7 @@ def render_page() -> str:
     peer_line = (
         "127.0.0.1:8878 accepted a connection."
         if peer
-        else "AZBrowser was not seen on 127.0.0.1:8878."
+        else "AZ Browser was not seen on 127.0.0.1:8878."
     )
     return (
         PAGE.replace("__MARKER__", html.escape(MARKER))

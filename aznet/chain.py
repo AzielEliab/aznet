@@ -102,7 +102,7 @@ class Ledger:
         if for_memorial:
             return
         if not self.pair_token() or self.pair_status() != "PAIRED":
-            raise PairError("AZNet + AZBrowser pairing is functional only (pair_token). Products stay separate apps.")
+            raise PairError("AZnet + AZ Browser pairing is functional only (pair_token). Products stay separate apps.")
         if not self.pair_flag():
             raise PairError("FragGate pair_flag required. Pairing alone does not open garden/stamp/memorial writes.")
 
@@ -113,7 +113,7 @@ class Ledger:
         return rec
 
     def refuse_mutate(self) -> None:
-        raise AppendOnlyError("AZNet ledgers are append-only. Withdraw rather than coerce.")
+        raise AppendOnlyError("AZnet ledgers are append-only. Withdraw rather than coerce.")
 
     def pair(
         self,
@@ -150,7 +150,7 @@ class Ledger:
     ) -> Receipt:
         token = self.pair_token()
         if self.pair_status() != "PAIRED" or not token:
-            raise PairError("FragGate pair_flag requires an AZNet pair_token first. Apps stay separate.")
+            raise PairError("FragGate pair_flag requires an AZnet pair_token first. Apps stay separate.")
         clock = advise(timestamp)
         rec = Receipt.create(
             event_kind="UNLOCK",

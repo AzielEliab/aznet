@@ -1,5 +1,6 @@
 /**
  * AZN-SIDENET-1.0 worker cite. Same map as aznet/sidenet.py.
+ * Client surface spelling is AZ Browser. Pair with AZnet.
  * Not a FragGate catalog op. Not a second door. Not a Softwares slug.
  * Author: Aziel Eliab only.
  */
@@ -7,12 +8,14 @@
 const SURFACE = {
   "spec": "AZN-SIDENET-1.0",
   "author": "Aziel Eliab",
-  "product": "AZNet",
+  "product": "AZnet",
   "slug": "aznet",
   "naming_lock": {
     "sidenet": "aznet",
+    "display": "AZnet",
+    "client_surface": "AZ Browser",
     "second_sidenet": false,
-    "phrase": "AZNet is the sidenet"
+    "phrase": "AZnet is the sidenet"
   },
   "softwares_frozen": true,
   "new_software_slug": false,
@@ -43,7 +46,8 @@ const SURFACE = {
   "layers_replace_l0": false,
   "pairing": {
     "peer": "azbrowser",
-    "peer_name": "AZBrowser",
+    "peer_name": "AZ Browser",
+    "product_name": "AZnet",
     "url": "https://github.com/AzielEliab/azbrowser",
     "kind": "order and token",
     "products_merged": false,
@@ -265,12 +269,12 @@ const SURFACE = {
     {
       "id": "hub-https",
       "status": "SLOT",
-      "means": "not an AZNet survival copy",
+      "means": "not an AZnet survival copy",
       "probed": false,
       "public_icann": false,
       "icann_registration_by_this_code": false,
       "resolves_to_hub_from_cap7": false,
-      "note": "The four AZ domain hubs are public HTTPS cites. This process does not serve them, does not register them, and does not treat them as Cap-7 answers. SLOT means they are not an AZNet survival copy. It does not mean those sites were probed."
+      "note": "The four AZ domain hubs are public HTTPS cites. This process does not serve them, does not register them, and does not treat them as Cap-7 answers. SLOT means they are not an AZnet survival copy. It does not mean those sites were probed."
     },
     {
       "id": "public-icann",
@@ -312,7 +316,7 @@ const SURFACE = {
     "bearer_status": "SLOT",
     "socket_opened_here": false
   },
-  "note": "AZNet is the sidenet. The layer is additive: L0 is the public FragGate path and stays unbroken. Softwares stays frozen. Cap-7 mesh DNS pairing is a local map. The qnm peer bearer is SLOT because this process does not open it. Survival planes are LIVE only where this code runs, and SLOT where a copy or bearer is not here. There is no public ICANN registration. One product tunnel is not a finished multi-survival set."
+  "note": "AZnet is the sidenet. The client surface is AZ Browser. The layer is additive: L0 is the public FragGate path and stays unbroken. Softwares stays frozen. Cap-7 mesh DNS pairing is a local map. The qnm peer bearer is SLOT because this process does not open it. Survival planes are LIVE only where this code runs, and SLOT where a copy or bearer is not here. There is no public ICANN registration. One product tunnel is not a finished multi-survival set."
 };
 
 export function sidenetSurface() {

@@ -1,7 +1,8 @@
-# AZN-SIDENET-1.0 — AZNet is the sidenet
+# AZN-SIDENET-1.0 — AZnet is the sidenet
 
-Operator naming lock: the sidenet is AZNet. There is no second sidenet
-and no new Softwares slug.
+Operator naming lock: the sidenet is AZnet. The client surface is AZ Browser.
+There is no second sidenet and no new Softwares slug. The pair slug stays
+`azbrowser`. There is no public ICANN registration.
 
 **Author:** Aziel Eliab only.
 
@@ -42,8 +43,8 @@ AZN-NAME-1.0). Public DNS is SLOT. `resolves_to_hub` stays false.
 Standard internet does not reach Cap-7. No label is a hardcoded
 update host.
 
-AZBrowser pairing stays order and token. Products stay separate.
-AZBrowser reads this map; it does not merge with AZNet.
+AZ Browser pairing stays order and token. Products stay separate.
+AZ Browser reads this map; it does not merge with AZNet.
 
 ## Peer bearers
 

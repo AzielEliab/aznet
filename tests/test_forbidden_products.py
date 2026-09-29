@@ -39,4 +39,4 @@ def test_no_forbidden_product_wiring() -> None:
 def test_azbrowser_is_the_pair() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert "github.com/AzielEliab/azbrowser" in readme
-    assert "AZNet + AZBrowser" in readme or "AZNet + [AZBrowser]" in readme
+    assert "AZnet + AZ Browser" in readme or "AZNet + [AZ Browser]" in readme

@@ -41,14 +41,14 @@ from aznet.witness import expected_witness
 HELP = f"""\
 usage: aznet [--json] <command> [options]
 
-AZNet keeps a device-local hash record.
+AZnet keeps a device-local hash record.
 The local page writes a pair token on this ledger when one is not there yet.
 
 Author: Aziel Eliab
 
 Common commands:
   ui         Open the local page (http://127.0.0.1:8771)
-  pair       Pair this node with AZBrowser
+  pair       Pair this node with AZ Browser
   unlock     FragGate unlock after pair
   doctor     Pass/fail check of this install
   time       Advisory time stamp, in words
@@ -84,9 +84,9 @@ Version {__version__}.
 
 def _welcome() -> str:
     return (
-        f"AZNet {__version__} — Aziel Eliab\n"
+        f"AZnet {__version__} — Aziel Eliab\n"
         "\n"
-        "AZNet keeps a device-local hash record. The local page writes a pair token on this ledger when one is not there yet.\n"
+        "AZnet keeps a device-local hash record. The local page writes a pair token on this ledger when one is not there yet.\n"
         "\n"
         "Next: open the local page.\n"
         "\n"
@@ -160,7 +160,7 @@ def _emit_json(payload: object, *, ensure_ascii: bool = True) -> None:
 def _build_parser() -> FriendlyParser:
     parser = FriendlyParser(
         prog="aznet",
-        description="AZNet keeps a device-local hash record. Author: Aziel Eliab.",
+        description="AZnet keeps a device-local hash record. Author: Aziel Eliab.",
     )
     _json_arg(parser, suppress=False)
     sub = parser.add_subparsers(dest="cmd", required=False, parser_class=FriendlyParser)
@@ -243,7 +243,7 @@ def _build_parser() -> FriendlyParser:
     p_names = sub.add_parser("names", help="Show mesh-name rules for .aziel.")
     _json_arg(p_names, suppress=True)
 
-    p_side = sub.add_parser("sidenet", help="Show the AZNet sidenet map. No network.")
+    p_side = sub.add_parser("sidenet", help="Show the AZnet sidenet map. No network.")
     _json_arg(p_side, suppress=True)
 
     p_res = sub.add_parser("resolve", help="Look up one name on the local name ledger.")
@@ -343,7 +343,7 @@ def _print_lattice(payload: dict) -> None:
 
 def _print_sidenet(doc: dict) -> None:
     lock = doc.get("naming_lock") or {}
-    print("AZNet sidenet")
+    print("AZnet sidenet")
     print(f"  Spec      {doc.get('spec', '')}")
     print(f"  Lock      sidenet = {lock.get('sidenet', '')}")
     l0 = doc.get("l0") or {}
@@ -359,7 +359,7 @@ def _print_sidenet(doc: dict) -> None:
     print(f"  Shelves   independent live {doc.get('independent_live_shelves', 0)}")
     for plane in doc.get("survival") or []:
         print(f"    {plane.get('status', ''):8}  {plane.get('id', '')}")
-    print("AZBrowser stays a separate product. Pairing is order and token.")
+    print("Client surface: AZ Browser. Pairing is order and token.")
 
 
 def _print_names(surface: dict) -> None:
@@ -418,7 +418,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
         if args.cmd == "version":
             if _wants_json(args):
-                _emit_json({"product": "AZNet", "version": __version__, "author": "Aziel Eliab"})
+                _emit_json({"product": "AZnet", "version": __version__, "author": "Aziel Eliab", "client_surface": "AZ Browser"})
             else:
                 print(f"aznet {__version__}")
             return 0

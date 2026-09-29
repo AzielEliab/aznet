@@ -11,7 +11,7 @@ from aznet.chain import Ledger, default_ledger_path
 from aznet.receipt import Receipt
 
 AUTHOR = "Aziel Eliab"
-PRODUCT = "AZNet"
+PRODUCT = "AZnet"
 STATE_NAME = ".aznet-state.json"
 
 

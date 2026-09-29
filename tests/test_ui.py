@@ -14,7 +14,9 @@ def test_ui_has_ops() -> None:
     assert "Gold Pages" in PAGE
     assert "Aziel Eliab" in PAGE
     assert "Re-pair" in PAGE
-    assert "Pair with AZBrowser" not in PAGE
+    assert "Pair with AZ Browser" not in PAGE
+    assert "AZ Browser is the client surface" in PAGE
+    assert ">AZnet</h1>" in PAGE
     for section in ("garden", "memorial", "stamps", "receipts", "pair", "unlock", "staticclock"):
         assert f'id="{section}"' in PAGE
 

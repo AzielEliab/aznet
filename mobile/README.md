@@ -1,7 +1,7 @@
 # AZNet — iPhone & Android
 
 Pair, unlock, stamp, and verify hashes on device.
-Hashes only. AZNet + AZBrowser both required.
+Hashes only. AZnet + AZ Browser both required.
 
 Offline. No analytics. Black / white / gold.
 
