@@ -50,6 +50,7 @@ Host: `https://aznet-download-tracker.vibelock.workers.dev`
 | GET | `/v1/health` | Liveness. Does not increment downloads. |
 | GET | `/v1/skill` | This markdown. Does not increment downloads. |
 | GET | `/v1/example` | Sample pair + stamp payload. Does not increment downloads. |
+| GET | `/v1/sidenet` | AZN-SIDENET-1.0 map. Not a catalog live op. Not a second door. |
 | GET/POST | `/v1/pair_status` | Catalog name: pair + report AZBrowser token/flag. Leftover alias: `/v1/pair`. |
 | GET | `/v1/garden_list` | Catalog name: demo Gold Pages. Leftover alias: `/v1/garden`. |
 | GET | `/v1/time` | StaticClock advisory display. Not a scheduler. Human chrome. |
@@ -113,6 +114,10 @@ aznet doctor
 ```
 
 Then open http://127.0.0.1:8771 (this computer only).
+
+## Sidenet (AZN-SIDENET-1.0)
+
+AZNet is the sidenet. The layer is additive. L0 stays the public FragGate path, and `sidenet` is not a catalog live op. Softwares stays frozen. Cap-7 mesh DNS pairing is local (`.aziel` plus the seven `.az` aliases). Public DNS for those names is SLOT. There is no public ICANN registration. The qnm peer bearer is SLOT: this process does not open it. Survival planes are LIVE only for the path contract, the local hash ledger, the local resolver, and the Cap-7 pair map. Shuffle land, the cold shelf, and hub HTTPS copies stay SLOT. `GET /v1/sidenet` and `aznet sidenet` print that map. AZBrowser stays a separate product; pairing is order and token. Spec: `docs/AZN-SIDENET-1.0.md`.
 
 ## Mesh names (AZN-NAME-1.0)
 

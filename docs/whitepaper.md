@@ -156,7 +156,23 @@ AZNet still does not host payloads. Private keys stay on the node.
 
 See [AZN-NAME-1.0.md](AZN-NAME-1.0.md).
 
-## 9. Honest banner
+## 9. Sidenet (AZN-SIDENET-1.0)
+
+AZNet is the sidenet. The mesh layer is additive. The public FragGate
+path stays L0 and is not a second door. Softwares stays frozen.
+
+Cap-7 mesh DNS pairing is the local seven-label map. Public DNS for
+those names is SLOT. The qnm peer bearer is SLOT because this process
+does not open it. Survival is an inventory: LIVE only where this code
+runs, SLOT where a copy is not here, and public ICANN is refused.
+`independent_live_shelves` is 0.
+
+AZBrowser reads that map. Pairing stays order and token. The products
+stay separate. The map does not add fields to an AZN-WP-0.1 receipt.
+
+See [AZN-SIDENET-1.0.md](AZN-SIDENET-1.0.md).
+
+## 10. Honest banner
 
 THIS IS: a silent verification SIDE-NET.
 THIS IS NOT: an alt internet, a host, a payload store, a VPN, or a key store.

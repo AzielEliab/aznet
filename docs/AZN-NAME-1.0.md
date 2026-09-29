@@ -360,7 +360,8 @@ These belong to other repos. This library does not claim them.
   in this library. An appeal does not lift isolation.
 - Witnesses are distinct handles. They are not checked to be relays.
 - No relay gossip, no socket, no end-to-end transport, no Tor bearer, no
-  two-hop routing.
+  two-hop routing. AZN-SIDENET-1.0 cites a qnm peer bearer and leaves it
+  SLOT. This library still does not open that socket.
 - No airlock, scanner, island mode, or per-peer quarantine.
 - No object-byte check. A hash target is not compared to bytes.
 - No zero-knowledge claim. No blockchain and no staking.

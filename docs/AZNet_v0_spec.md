@@ -37,3 +37,7 @@ SHA-256 of canonical UTF-8 JSON (sorted keys, no extra whitespace).
 [AZN-NAME-1.0](AZN-NAME-1.0.md) is a separate ledger (`aznet_names.jsonl`).
 It does not add fields to the AZN-WP-0.1 receipt. Garden stamps stay
 hashes only. Name records are hashes and handles only.
+
+[AZN-SIDENET-1.0](AZN-SIDENET-1.0.md) is the additive mesh map. It does
+not add fields to the receipt. L0 catalog ops stay unchanged. The qnm
+peer bearer is SLOT. There is no public ICANN registration.

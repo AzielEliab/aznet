@@ -203,6 +203,20 @@ aznet resolve cpv0cwypxp4.aziel       # SELF_CERT — the handle itself
 
 Spec and open alignment points: [docs/AZN-NAME-1.0.md](docs/AZN-NAME-1.0.md).
 
+## Sidenet (AZN-SIDENET-1.0)
+
+AZNet is the sidenet. That name is locked to this product. The mesh layer sits beside the public FragGate path and does not replace it. Catalog ops stay the same nine names. Softwares stays frozen: no new slug.
+
+`aznet sidenet` prints the machine map.
+
+- Cap-7 mesh DNS pairing is local. The seven factory labels resolve here as `.aziel` names, with `.az` aliases. Public DNS for those names is SLOT. They do not resolve to the hubs. Nothing here registers a TLD with ICANN.
+- The peer bearer is qnm-node, and it is SLOT. This process does not open that socket.
+- Survival planes that this code actually runs are LIVE. Shuffle land, a cold shelf, and hub copies are SLOT. `independent_live_shelves` is 0. One product tunnel is not a finished multi-survival set.
+
+AZBrowser stays separate software. Pairing is still order and token. AZBrowser can read the map; the products are not merged.
+
+Spec: [docs/AZN-SIDENET-1.0.md](docs/AZN-SIDENET-1.0.md).
+
 ## Invariants (enforced)
 
 - **I1** Hashes only — `payload`, `keys`, `user_content` are always `ABSENT`

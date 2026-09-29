@@ -361,8 +361,9 @@ def alignment_points() -> list[dict[str, str]]:
             "id": "relay-transport",
             "status": "open",
             "note": (
-                "Sync is an in-process AZN-NAME-SYNC-1.0 envelope. qnm-node relay framing is not "
-                "specified here. This library does not open a socket."
+                "Sync is an in-process AZN-NAME-SYNC-1.0 envelope. AZN-SIDENET-1.0 cites "
+                "qnm-node as the peer bearer and leaves that bearer SLOT. This library "
+                "does not open a socket."
             ),
         },
         {

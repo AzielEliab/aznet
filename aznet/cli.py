@@ -65,6 +65,7 @@ Advanced:
   witness    Check the UI witness hash
   lattice    Count linked receipts
   names      Mesh-name rules for .aziel
+  sidenet    Mesh sidenet map (Cap-7 DNS, bearers, survival)
   resolve    Look up one name on the local ledger
   import     Import a JSON document
   export     Export a JSON document
@@ -242,6 +243,9 @@ def _build_parser() -> FriendlyParser:
     p_names = sub.add_parser("names", help="Show mesh-name rules for .aziel.")
     _json_arg(p_names, suppress=True)
 
+    p_side = sub.add_parser("sidenet", help="Show the AZNet sidenet map. No network.")
+    _json_arg(p_side, suppress=True)
+
     p_res = sub.add_parser("resolve", help="Look up one name on the local name ledger.")
     _json_arg(p_res, suppress=True)
     p_res.add_argument("name")
@@ -337,6 +341,27 @@ def _print_lattice(payload: dict) -> None:
         print("Next: aznet verify")
 
 
+def _print_sidenet(doc: dict) -> None:
+    lock = doc.get("naming_lock") or {}
+    print("AZNet sidenet")
+    print(f"  Spec      {doc.get('spec', '')}")
+    print(f"  Lock      sidenet = {lock.get('sidenet', '')}")
+    l0 = doc.get("l0") or {}
+    ops = l0.get("ops") or []
+    print(f"  L0        {l0.get('status', '')}  {l0.get('name', '')}  ({len(ops)} ops)")
+    cap7 = doc.get("cap7") or {}
+    print(
+        f"  Cap-7     {cap7.get('count', 0)} mesh names  "
+        f"local {cap7.get('local_mesh_dns', '')}  public DNS {cap7.get('public_dns', '')}"
+    )
+    qnm = doc.get("qnm") or {}
+    print(f"  Bearer    qnm {qnm.get('bearer_status', '')}")
+    print(f"  Shelves   independent live {doc.get('independent_live_shelves', 0)}")
+    for plane in doc.get("survival") or []:
+        print(f"    {plane.get('status', ''):8}  {plane.get('id', '')}")
+    print("AZBrowser stays a separate product. Pairing is order and token.")
+
+
 def _print_names(surface: dict) -> None:
     print("Mesh names")
     print(f"  Spec     {surface.get('spec', '')}")
@@ -412,6 +437,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 _emit_json(rec.to_dict())
             else:
                 print(f"paired  {rec.receipt_hash}  azbrowser={rec.azbrowser}")
+                print("Cap-7 mesh DNS map: aznet sidenet")
             return 0
 
         if args.cmd == "unlock":
@@ -552,6 +578,16 @@ def main(argv: Sequence[str] | None = None) -> int:
                 _emit_json(surface)
             else:
                 _print_names(surface)
+            return 0
+
+        if args.cmd == "sidenet":
+            from aznet.sidenet import surface as sidenet_surface
+
+            doc = sidenet_surface()
+            if as_json:
+                _emit_json(doc)
+            else:
+                _print_sidenet(doc)
             return 0
 
         if args.cmd == "resolve":

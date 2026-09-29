@@ -9,6 +9,7 @@
  */
 import { classifyV1Path, doorTargetUrl } from "./door.js";
 import { attachQnsCdCrossMap, isMeshLiveNodesPath, meshOpenApiPaths, meshPointer } from "./mesh.js";
+import { sidenetSurface } from "./sidenet.js";
 const PRODUCT = "aznet";
 const VERSION = "0.1.0";
 const MOTTO = "Verification without hosting. Presence without authority.";
@@ -122,6 +123,7 @@ Host: \`https://aznet-download-tracker.vibelock.workers.dev\`
 | GET | \`/v1/health\` | Liveness. Does not increment downloads. |
 | GET | \`/v1/skill\` | This markdown. Does not increment downloads. |
 | GET | \`/v1/example\` | Sample pair + stamp payload. Does not increment downloads. |
+| GET | \`/v1/sidenet\` | AZN-SIDENET-1.0 map. Not a catalog live op. Not a second door. |
 | GET/POST | \`/v1/pair_status\` | Catalog name: pair + report AZBrowser token/flag. Leftover alias: \`/v1/pair\`. |
 | GET | \`/v1/garden_list\` | Catalog name: demo Gold Pages. Leftover alias: \`/v1/garden\`. |
 | GET | \`/v1/time\` | StaticClock advisory display. Not a scheduler. Human chrome. |
@@ -185,6 +187,10 @@ aznet doctor
 \`\`\`
 
 Then open http://127.0.0.1:8771 (this computer only).
+
+## Sidenet (AZN-SIDENET-1.0)
+
+AZNet is the sidenet. The layer is additive. L0 stays the public FragGate path above, and \`sidenet\` is not a catalog live op. Softwares stays frozen. Cap-7 mesh DNS pairing is local (\`.aziel\` plus the seven \`.az\` aliases). Public DNS for those names is SLOT. There is no public ICANN registration. The qnm peer bearer is SLOT: this Worker does not open it. Survival planes are LIVE only for the path contract, the local hash ledger, the local resolver, and the Cap-7 pair map. Shuffle land, the cold shelf, and hub HTTPS copies stay SLOT. \`GET /v1/sidenet\` and \`aznet sidenet\` print that map. AZBrowser stays a separate product; pairing is order and token.
 
 ## Honest banner
 
@@ -819,6 +825,7 @@ function openapiSpec(origin) {
       "/v1/lattice": { post: { operationId: "lattice", summary: "Human chrome: verify receipt links + counts.", requestBody: { content: { "application/json": { schema: { type: "object" } } } }, responses: { "200": { description: "lattice" } } } },
       "/v1/receipts": { post: { operationId: "receipts", summary: "Leftover alias of receipt_verify / return the client-held ledger.", requestBody: { content: { "application/json": { schema: { type: "object" } } } }, responses: { "200": { description: "receipts" } } } },
       "/v1/example": { get: { operationId: "example", summary: "Sample pair payload.", responses: { "200": { description: "example" } } } },
+      "/v1/sidenet": { get: { operationId: "sidenet", summary: "AZN-SIDENET-1.0 map. Not a FragGate catalog op. Not a second door. Cap-7 local mesh DNS, qnm bearer SLOT, no public ICANN.", responses: { "200": { description: "sidenet" } } } },
       "/v1/fraggate/call": { post: { operationId: "aznet_fraggate_call_proxy", summary: "PROXY to aziel-runtime POST /v1/fraggate/call. Not a local op.", requestBody: { content: { "application/json": { schema: { type: "object" } } } }, responses: { "200": { description: "FragGate ResultEnvelope" } } } },
       "/v1/fraggate/list": { get: { operationId: "aznet_fraggate_list_proxy", summary: "PROXY to aziel-runtime GET /v1/fraggate/list. Not a local op.", responses: { "200": { description: "hashed registry" } } } },
       "/v1/fraggate/describe": { get: { operationId: "aznet_fraggate_describe_proxy", summary: "PROXY to aziel-runtime GET /v1/fraggate/describe. Not a local op.", responses: { "200": { description: "catalog entry" } } } },
@@ -897,6 +904,8 @@ export async function handleRuntimeApi(request, url, env) {
         fraggate_live_ops: [...FRAGGATE_LIVE_OPS],
         pair: "AZNet + AZBrowser both required",
         separate_software: true,
+        sidenet_path: "/v1/sidenet",
+        sidenet_is_catalog_op: false,
         worker_posture: "control-plane / demo garden",
         mesh: meshPointer(),
         note: "Hosted /v1 does not store ledgers. Hashes only. Device-local silent node is the real posture. Agent path is FragGate only. Suite mesh /v1/mesh/* PROXY to aziel-runtime. Default OFF. QNS-CD-1.0 is a hub cite / Worker mesh cross-map only.",
@@ -930,6 +939,7 @@ export async function handleRuntimeApi(request, url, env) {
     if (path === "/v1/example" && request.method === "GET") {
       return json({ azbrowser: AZBROWSER, hash_hex: "a".repeat(64), author: AUTHOR, spec: SPEC, marker: MARKER, op: "pair_status" });
     }
+    if (path === "/v1/sidenet" && request.method === "GET") return json(sidenetSurface());
     if ((path === "/v1/garden" || path === "/v1/garden_list") && request.method === "GET") return json(await gardenView());
     if (path === "/v1/time" && request.method === "GET") return json(await advise());
     if (path === "/v1/witness" && request.method === "GET") {
