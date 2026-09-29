@@ -1,6 +1,6 @@
-# AZNet
+# AZnet
 
-AZNet keeps a device-local hash record. The local page writes a pair token on this ledger when one is not there yet.
+AZnet keeps a device-local hash record. AZ Browser is the client surface. The local page writes a pair token on this ledger when one is not there yet.
 
 **Author:** Aziel Eliab
 **Date:** September 2026 · v0.1.0
@@ -191,7 +191,7 @@ four AZ.* display names are hub cites, not name records.
 Regular browsers do not see `.aziel`. This repo does not register
 anything with ICANN. Internet reach of those AZ.* domains is the hub
 site. Cap-7 is the mesh duplication layer and does not resolve to the
-hub. AZNet and AZBrowser stay separate software. Name records are hashes
+hub. AZnet and AZ Browser stay separate software. Name records are hashes
 and handles only. This library does not gossip, does not open a socket,
 and does not run peer code.
 
@@ -203,6 +203,20 @@ aznet resolve cpv0cwypxp4.aziel       # SELF_CERT — the handle itself
 
 Spec and open alignment points: [docs/AZN-NAME-1.0.md](docs/AZN-NAME-1.0.md).
 
+## Sidenet (AZN-SIDENET-1.0)
+
+AZnet is the sidenet. That name is locked to this product. The mesh layer sits beside the public FragGate path and does not replace it. Catalog ops stay the same nine names. Softwares stays frozen: no new slug.
+
+`aznet sidenet` prints the machine map.
+
+- Cap-7 mesh DNS pairing is local. The seven factory labels resolve here as `.aziel` names, with `.az` aliases. Public DNS for those names is SLOT. They do not resolve to the hubs. Nothing here registers a TLD with ICANN.
+- The peer bearer is qnm-node, and it is SLOT. This process does not open that socket.
+- Survival planes that this code actually runs are LIVE. Shuffle land, a cold shelf, and hub copies are SLOT. `independent_live_shelves` is 0. One product tunnel is not a finished multi-survival set.
+
+AZ Browser stays separate software. Pairing is still order and token. AZ Browser can read the map; the products are not merged.
+
+Spec: [docs/AZN-SIDENET-1.0.md](docs/AZN-SIDENET-1.0.md).
+
 ## Invariants (enforced)
 
 - **I1** Hashes only — `payload`, `keys`, `user_content` are always `ABSENT`
@@ -211,28 +225,28 @@ Spec and open alignment points: [docs/AZN-NAME-1.0.md](docs/AZN-NAME-1.0.md).
 - **I4** Silence as security — no analytics, personalization, or engagement
 - **I5** Hash continuity — append-only SHA-256 lattice
 - **I6** UI is a mandatory witness — altered UI terminates + memorial
-- **I7** Pairing required — AZNet + AZBrowser both required (except health/skill/pair/time)
+- **I7** Pairing required — AZnet + AZ Browser both required (except health/skill/pair/time)
 - **I8** Memorial on terminal compromise — non-actionable; no exploit details
 - **I9** Worker is a demo garden — honest about control-plane posture
 - **I10** No persuasion / engagement optimization
 
 ## Pairing (mandatory)
 
-AZNet, [AZBrowser](https://github.com/AzielEliab/azbrowser), and
+AZnet, [AZ Browser](https://github.com/AzielEliab/azbrowser), and
 [FragGate](https://github.com/AzielEliab/fraggate) are **separate software**
-with separate Worker UIs. Do not embed AZNet chrome inside AZBrowser or
+with separate Worker UIs. Do not embed AZnet chrome inside AZ Browser or
 FragGate. ONE FragGate door. Agents use FragGate only (`slug=aznet`).
 
 The required relationship is **functional order / pairing only**:
 `pair_token` then FragGate `pair_flag` before garden / stamp / memorial
-writes. AZBrowser may view side-net status from its own UI by calling
+writes. AZ Browser may view side-net status from its own UI by calling
 this runtime. Products stay separate.
 
 Do **not** wire Lumen, AZInterface, AZ-OS Hub, or Interface products.
 
 ## Cross-links
 
-- [AZBrowser](https://github.com/AzielEliab/azbrowser) — required pair; views the side-net
+- [AZ Browser](https://github.com/AzielEliab/azbrowser) — required pair; views the side-net
 - [StaticClock](https://github.com/AzielEliab/staticclock) — stamps time
 - [TemporalLock](https://github.com/AzielEliab/temporallock) — timeslate lattice
 - [FragGate](https://github.com/AzielEliab/fraggate) — one door: discover, route, refuse
@@ -264,7 +278,7 @@ Always send `User-Agent: Mozilla/5.0`.
 THIS IS: a silent verification SIDE-NET (hash continuity, Custodian Garden, Memorial ledger).
 THIS IS NOT: an alt internet, a host, a payload store, a VPN, or a key store.
 The Worker is a control-plane / demo garden. Device-local silent node is the real posture.
-AZNet + AZBrowser are both required. Author Aziel Eliab only.
+AZnet + AZ Browser are both required. Author Aziel Eliab only.
 
 Cite the GitHub repository and this Worker. No Zenodo DOI is invented here (placeholder until a software deposit exists).
 

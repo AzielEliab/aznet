@@ -118,7 +118,7 @@ def _check_pair_required() -> Check:
             return _fail("pair", "stamp accepted without pair")
         except PairError:
             pass
-        return _ok("pair required", "stamp refused until AZBrowser pair + FragGate unlock")
+        return _ok("pair required", "stamp refused until AZ Browser pair + FragGate unlock")
 
 
 def _check_lattice() -> Check:
@@ -183,6 +183,36 @@ def _check_names() -> Check:
     return _ok("mesh names", "AZN-NAME-1.0 RFC 8032 and FED-MESH #CPV0CWYPXP4; .aziel is not an ICANN registration")
 
 
+def _check_sidenet() -> Check:
+    from aznet.sidenet import L0_LIVE_OPS, SidenetRefuse, peer_bearer, surface
+
+    try:
+        doc = surface()
+    except SidenetRefuse as exc:
+        return _fail("sidenet", str(exc))
+    if doc.get("naming_lock", {}).get("sidenet") != "aznet" or doc.get("naming_lock", {}).get("second_sidenet"):
+        return _fail("sidenet", "naming lock drifted")
+    if doc.get("public_icann") or doc.get("icann_registration") or doc.get("second_door") or not doc.get("softwares_frozen"):
+        return _fail("sidenet", "honesty surface overclaims")
+    if tuple(doc.get("l0", {}).get("ops") or ()) != L0_LIVE_OPS or "sidenet" in L0_LIVE_OPS:
+        return _fail("sidenet", "L0 FragGate ops changed")
+    if doc.get("sidenet_is_catalog_op") or doc.get("qnm", {}).get("bearer_status") != "SLOT":
+        return _fail("sidenet", "qnm bearer or catalog op overclaims")
+    if peer_bearer("qnm")["status"] != "SLOT" or peer_bearer("qnm")["socket"]:
+        return _fail("sidenet", "qnm bearer opened a socket")
+    if peer_bearer("tor")["status"] != "REFUSED":
+        return _fail("sidenet", "non-qnm bearer was accepted")
+    if doc.get("independent_live_shelves") != 0 or doc.get("multi_survival_complete"):
+        return _fail("sidenet", "multi-survival marked complete")
+    if doc.get("cap7", {}).get("count") != 7 or doc.get("cap7", {}).get("public_icann"):
+        return _fail("sidenet", "Cap-7 pair map drifted")
+    if doc.get("naming_lock", {}).get("client_surface") != "AZ Browser" or doc.get("pairing", {}).get("peer_name") != "AZ Browser":
+        return _fail("sidenet", "client surface spelling drifted")
+    if doc.get("pairing", {}).get("peer") != "azbrowser" or doc.get("product") != "AZnet":
+        return _fail("sidenet", "pair slug or AZnet display drifted")
+    return _ok("sidenet", "AZN-SIDENET-1.0 AZnet lock; client surface AZ Browser; L0 unchanged; qnm SLOT; no public ICANN")
+
+
 def _check_witness() -> Check:
     from aznet.chain import Ledger
     from aznet.errors import WitnessError
@@ -211,6 +241,7 @@ CHECKS: tuple[Callable[[], Check], ...] = (
     _check_lattice,
     _check_no_payload,
     _check_names,
+    _check_sidenet,
     _check_witness,
 )
 

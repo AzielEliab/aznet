@@ -350,7 +350,7 @@ export function meshPointer() {
     catalog_mcp: FRAGGATE_MCP,
     fraggate_slug: MESH_SLUG,
     origin: RUNTIME + MESH_PATH,
-    note: "PROXY to aziel-runtime /v1/mesh/* via AZIEL_RUNTIME. Not a local op. Not AnonBroadcast. Not AZMail's product-local ring. AZBrowser is sibling software (functional-order pair), not this product. QNS-CD-1.0 is a hub cite / Worker mesh cross-map only — no public qnsd proxy. " + MESH_NOTE,
+    note: "PROXY to aziel-runtime /v1/mesh/* via AZIEL_RUNTIME. Not a local op. Not AnonBroadcast. Not AZMail's product-local ring. AZ Browser is sibling software (functional-order pair), not this product. QNS-CD-1.0 is a hub cite / Worker mesh cross-map only — no public qnsd proxy. " + MESH_NOTE,
     anon_broadcast: ANON_BROADCAST,
     anon_broadcast_publish_path: false,
   };

@@ -40,4 +40,4 @@ def test_readme_author() -> None:
     assert "Aziel Eliab" in readme
     assert "Apache-2.0" in readme
     assert "AZNet" in readme
-    assert "AZBrowser" in readme
+    assert "AZ Browser" in readme

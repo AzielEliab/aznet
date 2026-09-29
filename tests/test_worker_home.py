@@ -11,7 +11,7 @@ TOML = Path("workers/download-tracker/wrangler.toml").read_text(encoding="utf-8"
 
 
 def test_title_is_product_not_downloads_shell() -> None:
-    assert "AZNet — Aziel Eliab" in HOME
+    assert "AZnet — Aziel Eliab" in HOME
     assert "AZNet downloads" not in HOME
 
 

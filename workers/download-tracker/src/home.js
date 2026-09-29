@@ -104,16 +104,16 @@ export function uniqueUserAgents(agents) {
   return out;
 }
 
-const TITLE = "AZNet — Aziel Eliab";
+const TITLE = "AZnet — Aziel Eliab";
 const DEFAULT_ASSET = "aznet-0.1.0.tar.gz";
 const INSTALL_LINE = "curl -fsSL https://aznet-download-tracker.vibelock.workers.dev/install.sh | bash";
 const MARKER = "Truth Is No Defense — .AZNet — AZ.";
 const DESCRIPTION =
-  "AZNet is Aziel Eliab software: a silent verification SIDE-NET (AZN-WP-0.1). Hashes only. AZNet + AZBrowser required. FragGate unlocks access. StaticClock stamps time. Apache-2.0.";
+  "AZnet is Aziel Eliab software: a silent verification SIDE-NET (AZN-WP-0.1). Hashes only. AZnet + AZ Browser required. FragGate unlocks access. StaticClock stamps time. Apache-2.0.";
 const HONEST =
-  "THIS IS: a silent verification SIDE-NET (hash continuity, Custodian Garden, Memorial ledger). THIS IS NOT: an alt internet, a host, a payload store, a VPN, or a key store. The Worker is a control-plane / demo garden. Device-local silent node is the real posture. AZNet + AZBrowser are both required. Author Aziel Eliab.";
+  "THIS IS: a silent verification SIDE-NET (hash continuity, Custodian Garden, Memorial ledger). THIS IS NOT: an alt internet, a host, a payload store, a VPN, or a key store. The Worker is a control-plane / demo garden. Device-local silent node is the real posture. AZnet + AZ Browser are both required. Author Aziel Eliab.";
 const HOW_TO_CITE =
-  "Eliab, Aziel. (2026). AZNet 0.1.0 [Software]. Apache-2.0. https://github.com/AzielEliab/aznet · https://aznet-download-tracker.vibelock.workers.dev/";
+  "Eliab, Aziel. (2026). AZnet 0.1.0 [Software]. Apache-2.0. https://github.com/AzielEliab/aznet · https://aznet-download-tracker.vibelock.workers.dev/";
 
 function corsHeaders() {
   return {
@@ -135,7 +135,7 @@ function escapeHtml(value) {
 export function citePayload() {
   return {
     author: AUTHOR,
-    title: "AZNet",
+    title: "AZnet",
     version: VERSION,
     homepage: HOST + "/",
     github: GITHUB_REPO,
@@ -152,9 +152,9 @@ export function citePayload() {
     license_url: LICENSE,
     one_line: DESCRIPTION,
     how_to_cite: HOW_TO_CITE,
-    apa: "Eliab, A. (2026). AZNet (Version 0.1.0) [Computer software]. https://aznet-download-tracker.vibelock.workers.dev/",
+    apa: "Eliab, A. (2026). AZnet (Version 0.1.0) [Computer software]. https://aznet-download-tracker.vibelock.workers.dev/",
     bibtex:
-      "@software{eliab_aznet_2026, author = {Eliab, Aziel}, title = {AZNet}, version = {0.1.0}, year = {2026}, license = {Apache-2.0}, url = {https://aznet-download-tracker.vibelock.workers.dev/}, publisher = {GitHub}, howpublished = {\\url{https://github.com/AzielEliab/aznet}}}",
+      "@software{eliab_aznet_2026, author = {Eliab, Aziel}, title = {AZnet}, version = {0.1.0}, year = {2026}, license = {Apache-2.0}, url = {https://aznet-download-tracker.vibelock.workers.dev/}, publisher = {GitHub}, howpublished = {\\url{https://github.com/AzielEliab/aznet}}}",
     zenodo_status: "placeholder_no_doi_invented",
     software_deposit_needed: true,
     note: "No DOI is invented here. Cite GitHub and this Worker. Identity is Aziel Eliab only. Forks welcome.",
@@ -168,7 +168,7 @@ export function jsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: "AZNet",
+    name: "AZnet",
     alternateName: TITLE,
     applicationCategory: "DeveloperApplication",
     operatingSystem: "Linux, macOS, Windows, Cloudflare Workers",
@@ -181,7 +181,7 @@ export function jsonLd() {
     license: LICENSE,
     url: HOST + "/",
     description: DESCRIPTION,
-    keywords: "AZNet, silent verification, side-net, Custodian Garden, Gold Pages, Memorial ledger, Aziel Eliab, AZN-WP-0.1",
+    keywords: "AZnet, AZ Browser, silent verification, side-net, Custodian Garden, Gold Pages, Memorial ledger, Aziel Eliab, AZN-WP-0.1",
     isAccessibleForFree: true,
     offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
     sameAs: [GITHUB_REPO, CATALOG_PRODUCT, AZBROWSER],
@@ -212,7 +212,7 @@ export function robotsTxt() {
 }
 
 export function llmsTxt() {
-  return `# AZNet
+  return `# AZnet
 
 Author: Aziel Eliab
 Also known as: ${AUTHOR_AKA} (alternateName only)
@@ -234,8 +234,8 @@ Catalog LIVE_OPS: health, pair_status, garden_list, stamp, verify_hash, memorial
 Suite mesh: GET ${HOST}/v1/mesh PROXY to aziel-runtime. Default OFF. QNM-BUILD-1.0 live|locked|isolated. QNS-CD-1.0 photon QNS1 cite only (qnm-node + aziel-runtime; pair custody cite). Not a Softwares-tab product. No Node Gate. No public qnsd proxy. No auto-heal. Not anonymity. Catalog MCP mesh_* + FragGate slug=mesh.
 Human chrome leftovers: unlock, time, witness, lattice, withdraw
 doctor is not a FragGate live op (local CLI only).
-AZNet is separate software from AZBrowser.
-Pair: AZNet + AZBrowser both required
+AZnet is separate software from AZ Browser.
+Pair: AZnet + AZ Browser both required
 Marker: ${MARKER}
 Identity: Aziel Eliab only
 License: Apache-2.0
@@ -390,13 +390,13 @@ export function renderHome(stats) {
       </div>
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap">
         <div>
-          <h1>AZNet</h1>
+          <h1>AZnet</h1>
           <p class="motto">Verification without hosting. Presence without authority.</p>
           <p class="marker">${escapeHtml(MARKER)}</p>
         </div>
         <p class="pill" id="api-pill">API · checking</p>
       </div>
-      <p class="lede">v${VERSION} software by <strong>${AUTHOR}</strong> only. Silent verification SIDE-NET. Hashes only. AZNet + <a href="${AZBROWSER}">AZBrowser</a> are both required. FragGate unlocks access. StaticClock stamps time. Forks are welcome and always allowed.</p>
+      <p class="lede">v${VERSION} software by <strong>${AUTHOR}</strong> only. Silent verification SIDE-NET. Hashes only. AZnet + <a href="${AZBROWSER}">AZ Browser</a> are both required. FragGate unlocks access. StaticClock stamps time. Forks are welcome and always allowed.</p>
       <nav class="toc" aria-label="Product sections">
         <a href="#garden">Garden</a>
         <a href="#memorial">Memorial</a>
@@ -422,25 +422,25 @@ export function renderHome(stats) {
         <input id="meshBearer" type="text" maxlength="80" placeholder="bearer (required to enable)" aria-label="mesh bearer">
         <button id="meshEnable" type="button" title="Enable suite mesh. Declared bearer required. Default off.">Enable</button>
         <button id="meshDisable" type="button" title="Disable suite mesh (always allowed)">Disable</button>
-        <button id="meshJoin" type="button" title="Join as aznet. Refused while mesh is OFF. No auto-join. AZBrowser stays separate software.">Join</button>
+        <button id="meshJoin" type="button" title="Join as aznet. Refused while mesh is OFF. No auto-join. AZ Browser stays separate software.">Join</button>
         <button id="meshLeave" type="button" title="Leave this node. No auto-heal.">Leave</button>
       </div>
-      <div id="meshProducts">Catalog MCP mesh_* · FragGate slug=mesh · /v1/mesh/* PROXY · QNS-CD-1.0 cite only · not AnonBroadcast · not AZMail ring · AZBrowser is sibling pair only · no public qnsd proxy</div>
+      <div id="meshProducts">Catalog MCP mesh_* · FragGate slug=mesh · /v1/mesh/* PROXY · QNS-CD-1.0 cite only · not AnonBroadcast · not AZMail ring · AZ Browser is sibling pair only · no public qnsd proxy</div>
     </div>
 
     <section class="card" id="pair">
       <h2><span class="kicker">pair</span>Pair status</h2>
-      <p>Separate software. Functional pair only: <code>pair_token</code>, then FragGate <code>pair_flag</code>. No AZBrowser chrome is embedded here. Catalog op: <code>pair_status</code>.</p>
+      <p>Separate software. Functional pair only: <code>pair_token</code>, then FragGate <code>pair_flag</code>. No AZ Browser chrome is embedded here. Catalog op: <code>pair_status</code>.</p>
       <p id="pair-status">UNPAIRED · LOCKED</p>
       <div class="actions">
-        <button type="button" class="gold" id="btn-pair">Pair AZBrowser</button>
+        <button type="button" class="gold" id="btn-pair">Pair AZ Browser</button>
         <button type="button" class="ghost" id="btn-unlock">FragGate unlock</button>
       </div>
     </section>
 
     <section class="card" id="unlock">
       <h2><span class="kicker">unlock</span>FragGate</h2>
-      <p>ONE FragGate door. Agent path is FragGate only: <code>POST /v1/fraggate/call</code> slug=<b>aznet</b>. This Worker <code>/v1/fraggate/*</code> and <code>/v1/mesh/*</code> proxy to aziel-runtime. Catalog MCP: <code>POST https://aziel-runtime.vibelock.workers.dev/mcp</code> (<code>mesh_*</code> + slug=<b>mesh</b>). This host <a href="/mcp">/mcp</a> is a pointer, not a second MCP. AZBrowser is sibling software (functional pair only). Suite mesh default OFF. QNM-BUILD-1.0 live|locked|isolated. QNS-CD-1.0 photon QNS1 cite only (not a Softwares-tab product; no public qnsd proxy). No Node Gate. No auto-heal. Not anonymity.</p>
+      <p>ONE FragGate door. Agent path is FragGate only: <code>POST /v1/fraggate/call</code> slug=<b>aznet</b>. This Worker <code>/v1/fraggate/*</code> and <code>/v1/mesh/*</code> proxy to aziel-runtime. Catalog MCP: <code>POST https://aziel-runtime.vibelock.workers.dev/mcp</code> (<code>mesh_*</code> + slug=<b>mesh</b>). This host <a href="/mcp">/mcp</a> is a pointer, not a second MCP. AZ Browser is sibling software (functional pair only). Suite mesh default OFF. QNM-BUILD-1.0 live|locked|isolated. QNS-CD-1.0 photon QNS1 cite only (not a Softwares-tab product; no public qnsd proxy). No Node Gate. No auto-heal. Not anonymity.</p>
     </section>
 
     <section class="card" id="staticclock">
@@ -489,7 +489,7 @@ export function renderHome(stats) {
 
     <section class="card" id="receipts">
       <h2><span class="kicker">receipts</span>Hash-chained lattice</h2>
-      <div class="status" id="ws-status">Pair AZBrowser, then FragGate unlock. Garden stays hash-only.</div>
+      <div class="status" id="ws-status">Pair AZ Browser, then FragGate unlock. Garden stays hash-only.</div>
       <div class="metrics">
         <div class="metric"><b>Length</b><span id="chain-length">0</span></div>
         <div class="metric"><b>Pair</b><span id="last-pair">UNPAIRED</span></div>
@@ -514,7 +514,7 @@ export function renderHome(stats) {
       <p class="meta">The download count ticks on the Download click. No 302 to GitHub. ${DEFAULT_ASSET} — ${n} counted.</p>
       <p class="iso">Isolated counter: Worker <code>aznet-download-tracker</code>, project <code>aznet</code>, KV <code>AZNET_DOWNLOADS</code>. /v1 and /mcp do not increment downloads.</p>
       <p class="meta">GitHub: stars ${gh.stars || 0} · forks ${gh.forks || 0} · watchers ${gh.watchers || 0} · release assets ${gh.release_download_count || 0}</p>
-      <p class="meta">Pair / time: <a href="${AZBROWSER}">AZBrowser</a> · <a href="${STATICCLOCK_HOST}/">StaticClock</a> · <a href="${TEMPORALLOCK_HOST}/">TemporalLock</a> · <a href="${FRAGGATE}">FragGate</a> · <a href="${CATALOG}">aziel-runtime</a> · <a href="https://www.azielcorpuslibrary.net/">library</a> · <a href="https://godlock.uk/">godlock.uk</a> · <a href="https://www.azieleliab.com/">www.azieleliab.com</a></p>
+      <p class="meta">Pair / time: <a href="${AZBROWSER}">AZ Browser</a> · <a href="${STATICCLOCK_HOST}/">StaticClock</a> · <a href="${TEMPORALLOCK_HOST}/">TemporalLock</a> · <a href="${FRAGGATE}">FragGate</a> · <a href="${CATALOG}">aziel-runtime</a> · <a href="https://www.azielcorpuslibrary.net/">library</a> · <a href="https://godlock.uk/">godlock.uk</a> · <a href="https://www.azieleliab.com/">www.azieleliab.com</a></p>
       <p class="meta"><a href="/stats">JSON stats</a> · <a href="/count">/count</a> · <a href="/openapi.json">OpenAPI</a> · <a href="/mcp">/mcp pointer</a> · <a href="/v1/fraggate/list">FragGate list</a> · <a href="/v1/mesh">/v1/mesh</a> · <a href="/v1/skill">Skill</a> · <a href="/v1/example">Example</a> · <a href="/ai">AI runtime</a> · <a href="${GITHUB_REPO}">GitHub</a> · <a href="${GITHUB_LATEST}">releases</a></p>
       <h3>Per repo / branch / fork</h3>
       <ul>${breakdownList(stats)}</ul>
@@ -529,7 +529,7 @@ export function renderHome(stats) {
     </section>
 
     <footer>
-      <p>Apache-2.0 · ${AUTHOR} · AZNet v${VERSION}</p>
+      <p>Apache-2.0 · ${AUTHOR} · AZnet v${VERSION}</p>
       <p>${escapeHtml(MARKER)}</p>
       <p>Hashes only. UI is a mandatory witness. The sequence cannot be altered without detection.</p>
     </footer>
@@ -698,7 +698,7 @@ export function renderHome(stats) {
         var names = Array.isArray(products) ? products.map(function (p) { return typeof p === "string" ? p : (p && (p.product || p.slug)) || ""; }).filter(Boolean) : [];
         var nodes = Array.isArray(j.nodes) ? j.nodes : [];
         var extra = names.length ? " · products " + names.join(", ") : (nodes.length ? " · " + nodes.length + " node labels" : "");
-        $("meshProducts").textContent = "Catalog MCP mesh_* · FragGate slug=mesh · /v1/mesh/* PROXY · QNS-CD-1.0 cite only · not AnonBroadcast · not AZMail ring · AZBrowser is sibling pair only · no public qnsd proxy" + extra;
+        $("meshProducts").textContent = "Catalog MCP mesh_* · FragGate slug=mesh · /v1/mesh/* PROXY · QNS-CD-1.0 cite only · not AnonBroadcast · not AZMail ring · AZ Browser is sibling pair only · no public qnsd proxy" + extra;
       }
       async function meshGet(path) {
         var r = await fetch(path, { headers: { "user-agent": "Mozilla/5.0", accept: "application/json" } });
@@ -740,7 +740,7 @@ export function renderHome(stats) {
         refreshMesh();
       };
       $("meshJoin").onclick = async function () {
-        var j = await meshPost("/v1/mesh/join", { product: "aznet", label: "AZNet Worker" });
+        var j = await meshPost("/v1/mesh/join", { product: "aznet", label: "AZnet Worker" });
         var inner = unwrapMesh(j);
         var id = inner.node_id || inner.id || (inner.session && inner.session.node_id);
         if (id) sessionStorage.setItem("aznet_mesh_node", String(id));

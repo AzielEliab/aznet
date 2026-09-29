@@ -9,6 +9,7 @@
  */
 import { classifyV1Path, doorTargetUrl } from "./door.js";
 import { attachQnsCdCrossMap, isMeshLiveNodesPath, meshOpenApiPaths, meshPointer } from "./mesh.js";
+import { sidenetSurface } from "./sidenet.js";
 const PRODUCT = "aznet";
 const VERSION = "0.1.0";
 const MOTTO = "Verification without hosting. Presence without authority.";
@@ -63,15 +64,15 @@ const DEMO_SEEDS = [
   "AZNet Gold Pages card 7 — cold storage",
 ];
 const FORBIDDEN = ["payload_bytes", "ciphertext", "private_key", "secret", "user_text", "body", "exploit", "poc", "cve", "0day", "key_material", "password", "plaintext"];
-const HONEST = "THIS IS: a silent verification SIDE-NET (hash continuity, Custodian Garden, Memorial ledger). THIS IS NOT: an alt internet, a host, a payload store, a VPN, or a key store. The Worker is a control-plane / demo garden. Device-local silent node is the real posture. AZNet + AZBrowser are both required. Author Aziel Eliab.";
+const HONEST = "THIS IS: a silent verification SIDE-NET (hash continuity, Custodian Garden, Memorial ledger). THIS IS NOT: an alt internet, a host, a payload store, a VPN, or a key store. The Worker is a control-plane / demo garden. Device-local silent node is the real posture. AZnet + AZ Browser are both required. Author Aziel Eliab.";
 const AI_CLIENTS = "Works with ChatGPT (GPT Actions / OpenAI), Grok (xAI), Venice, Claude (Anthropic), Cursor (MCP), Glama (MCP), Perplexity, Microsoft Copilot / Bing, Google Gemini / Vertex, Mistral, Meta AI, Apple Intelligence surfaces, Amazon Q tooling, DuckAssist, You.com, Cohere, and other MCP/OpenAPI-capable assistants. Import the catalog or Worker OpenAPI as a GPT Action, custom HTTP tool, or custom OpenAPI tool. MCP clients (Cursor, Glama, Claude, and others): `POST` the catalog MCP endpoint.";
 
 const SKILL = `---
-name: AZNet
-description: Use when verifying hashes on the AZNet silent verification side-net (AZN-WP-0.1). Hashes only — never payloads, keys, or user content. AZNet + AZBrowser both required. FragGate unlocks access. StaticClock stamps time. Hosted /v1 via this Worker or aziel-runtime slug aznet. Author Aziel Eliab.
+name: AZnet
+description: Use when verifying hashes on the AZNet silent verification side-net (AZN-WP-0.1). Hashes only — never payloads, keys, or user content. AZnet + AZ Browser both required. FragGate unlocks access. StaticClock stamps time. Hosted /v1 via this Worker or aziel-runtime slug aznet. Author Aziel Eliab.
 ---
 
-# AZNet
+# AZnet
 
 Silent verification SIDE-NET. Not an alt internet.
 
@@ -79,7 +80,7 @@ Author: **Aziel Eliab**.
 
 Use when mirroring a cryptographic hash, shifting the Custodian Garden / Gold Pages, stamping a hash, or writing a Memorial. Never host payloads. Never store keys or user content. UI is a mandatory witness — if altered, terminate and memorial.
 
-AZNet, AZBrowser, and FragGate are **separate apps**. Do not embed AZNet chrome in AZBrowser or FragGate. Functional order only: \`pair_token\` then FragGate \`pair_flag\` before garden / stamp / memorial writes. StaticClock stamps time.
+AZnet, AZ Browser, and FragGate are **separate apps**. Do not embed AZnet chrome in AZ Browser or FragGate. Functional order only: \`pair_token\` then FragGate \`pair_flag\` before garden / stamp / memorial writes. StaticClock stamps time.
 
 Always send \`User-Agent: Mozilla/5.0\`. Cloudflare Workers may 403 an empty agent.
 
@@ -99,7 +100,7 @@ Catalog LIVE_OPS (same names the Worker UI buttons call): \`health\`, \`pair_sta
 
 \`doctor\` is **not** a FragGate live op. Local CLI \`aznet doctor\` stays a device-local self-check. Worker UI does not expose a Doctor button.
 
-AZNet is **separate software** from AZBrowser. Pairing is functional order only (\`pair_token\` + \`pair_flag\`). Do not merge UIs. Suite mesh is presence + QNM live|locked|isolated (default OFF) — not an anonymity network and not AZMail's product-local ring. QNS-CD-1.0 is a hub cite / Worker mesh cross-map only (photon QNS1 packet transfer). Not a Softwares-tab product. No public qnsd proxy.
+AZnet is **separate software** from AZ Browser. Pairing is functional order only (\`pair_token\` + \`pair_flag\`). Do not merge UIs. Suite mesh is presence + QNM live|locked|isolated (default OFF) — not an anonymity network and not AZMail's product-local ring. QNS-CD-1.0 is a hub cite / Worker mesh cross-map only (photon QNS1 packet transfer). Not a Softwares-tab product. No public qnsd proxy.
 
 ## Endpoints (this Worker)
 
@@ -122,7 +123,8 @@ Host: \`https://aznet-download-tracker.vibelock.workers.dev\`
 | GET | \`/v1/health\` | Liveness. Does not increment downloads. |
 | GET | \`/v1/skill\` | This markdown. Does not increment downloads. |
 | GET | \`/v1/example\` | Sample pair + stamp payload. Does not increment downloads. |
-| GET/POST | \`/v1/pair_status\` | Catalog name: pair + report AZBrowser token/flag. Leftover alias: \`/v1/pair\`. |
+| GET | \`/v1/sidenet\` | AZN-SIDENET-1.0 map. Not a catalog live op. Not a second door. |
+| GET/POST | \`/v1/pair_status\` | Catalog name: pair + report AZ Browser token/flag. Leftover alias: \`/v1/pair\`. |
 | GET | \`/v1/garden_list\` | Catalog name: demo Gold Pages. Leftover alias: \`/v1/garden\`. |
 | GET | \`/v1/time\` | StaticClock advisory display. Not a scheduler. Human chrome. |
 | GET | \`/v1/witness\` | Mandatory UI witness hash. Human chrome. |
@@ -146,7 +148,7 @@ This Worker MCP pointer: \`GET|POST https://aznet-download-tracker.vibelock.work
 
 Catalog aliases under \`/p/aznet/…\` when listed. FragGate slug: \`aznet\`.
 
-AZBrowser (required pair): \`https://github.com/AzielEliab/azbrowser\`
+AZ Browser (required pair): \`https://github.com/AzielEliab/azbrowser\`
 
 StaticClock: \`https://staticclock-download-tracker.vibelock.workers.dev/\`
 
@@ -185,6 +187,10 @@ aznet doctor
 \`\`\`
 
 Then open http://127.0.0.1:8771 (this computer only).
+
+## Sidenet (AZN-SIDENET-1.0)
+
+AZnet is the sidenet. The layer is additive. L0 stays the public FragGate path above, and \`sidenet\` is not a catalog live op. Softwares stays frozen. Cap-7 mesh DNS pairing is local (\`.aziel\` plus the seven \`.az\` aliases). Public DNS for those names is SLOT. There is no public ICANN registration. The qnm peer bearer is SLOT: this Worker does not open it. Survival planes are LIVE only for the path contract, the local hash ledger, the local resolver, and the Cap-7 pair map. Shuffle land, the cold shelf, and hub HTTPS copies stay SLOT. \`GET /v1/sidenet\` and \`aznet sidenet\` print that map. AZ Browser stays a separate product; pairing is order and token.
 
 ## Honest banner
 
@@ -426,7 +432,7 @@ function pairFlag(ledger) {
 
 function requireReady(ledger) {
   if (!pairToken(ledger) || pairStatus(ledger) !== "PAIRED") {
-    throw new PairError("AZNet + AZBrowser pairing is functional only (pair_token). Products stay separate apps.");
+    throw new PairError("AZnet + AZ Browser pairing is functional only (pair_token). Products stay separate apps.");
   }
   if (!pairFlag(ledger)) {
     throw new PairError("FragGate pair_flag required. Pairing alone does not open garden/stamp/memorial writes.");
@@ -658,7 +664,7 @@ function mcpDocs(origin) {
     openapi: origin + "/openapi.json",
     mesh: meshPointer(),
     mesh_body: { slug: "mesh", op: "status", payload: {} },
-    note: "AI / MCP path is FragGate only. This host GET|POST /mcp is a pointer (never 404), not a second agent brand. /v1/fraggate/*, /v1/runtime/*, and /v1/mesh/* PROXY to aziel-runtime via AZIEL_RUNTIME. Local ops are /v1/{op} only. Catalog LIVE_OPS: " + FRAGGATE_LIVE_OPS.join(", ") + ". Catalog MCP mesh_* + FragGate slug=mesh. Suite mesh default OFF. QNM rollup live|locked|isolated. QNS-CD-1.0 photon QNS1 cite only — no public qnsd proxy. No Node Gate. No auto-heal. Not anonymity. AZBrowser is sibling software (functional-order pair), not this product. doctor is not a FragGate live op.",
+    note: "AI / MCP path is FragGate only. This host GET|POST /mcp is a pointer (never 404), not a second agent brand. /v1/fraggate/*, /v1/runtime/*, and /v1/mesh/* PROXY to aziel-runtime via AZIEL_RUNTIME. Local ops are /v1/{op} only. Catalog LIVE_OPS: " + FRAGGATE_LIVE_OPS.join(", ") + ". Catalog MCP mesh_* + FragGate slug=mesh. Suite mesh default OFF. QNM rollup live|locked|isolated. QNS-CD-1.0 photon QNS1 cite only — no public qnsd proxy. No Node Gate. No auto-heal. Not anonymity. AZ Browser is sibling software (functional-order pair), not this product. doctor is not a FragGate live op.",
     ops: [...FRAGGATE_LIVE_OPS],
     live_ops: [...FRAGGATE_LIVE_OPS],
     fraggate_live_ops: [...FRAGGATE_LIVE_OPS],
@@ -784,10 +790,10 @@ function openapiSpec(origin) {
   return {
     openapi: "3.1.0",
     info: {
-      title: "AZNet runtime",
+      title: "AZnet runtime",
       version: VERSION,
       summary: "Dual surface. Human UI is this Worker /v1. AI / MCP path is FragGate only (slug=aznet).",
-      description: HONEST + " Agent door is FragGate only: POST " + FRAGGATE_CALL + " {slug:aznet,op,payload}. Catalog MCP: POST " + FRAGGATE_MCP + ". This host /mcp is a pointer, not a second agent brand. Catalog LIVE_OPS: " + FRAGGATE_LIVE_OPS.join(", ") + ". AZBrowser is sibling software. Suite mesh /v1/mesh/* PROXY to aziel-runtime (AZIEL_RUNTIME). Default OFF. QNM-BUILD-1.0 live|locked|isolated. QNS-CD-1.0 photon QNS1 cite only. No Node Gate. No public qnsd proxy. No auto-heal. Not anonymity. Aziel Eliab only.",
+      description: HONEST + " Agent door is FragGate only: POST " + FRAGGATE_CALL + " {slug:aznet,op,payload}. Catalog MCP: POST " + FRAGGATE_MCP + ". This host /mcp is a pointer, not a second agent brand. Catalog LIVE_OPS: " + FRAGGATE_LIVE_OPS.join(", ") + ". AZ Browser is sibling software. Suite mesh /v1/mesh/* PROXY to aziel-runtime (AZIEL_RUNTIME). Default OFF. QNM-BUILD-1.0 live|locked|isolated. QNS-CD-1.0 photon QNS1 cite only. No Node Gate. No public qnsd proxy. No auto-heal. Not anonymity. Aziel Eliab only.",
       license: { name: "Apache-2.0", identifier: "Apache-2.0" },
       contact: { name: AUTHOR, url: "https://github.com/AzielEliab/aznet" },
     },
@@ -802,7 +808,7 @@ function openapiSpec(origin) {
       },
       "/v1/skill": { get: { operationId: "aznet_skill", summary: "Return skill markdown. Does not increment download KV.", responses: { "200": { description: "markdown" } } } },
       "/v1/health": { get: { operationId: "health", summary: "Liveness", responses: { "200": { description: "ok" } } } },
-      "/v1/pair_status": { get: { operationId: "pair_status_get", summary: "Report AZBrowser pair token + flag.", responses: { "200": { description: "status" } } }, post: { operationId: "pair_status", summary: "FragGate catalog name. Pair AZNet + AZBrowser, then report status. Leftover alias: /v1/pair.", requestBody: { content: { "application/json": { schema: { type: "object", properties: { azbrowser: { type: "string" }, ledger: ledgerSchema } } } } }, responses: { "200": { description: "paired" } } } },
+      "/v1/pair_status": { get: { operationId: "pair_status_get", summary: "Report AZ Browser pair token + flag.", responses: { "200": { description: "status" } } }, post: { operationId: "pair_status", summary: "FragGate catalog name. Pair AZnet + AZ Browser, then report status. Leftover alias: /v1/pair.", requestBody: { content: { "application/json": { schema: { type: "object", properties: { azbrowser: { type: "string" }, ledger: ledgerSchema } } } } }, responses: { "200": { description: "paired" } } } },
       "/v1/garden_list": { get: { operationId: "garden_list", summary: "FragGate catalog name. Demo Gold Pages. Leftover alias: /v1/garden.", responses: { "200": { description: "garden" } } } },
       "/v1/time": { get: { operationId: "time", summary: "StaticClock advisory display. Human chrome.", responses: { "200": { description: "time" } } } },
       "/v1/witness": { get: { operationId: "witness_get", summary: "Mandatory UI witness hash.", responses: { "200": { description: "witness" } } } },
@@ -819,6 +825,7 @@ function openapiSpec(origin) {
       "/v1/lattice": { post: { operationId: "lattice", summary: "Human chrome: verify receipt links + counts.", requestBody: { content: { "application/json": { schema: { type: "object" } } } }, responses: { "200": { description: "lattice" } } } },
       "/v1/receipts": { post: { operationId: "receipts", summary: "Leftover alias of receipt_verify / return the client-held ledger.", requestBody: { content: { "application/json": { schema: { type: "object" } } } }, responses: { "200": { description: "receipts" } } } },
       "/v1/example": { get: { operationId: "example", summary: "Sample pair payload.", responses: { "200": { description: "example" } } } },
+      "/v1/sidenet": { get: { operationId: "sidenet", summary: "AZN-SIDENET-1.0 map. Not a FragGate catalog op. Not a second door. Cap-7 local mesh DNS, qnm bearer SLOT, no public ICANN.", responses: { "200": { description: "sidenet" } } } },
       "/v1/fraggate/call": { post: { operationId: "aznet_fraggate_call_proxy", summary: "PROXY to aziel-runtime POST /v1/fraggate/call. Not a local op.", requestBody: { content: { "application/json": { schema: { type: "object" } } } }, responses: { "200": { description: "FragGate ResultEnvelope" } } } },
       "/v1/fraggate/list": { get: { operationId: "aznet_fraggate_list_proxy", summary: "PROXY to aziel-runtime GET /v1/fraggate/list. Not a local op.", responses: { "200": { description: "hashed registry" } } } },
       "/v1/fraggate/describe": { get: { operationId: "aznet_fraggate_describe_proxy", summary: "PROXY to aziel-runtime GET /v1/fraggate/describe. Not a local op.", responses: { "200": { description: "catalog entry" } } } },
@@ -858,7 +865,7 @@ function aiHtml(origin) {
   <p class="banner">${HONEST}</p>
   <h2>Use with AI assistants</h2>
   <p>${AI_CLIENTS} Author ${AUTHOR} only.</p>
-  <p>Agent path is FragGate only (one door). This Worker <code>/mcp</code> is a pointer, not a second MCP. AZBrowser is sibling software — functional-order pair only.</p>
+  <p>Agent path is FragGate only (one door). This Worker <code>/mcp</code> is a pointer, not a second MCP. AZ Browser is sibling software — functional-order pair only.</p>
   <pre>POST ${FRAGGATE_CALL}
 {"slug":"aznet","op":"pair_status","payload":{"azbrowser":"${AZBROWSER}"}}</pre>
   <h2>OpenAPI import</h2>
@@ -895,8 +902,10 @@ export async function handleRuntimeApi(request, url, env) {
         slug: "aznet",
         agent_path: FRAGGATE_CALL,
         fraggate_live_ops: [...FRAGGATE_LIVE_OPS],
-        pair: "AZNet + AZBrowser both required",
+        pair: "AZnet + AZ Browser both required",
         separate_software: true,
+        sidenet_path: "/v1/sidenet",
+        sidenet_is_catalog_op: false,
         worker_posture: "control-plane / demo garden",
         mesh: meshPointer(),
         note: "Hosted /v1 does not store ledgers. Hashes only. Device-local silent node is the real posture. Agent path is FragGate only. Suite mesh /v1/mesh/* PROXY to aziel-runtime. Default OFF. QNS-CD-1.0 is a hub cite / Worker mesh cross-map only.",
@@ -930,6 +939,7 @@ export async function handleRuntimeApi(request, url, env) {
     if (path === "/v1/example" && request.method === "GET") {
       return json({ azbrowser: AZBROWSER, hash_hex: "a".repeat(64), author: AUTHOR, spec: SPEC, marker: MARKER, op: "pair_status" });
     }
+    if (path === "/v1/sidenet" && request.method === "GET") return json(sidenetSurface());
     if ((path === "/v1/garden" || path === "/v1/garden_list") && request.method === "GET") return json(await gardenView());
     if (path === "/v1/time" && request.method === "GET") return json(await advise());
     if (path === "/v1/witness" && request.method === "GET") {

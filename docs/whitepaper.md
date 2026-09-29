@@ -21,7 +21,7 @@ The Worker homepage is a control-plane / demo garden. Honest scope:
 the hosted surface demonstrates the garden, the Memorial, stamps, and
 receipts. The real posture is device-local.
 
-AZNet + AZBrowser are both required to run. AZBrowser views the
+AZnet + AZ Browser are both required to run. AZ Browser views the
 side-net. FragGate unlocks access. StaticClock stamps time.
 
 This document is the specification implemented by the `aznet`
@@ -57,7 +57,7 @@ Whitepaper themes:
 | I4 | Silence as security. No analytics, personalization, or engagement. |
 | I5 | Hash continuity. Append-only SHA-256 lattice. |
 | I6 | UI is a mandatory witness. Altered UI terminates and writes a Memorial. |
-| I7 | Pairing required. AZNet + AZBrowser both required to run. |
+| I7 | Pairing required. AZnet + AZ Browser both required to run. |
 | I8 | Memorial is non-actionable. Genesis / final hash, timestamps, closed-set summary. No exploit details. |
 | I9 | Worker is a demo garden. Device-local silent node is the real posture. |
 | I10 | No persuasion / engagement optimization. |
@@ -99,17 +99,17 @@ No exploit details. No payloads. No keys.
 
 ## 6. Pairing
 
-AZNet, AZBrowser, and FragGate are separate software with separate Worker
-UIs. Do not embed AZNet chrome inside AZBrowser or FragGate. ONE FragGate
+AZnet, AZ Browser, and FragGate are separate software with separate Worker
+UIs. Do not embed AZnet chrome inside AZ Browser or FragGate. ONE FragGate
 door. Agents call `slug=aznet` only through FragGate.
 
 Functional order only: issue a `pair_token`, then set FragGate
 `pair_flag`, then garden / stamp / memorial writes. Health, skill,
 pair_status, and time remain available so an operator can complete the pair.
-AZBrowser may view side-net status from its own UI by calling this
+AZ Browser may view side-net status from its own UI by calling this
 runtime.
 
-AZBrowser: https://github.com/AzielEliab/azbrowser
+AZ Browser: https://github.com/AzielEliab/azbrowser
 
 Do not wire Lumen, AZInterface, AZ-OS Hub, or Interface products.
 
@@ -156,7 +156,23 @@ AZNet still does not host payloads. Private keys stay on the node.
 
 See [AZN-NAME-1.0.md](AZN-NAME-1.0.md).
 
-## 9. Honest banner
+## 9. Sidenet (AZN-SIDENET-1.0)
+
+AZnet is the sidenet. The mesh layer is additive. The public FragGate
+path stays L0 and is not a second door. Softwares stays frozen.
+
+Cap-7 mesh DNS pairing is the local seven-label map. Public DNS for
+those names is SLOT. The qnm peer bearer is SLOT because this process
+does not open it. Survival is an inventory: LIVE only where this code
+runs, SLOT where a copy is not here, and public ICANN is refused.
+`independent_live_shelves` is 0.
+
+AZ Browser reads that map. Pairing stays order and token. The products
+stay separate. The map does not add fields to an AZN-WP-0.1 receipt.
+
+See [AZN-SIDENET-1.0.md](AZN-SIDENET-1.0.md).
+
+## 10. Honest banner
 
 THIS IS: a silent verification SIDE-NET.
 THIS IS NOT: an alt internet, a host, a payload store, a VPN, or a key store.

@@ -20,7 +20,8 @@ ABSENT = "ABSENT"
 ACTOR_OPERATOR = "operator"
 GENESIS_PREV_HASH = "0" * 64
 MARKER = "Truth Is No Defense — .AZNet — AZ."
-PRODUCT = "AZNet"
+PRODUCT = "AZnet"
+CLIENT_SURFACE = "AZ Browser"
 VERSION = "0.1.0"
 AUTHOR = "Aziel Eliab"
 ROLE = "silent verification side-net"
@@ -29,7 +30,7 @@ HONEST = (
     "THIS IS: a silent verification SIDE-NET (hash continuity, Custodian Garden, "
     "Memorial ledger). THIS IS NOT: an alt internet, a host, a payload store, a VPN, "
     "or a key store. The Worker is a control-plane / demo garden. Device-local silent "
-    "node is the real posture. AZNet + AZBrowser are both required to run. FragGate "
+    "node is the real posture. AZnet + AZ Browser are both required to run. FragGate "
     "unlocks access. StaticClock stamps time. Author Aziel Eliab only."
 )
 

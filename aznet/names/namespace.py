@@ -221,7 +221,7 @@ def internet_reach(raw: str) -> dict | None:
                 "mesh_answer": False,
                 "note": (
                     "Standard internet reaches this AZ domain through the hub HTTPS link. "
-                    "That reach is not a mesh target and not an ICANN .az registration by AZNet."
+                    "That reach is not a mesh target and not an ICANN .az registration by AZnet."
                 ),
             }
     classified = classify(raw if not query.startswith("#") else raw)
@@ -361,8 +361,9 @@ def alignment_points() -> list[dict[str, str]]:
             "id": "relay-transport",
             "status": "open",
             "note": (
-                "Sync is an in-process AZN-NAME-SYNC-1.0 envelope. qnm-node relay framing is not "
-                "specified here. This library does not open a socket."
+                "Sync is an in-process AZN-NAME-SYNC-1.0 envelope. AZN-SIDENET-1.0 cites "
+                "qnm-node as the peer bearer and leaves that bearer SLOT. This library "
+                "does not open a socket."
             ),
         },
         {
@@ -388,8 +389,8 @@ def honesty() -> dict:
     return {
         "spec": SPEC,
         "author": AUTHOR,
-        "product": "AZNet",
-        "paired_software": "AZBrowser",
+        "product": "AZnet",
+        "paired_software": "AZ Browser",
         "products_merged": False,
         "pairing": "order and token only",
         "mesh_tld": MESH_TLD,
@@ -440,9 +441,9 @@ def honesty() -> dict:
         "az_domain_hubs": [row["hub"] for row in AZ_DOMAIN_REACH],
         "alignment": alignment_points(),
         "note": (
-            "Parallel namespace for AZBrowser and other callers of this resolver. "
+            "Parallel namespace for AZ Browser and other callers of this resolver. "
             "Regular browsers do not see .aziel names. Nothing here is an ICANN registration. "
             "Internet reach of the AZ.* domains is the four hub sites. Cap-7 is the mesh duplication layer. "
-            "AZNet stores name records and hashes, never payloads. Private keys are not an input to the ledger."
+            "AZnet stores name records and hashes, never payloads. Private keys are not an input to the ledger."
         ),
     }
